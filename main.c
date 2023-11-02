@@ -19,18 +19,22 @@ output_dev_t out_gamepadd_dev = {
 };
 
 input_dev_t in_asus_kb_1_dev = {
+  .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
 };
 
 input_dev_t in_asus_kb_2_dev = {
+  .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
 };
 
 input_dev_t in_asus_kb_3_dev = {
+  .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
 };
 
 input_dev_t in_xbox_dev = {
+  .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
 };
 

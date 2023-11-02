@@ -150,7 +150,7 @@ void *output_dev_thread_func(void *ptr) {
     output_dev_t *out_dev = (output_dev_t*)ptr;
 
     for (;;) {
-        uint32_t flags = out_dev->crtl_flags;
+        const uint32_t flags = out_dev->crtl_flags;
 		if (flags & OUTPUT_DEV_CTRL_FLAG_EXIT) {
 			out_dev->crtl_flags &= ~OUTPUT_DEV_CTRL_FLAG_EXIT;
             break;
