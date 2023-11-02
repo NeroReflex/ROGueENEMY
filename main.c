@@ -34,13 +34,13 @@ void sig_handler(int signo)
 }
 
 int main(int argc, char ** argv) {
-  imu_dev.fd = create_imu("/dev/uinput", "Virtual IMU - ROGueENEMY");
+  imu_dev.fd = create_output_dev("/dev/uinput", "Virtual IMU - ROGueENEMY", output_dev_imu);
   if (imu_dev.fd < 0) {
     fprintf(stderr, "Unable to create IMU virtual device\n");
     return EXIT_FAILURE;
   }
 
-  gamepadd_dev.fd = create_gamepad("/dev/uinput", "Virtual Controller - ROGueENEMY");
+  gamepadd_dev.fd = create_output_dev("/dev/uinput", "Virtual Controller - ROGueENEMY", output_dev_gamepad);
   if (gamepadd_dev.fd < 0) {
     close(imu_dev.fd);
     fprintf(stderr, "Unable to create gamepad virtual device\n");
@@ -79,5 +79,11 @@ gamepad_thread_err:
   pthread_join(imu_thread, NULL); 
 
 imu_thread_err:
+  if (!(gamepadd_dev.fd < 0))
+    close(gamepadd_dev.fd);
+  
+  if (!(imu_dev.fd < 0))
+    close(imu_dev.fd);
+  
   return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }

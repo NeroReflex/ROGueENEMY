@@ -6,7 +6,10 @@
 void *imu_thread_func(void *ptr) {
     output_dev_t *out_dev = (output_dev_t*)ptr;
 
-    /*timeval now = {0};
+    /*
+    int64_t secAtInit = 0;
+	int64_t usecAtInit = 0;
+    timeval now = {0};
 	gettimeofday(&now, NULL);
 	secAtInit = now.tv_sec;
 	usecAtInit = now.tv_usec;*/

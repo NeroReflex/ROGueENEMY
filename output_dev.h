@@ -13,6 +13,11 @@
 
 #define GYRO_DEADZONE 1 // degrees/s to count as zero movement
 
+typedef enum output_dev_type {
+    output_dev_gamepad,
+    output_dev_imu,
+} output_dev_type_t;
+
 typedef struct output_dev {
     int fd;
 
@@ -24,5 +29,4 @@ typedef struct output_dev {
     struct input_event events_list;
 } output_dev_t;
 
-int create_imu(const char* uinput_path, const char* name);
-int create_gamepad(const char* uinput_path, const char* name);
+int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type);
