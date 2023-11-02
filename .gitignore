@@ -1,0 +1,4 @@
+/build
+/rogue_enemy
+*.o
+/depends
