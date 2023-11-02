@@ -26,7 +26,9 @@ typedef struct output_dev {
 
     uint32_t max_events;
     uint32_t events_count;
-    struct input_event events_list;
+    struct input_event *events_list;
 } output_dev_t;
 
 int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type);
+
+void *output_dev_thread_func(void *ptr);

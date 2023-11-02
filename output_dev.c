@@ -130,6 +130,11 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			break;
 		}
 
+		case output_dev_gamepad: {
+
+			break;
+		}
+
 		default:
 			// error
 			close(fd);
@@ -139,4 +144,32 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 	
 create_output_dev_err:
     return fd;
+}
+
+void *output_dev_thread_func(void *ptr) {
+    output_dev_t *out_dev = (output_dev_t*)ptr;
+
+    for (;;) {
+        pthread_mutex_lock(&out_dev->ctrl_mutex);
+
+        if (out_dev->crtl_flags & OUTPUT_DEV_CTRL_FLAG_EXIT) {
+            pthread_mutex_unlock(&out_dev->ctrl_mutex);
+            break;
+        } else if (out_dev->crtl_flags & OUTPUT_DEV_CTRL_FLAG_DATA) {
+            const uint32_t events_count = out_dev->events_count;
+            for (uint32_t i = 0; i < events_count; ++i) {
+                // send the event
+                write(out_dev->fd, (const void*)&out_dev->events_list[i], sizeof(struct input_event));
+
+                out_dev->events_count -= 1;
+            }
+
+            // clear out the data present flag
+            out_dev->crtl_flags &= ~OUTPUT_DEV_CTRL_FLAG_DATA;
+        }
+
+        pthread_mutex_unlock(&out_dev->ctrl_mutex);
+    }
+
+    return NULL;
 }

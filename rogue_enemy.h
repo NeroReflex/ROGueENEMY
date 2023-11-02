@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <string.h>
+#include <semaphore.h>
 
 #include <linux/uinput.h>
 #include <linux/input.h>
