@@ -126,9 +126,15 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 				close(fd);
 				goto create_output_dev_err;
 			}
+
+			break;
 		}
+
 		default:
 			// error
+			close(fd);
+			fd = -1;
+			goto create_output_dev_err;
 	}
 	
 create_output_dev_err:
