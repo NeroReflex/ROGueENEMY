@@ -1,6 +1,7 @@
 #pragma once
 
 #include "rogue_enemy.h"
+#include "queue.h"
 
 #define OUTPUT_DEV_VENDOR_ID      0x4532
 #define OUTPUT_DEV_PRODUCT_ID     0x0924
@@ -21,12 +22,9 @@ typedef enum output_dev_type {
 typedef struct output_dev {
     int fd;
 
-    pthread_mutex_t ctrl_mutex;
-    uint32_t crtl_flags;
+    volatile uint32_t crtl_flags;
 
-    uint32_t max_events;
-    uint32_t events_count;
-    struct input_event *events_list;
+    ev_queue_t *queue;
 } output_dev_t;
 
 int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type);

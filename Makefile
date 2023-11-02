@@ -1,7 +1,7 @@
-CFLAGS=-g -std=c11 -pedantic -Wall # -Werror
+CFLAGS=-g -O0 -std=c11 -fPIE -pedantic -Wall # -Werror
 LDFLAGS=-lpthread
 CC=gcc
-OBJECTS=main.o input_dev.o output_dev.o
+OBJECTS=main.o input_dev.o output_dev.o queue.o
 TARGET=rogue_enemy
 
 all: $(TARGET)

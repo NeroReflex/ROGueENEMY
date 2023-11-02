@@ -9,6 +9,21 @@
 
 #include "input_dev.h"
 
+void *input_dev_thread_func(void *ptr) {
+    input_dev_t *out_dev = (input_dev_t*)ptr;
+
+    for (;;) {
+        uint32_t flags = out_dev->crtl_flags;
+		if (flags & INPUT_DEV_CTRL_FLAG_EXIT) {
+			out_dev->crtl_flags &= ~INPUT_DEV_CTRL_FLAG_EXIT;
+            break;
+        }
+    }
+
+    return NULL;
+}
+
+
 int open_and_hide_input() {
     int fd = -1;
     char buf[256];

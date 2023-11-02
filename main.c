@@ -3,30 +3,44 @@
 #include "input_dev.h"
 #include "output_dev.h"
 
+ev_queue_t imu_ev;
+ev_queue_t gamepad_ev;
+
 output_dev_t imu_dev = {
   .fd = -1,
-  .ctrl_mutex = PTHREAD_MUTEX_INITIALIZER,
   .crtl_flags = 0x00000000U,
-  .max_events = 32,
-  .events_list = NULL,
+  .queue = &imu_ev,
 };
 
 output_dev_t gamepadd_dev = {
   .fd = -1,
-  .ctrl_mutex = PTHREAD_MUTEX_INITIALIZER,
   .crtl_flags = 0x00000000U,
-  .max_events = 32,
-  .events_list = NULL,
+  .queue = &gamepad_ev,
+};
+
+input_dev_t in_asus_kb_1_dev = {
+  .crtl_flags = 0x00000000U,
+};
+
+input_dev_t in_asus_kb_2_dev = {
+  .crtl_flags = 0x00000000U,
+};
+
+input_dev_t in_asus_kb_3_dev = {
+  .crtl_flags = 0x00000000U,
+};
+
+input_dev_t in_asus_kb_4_dev = {
+  .crtl_flags = 0x00000000U,
+};
+
+input_dev_t in_xbox_dev = {
+  .crtl_flags = 0x00000000U,
 };
 
 void request_termination() {
-  pthread_mutex_lock(&imu_dev.ctrl_mutex);
   imu_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
-  pthread_mutex_unlock(&imu_dev.ctrl_mutex);
-
-  pthread_mutex_lock(&gamepadd_dev.ctrl_mutex);
   gamepadd_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
-  pthread_mutex_unlock(&gamepadd_dev.ctrl_mutex);
 }
 
 void sig_handler(int signo)
@@ -38,23 +52,11 @@ void sig_handler(int signo)
 }
 
 int main(int argc, char ** argv) {
-  imu_dev.events_list = calloc(sizeof(struct input_event), imu_dev.max_events);
-  if (imu_dev.events_list == NULL) {
-    fprintf(stderr, "Unable to allocate events list for IMU output\n");
-    return EXIT_FAILURE;
-  }
-
-  imu_dev.events_list = calloc(sizeof(struct input_event), imu_dev.max_events);
-  if (gamepadd_dev.events_list == NULL) {
-    free(imu_dev.events_list);
-    fprintf(stderr, "Unable to allocate events list for gamepad output\n");
-    return EXIT_FAILURE;
-  }
-
+  
   imu_dev.fd = create_output_dev("/dev/uinput", "Virtual IMU - ROGueENEMY", output_dev_imu);
   if (imu_dev.fd < 0) {
-    free(imu_dev.events_list);
-    free(gamepadd_dev.events_list);
+    // TODO: free(imu_dev.events_list);
+    // TODO: free(gamepadd_dev.events_list);
     fprintf(stderr, "Unable to create IMU virtual device\n");
     return EXIT_FAILURE;
   }
@@ -104,8 +106,8 @@ imu_thread_err:
   if (!(imu_dev.fd < 0))
     close(imu_dev.fd);
   
-  free(imu_dev.events_list);
-  free(gamepadd_dev.events_list);
+  // TODO: free(imu_dev.events_list);
+  // TODO: free(gamepadd_dev.events_list);
 
   return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
 }
