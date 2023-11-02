@@ -30,10 +30,6 @@ input_dev_t in_asus_kb_3_dev = {
   .crtl_flags = 0x00000000U,
 };
 
-input_dev_t in_asus_kb_4_dev = {
-  .crtl_flags = 0x00000000U,
-};
-
 input_dev_t in_xbox_dev = {
   .crtl_flags = 0x00000000U,
 };
@@ -41,6 +37,11 @@ input_dev_t in_xbox_dev = {
 void request_termination() {
   out_imu_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
   out_gamepadd_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
+
+  in_xbox_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
+  in_asus_kb_3_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
+  in_asus_kb_2_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
+  in_asus_kb_1_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
 }
 
 void sig_handler(int signo)
@@ -79,6 +80,7 @@ int main(int argc, char ** argv) {
   int ret = 0;
 
   pthread_t imu_thread, gamepad_thread;
+  pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread;
 
   const int imu_thread_creation = pthread_create(&imu_thread, NULL, output_dev_thread_func, (void*)(&out_imu_dev));
   if (imu_thread_creation != 0) {
@@ -96,6 +98,50 @@ int main(int argc, char ** argv) {
     goto gamepad_thread_err;
   }
 
+  const int xbox_thread_creation = pthread_create(&xbox_thread, NULL, input_dev_thread_func, (void*)(&in_xbox_dev));
+  if (xbox_thread_creation != 0) {
+    fprintf(stderr, "Error creating xbox input thread: %d\n", xbox_thread_creation);
+    ret = -1;
+    request_termination();
+    goto xbox_drv_thread_err;
+  }
+
+  const int asus_kb_1_thread_creation = pthread_create(&asus_kb_1_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_1_dev));
+  if (asus_kb_1_thread_creation != 0) {
+    fprintf(stderr, "Error creating asus keyboard (1) input thread: %d\n", asus_kb_1_thread_creation);
+    ret = -1;
+    request_termination();
+    goto asus_kb_1_thread_err;
+  }
+
+  const int asus_kb_2_thread_creation = pthread_create(&asus_kb_2_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_2_dev));
+  if (asus_kb_2_thread_creation != 0) {
+    fprintf(stderr, "Error creating asus keyboard (2) input thread: %d\n", asus_kb_2_thread_creation);
+    ret = -1;
+    request_termination();
+    goto asus_kb_2_thread_err;
+  }
+
+  const int asus_kb_3_thread_creation = pthread_create(&asus_kb_3_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_3_dev));
+  if (asus_kb_3_thread_creation != 0) {
+    fprintf(stderr, "Error creating asus keyboard (3) input thread: %d\n", asus_kb_3_thread_creation);
+    ret = -1;
+    request_termination();
+    goto asus_kb_3_thread_err;
+  }
+
+  pthread_join(asus_kb_3_thread, NULL);
+
+asus_kb_3_thread_err:
+  pthread_join(asus_kb_2_thread, NULL);
+
+asus_kb_2_thread_err:
+  pthread_join(asus_kb_1_thread, NULL);
+
+asus_kb_1_thread_err:
+  pthread_join(xbox_thread, NULL);
+
+xbox_drv_thread_err:
   pthread_join(gamepad_thread, NULL);
 
 gamepad_thread_err:
