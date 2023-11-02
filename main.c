@@ -6,13 +6,13 @@
 ev_queue_t imu_ev;
 ev_queue_t gamepad_ev;
 
-output_dev_t imu_dev = {
+output_dev_t out_imu_dev = {
   .fd = -1,
   .crtl_flags = 0x00000000U,
   .queue = &imu_ev,
 };
 
-output_dev_t gamepadd_dev = {
+output_dev_t out_gamepadd_dev = {
   .fd = -1,
   .crtl_flags = 0x00000000U,
   .queue = &gamepad_ev,
@@ -39,8 +39,8 @@ input_dev_t in_xbox_dev = {
 };
 
 void request_termination() {
-  imu_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
-  gamepadd_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
+  out_imu_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
+  out_gamepadd_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
 }
 
 void sig_handler(int signo)
@@ -53,17 +53,19 @@ void sig_handler(int signo)
 
 int main(int argc, char ** argv) {
   
-  imu_dev.fd = create_output_dev("/dev/uinput", "Virtual IMU - ROGueENEMY", output_dev_imu);
-  if (imu_dev.fd < 0) {
+  out_imu_dev.fd = create_output_dev("/dev/uinput", "Virtual IMU - ROGueENEMY", output_dev_imu);
+  if (out_imu_dev.fd < 0) {
     // TODO: free(imu_dev.events_list);
     // TODO: free(gamepadd_dev.events_list);
     fprintf(stderr, "Unable to create IMU virtual device\n");
     return EXIT_FAILURE;
   }
 
-  gamepadd_dev.fd = create_output_dev("/dev/uinput", "Virtual Controller - ROGueENEMY", output_dev_gamepad);
-  if (gamepadd_dev.fd < 0) {
-    close(imu_dev.fd);
+  out_gamepadd_dev.fd = create_output_dev("/dev/uinput", "Virtual Controller - ROGueENEMY", output_dev_gamepad);
+  if (out_gamepadd_dev.fd < 0) {
+    close(out_imu_dev.fd);
+    // TODO: free(imu_dev.events_list);
+    // TODO: free(gamepadd_dev.events_list);
     fprintf(stderr, "Unable to create gamepad virtual device\n");
     return EXIT_FAILURE;
   }
@@ -78,7 +80,7 @@ int main(int argc, char ** argv) {
 
   pthread_t imu_thread, gamepad_thread;
 
-  int imu_thread_creation = pthread_create(&imu_thread, NULL, output_dev_thread_func, (void*)(&imu_dev));
+  const int imu_thread_creation = pthread_create(&imu_thread, NULL, output_dev_thread_func, (void*)(&out_imu_dev));
   if (imu_thread_creation != 0) {
     fprintf(stderr, "Error creating IMU output thread: %d\n", imu_thread_creation);
     ret = -1;
@@ -86,7 +88,7 @@ int main(int argc, char ** argv) {
     goto imu_thread_err;
   }
   
-  int gamepad_thread_creation = pthread_create(&gamepad_thread, NULL, output_dev_thread_func, (void*)(&gamepadd_dev));
+  const int gamepad_thread_creation = pthread_create(&gamepad_thread, NULL, output_dev_thread_func, (void*)(&out_gamepadd_dev));
   if (gamepad_thread_creation != 0) {
     fprintf(stderr, "Error creating gamepad output thread: %d\n", gamepad_thread_creation);
     ret = -1;
@@ -100,11 +102,11 @@ gamepad_thread_err:
   pthread_join(imu_thread, NULL); 
 
 imu_thread_err:
-  if (!(gamepadd_dev.fd < 0))
-    close(gamepadd_dev.fd);
+  if (!(out_gamepadd_dev.fd < 0))
+    close(out_gamepadd_dev.fd);
   
-  if (!(imu_dev.fd < 0))
-    close(imu_dev.fd);
+  if (!(out_imu_dev.fd < 0))
+    close(out_imu_dev.fd);
   
   // TODO: free(imu_dev.events_list);
   // TODO: free(gamepadd_dev.events_list);
