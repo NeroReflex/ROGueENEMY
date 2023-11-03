@@ -17,7 +17,7 @@ static const char *input_path = "/dev/input/";
 static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters_t* const filters) {
     struct libevdev *dev = NULL;
 
-    int fd = open(sysfs_entry, O_RDONLY);
+    int fd = open(sysfs_entry, O_RDWR);
     if (fd < 0) {
         fprintf(stderr, "Cannot open %s, device skipped.\n", sysfs_entry);
         return NULL;
