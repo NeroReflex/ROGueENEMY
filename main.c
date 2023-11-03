@@ -49,7 +49,7 @@ static input_dev_t in_asus_kb_3_dev = {
 };
 
 static uinput_filters_t in_xbox_filters = {
-  .name = "Microsoft X-Box 360 pad 0",
+  .name = "Microsoft X-Box 360 pad",
 };
 
 static input_dev_t in_xbox_dev = {
