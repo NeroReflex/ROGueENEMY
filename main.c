@@ -6,36 +6,56 @@
 ev_queue_t imu_ev;
 ev_queue_t gamepad_ev;
 
-output_dev_t out_imu_dev = {
+static output_dev_t out_imu_dev = {
   .fd = -1,
   .crtl_flags = 0x00000000U,
   .queue = &imu_ev,
 };
 
-output_dev_t out_gamepadd_dev = {
+static output_dev_t out_gamepadd_dev = {
   .fd = -1,
   .crtl_flags = 0x00000000U,
   .queue = &gamepad_ev,
 };
 
-input_dev_t in_asus_kb_1_dev = {
-  .dev_type = input_dev_type_uinput,
-  .crtl_flags = 0x00000000U,
+static uinput_filters_t in_asus_kb_1_filters = {
+  .name = "Asus Keyboard",
 };
 
-input_dev_t in_asus_kb_2_dev = {
+static input_dev_t in_asus_kb_1_dev = {
   .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
+  .ev_filters = &in_asus_kb_1_filters,
 };
 
-input_dev_t in_asus_kb_3_dev = {
-  .dev_type = input_dev_type_uinput,
-  .crtl_flags = 0x00000000U,
+static uinput_filters_t in_asus_kb_2_filters = {
+  .name = "Asus Keyboard",
 };
 
-input_dev_t in_xbox_dev = {
+static input_dev_t in_asus_kb_2_dev = {
   .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
+  .ev_filters = &in_asus_kb_2_filters,
+};
+
+static uinput_filters_t in_asus_kb_3_filters = {
+  .name = "Asus Keyboard",
+};
+
+static input_dev_t in_asus_kb_3_dev = {
+  .dev_type = input_dev_type_uinput,
+  .crtl_flags = 0x00000000U,
+  .ev_filters = &in_asus_kb_3_filters,
+};
+
+static uinput_filters_t in_xbox_filters = {
+  .name = "Microsoft X-Box 360 pad 0",
+};
+
+static input_dev_t in_xbox_dev = {
+  .dev_type = input_dev_type_uinput,
+  .crtl_flags = 0x00000000U,
+  .ev_filters = &in_xbox_filters,
 };
 
 void request_termination() {
@@ -57,7 +77,6 @@ void sig_handler(int signo)
 }
 
 int main(int argc, char ** argv) {
-  
   out_imu_dev.fd = create_output_dev("/dev/uinput", "Virtual IMU - ROGueENEMY", output_dev_imu);
   if (out_imu_dev.fd < 0) {
     // TODO: free(imu_dev.events_list);

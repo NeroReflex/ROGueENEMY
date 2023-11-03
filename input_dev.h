@@ -9,8 +9,19 @@ typedef enum input_dev_type {
     input_dev_type_iio,
 } input_dev_type_t;
 
+typedef struct uinput_filters {
+    const char* name;
+} uinput_filters_t;
+
+typedef struct iio_filters {
+    const char* name;
+} iio_filters_t;
+
 typedef struct input_dev {
     input_dev_type_t dev_type;
+
+    const uinput_filters_t* ev_filters;
+    const iio_filters_t* iio_filters;
 
     volatile uint32_t crtl_flags;
 } input_dev_t;
