@@ -110,7 +110,7 @@ void *input_dev_thread_func(void *ptr) {
                 // open_sysfs
                 int skip = 0;
                 for (int o = 0; o < (sizeof(open_sysfs) / sizeof(const char*)); ++o) {
-                    if (strcmp(open_sysfs[o], path) == 0) {
+                    if ((open_sysfs[o] != NULL) && (strcmp(open_sysfs[o], path) == 0)) {
                         skip = 1;
                         break;
                     }
