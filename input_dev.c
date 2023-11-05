@@ -181,7 +181,7 @@ void *input_dev_thread_func(void *ptr) {
 
         pthread_t incoming_events_thread;
 
-        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_dev_thread_func, (void*)dev);
+        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)dev);
         if (incoming_events_thread_creation != 0) {
             fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(dev), incoming_events_thread_creation);
         }
