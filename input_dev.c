@@ -18,7 +18,7 @@ static const char *input_path = "/dev/input/";
 static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters_t* const filters) {
     struct libevdev *dev = NULL;
 
-    int fd = open(sysfs_entry, O_RDWR | O_NONBLOCK);
+    int fd = open(sysfs_entry, O_RDWR);
     if (fd < 0) {
         fprintf(stderr, "Cannot open %s, device skipped.\n", sysfs_entry);
         return NULL;
@@ -65,7 +65,7 @@ void* input_read_thread_func(void* ptr) {
 
     do {
         struct input_event ev;
-        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
+        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &ev);
         if (rc == 0) {
             printf(
                 "Device: %s, Event: %s %s %d\n",
