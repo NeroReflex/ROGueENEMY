@@ -125,10 +125,10 @@ void *input_dev_thread_func(void *ptr) {
                 if (dev != NULL) {
                     open_sysfs_idx = 0;
                     while (open_sysfs[open_sysfs_idx] != NULL) {
-                        open_sysfs[open_sysfs_idx] = malloc(sizeof(path));
-                        memcpy(open_sysfs[open_sysfs_idx], path, 512);
                         ++open_sysfs_idx;
                     }
+                    open_sysfs[open_sysfs_idx] = malloc(sizeof(path));
+                    memcpy(open_sysfs[open_sysfs_idx], path, 512);    
 
                     printf("Opened device %s\n    name: %s", path, libevdev_get_name(dev));
                     break;
