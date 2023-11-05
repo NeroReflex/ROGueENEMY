@@ -59,13 +59,32 @@ static char* open_sysfs[] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 };
 
+void* input_read_thread_func(void* ptr) {
+    struct libevdev* dev = (struct libevdev*)ptr;
+    int rc = 1;
+
+    do {
+        struct input_event ev;
+        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
+        if (rc == 0) {
+            printf(
+                "Device: %s, Event: %s %s %d\n",
+                libevdev_get_name(dev),
+                libevdev_event_type_get_name(ev.type),
+                libevdev_event_code_get_name(ev.type, ev.code),
+                ev.value
+            );
+        }
+    } while (rc == 1 || rc == 0 || rc == -EAGAIN);
+
+    return NULL;
+}
+
 void *input_dev_thread_func(void *ptr) {
     input_dev_t *in_dev = (input_dev_t*)ptr;
 
     struct libevdev* dev = NULL;
     int open_sysfs_idx = -1;
-
-    int rc = 1;
 
     for (;;) {
         const uint32_t flags = in_dev->crtl_flags;
@@ -160,24 +179,16 @@ void *input_dev_thread_func(void *ptr) {
             continue;
         }
 
-        do {
-            struct input_event ev;
-            rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
-            if (rc == 0) {
-                printf(
-                    "Device: %s, Event: %s %s %d\n",
-                    libevdev_get_name(dev),
-                    libevdev_event_type_get_name(ev.type),
-                    libevdev_event_code_get_name(ev.type, ev.code),
-                    ev.value
-                );
-            }
+        pthread_t incoming_events_thread;
 
-            const uint32_t flags = in_dev->crtl_flags;
-            if (flags & INPUT_DEV_CTRL_FLAG_EXIT) {
-                break;
-            }        
-        } while (rc == 1 || rc == 0 || rc == -EAGAIN);
+        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_dev_thread_func, (void*)dev);
+        if (incoming_events_thread_creation != 0) {
+            fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(dev), incoming_events_thread_creation);
+        }
+
+        if (incoming_events_thread_creation == 0) {
+            pthread_join(incoming_events_thread, NULL);
+        }
     }
 
     return NULL;
