@@ -1,3 +1,5 @@
+#include <libevdev-1.0/libevdev/libevdev.h>
+#include <linux/input.h>
 #include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
@@ -16,7 +18,7 @@ static const char *input_path = "/dev/input/";
 static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters_t* const filters) {
     struct libevdev *dev = NULL;
 
-    int fd = open(sysfs_entry, O_RDWR);
+    int fd = open(sysfs_entry, O_RDWR | O_NONBLOCK);
     if (fd < 0) {
         fprintf(stderr, "Cannot open %s, device skipped.\n", sysfs_entry);
         return NULL;
@@ -62,6 +64,8 @@ void *input_dev_thread_func(void *ptr) {
 
     struct libevdev* dev = NULL;
     int open_sysfs_idx = -1;
+
+    int rc = 1;
 
     for (;;) {
         const uint32_t flags = in_dev->crtl_flags;
@@ -130,7 +134,19 @@ void *input_dev_thread_func(void *ptr) {
                     open_sysfs[open_sysfs_idx] = malloc(sizeof(path));
                     memcpy(open_sysfs[open_sysfs_idx], path, 512);    
 
-                    printf("Opened device %s\n    name: %s", path, libevdev_get_name(dev));
+                    if (libevdev_has_event_type(dev, EV_FF)) {
+                        printf("Opened device %s\n    name: %s\n    rumble: %s\n",
+                            path,
+                            libevdev_get_name(dev),
+                            libevdev_has_event_code(dev, EV_FF, FF_RUMBLE) ? "true" : "false"
+                        );
+                    } else {
+                        printf("Opened device %s\n    name: %s\n    rumble: no EV_FF\n",
+                            path,
+                            libevdev_get_name(dev)
+                        );
+                    }
+                    
                     break;
                 }
             }
@@ -144,15 +160,24 @@ void *input_dev_thread_func(void *ptr) {
             continue;
         }
 
-        for (;;) {
-            // TODO: do the required
-            //process_events(dev);
+        do {
+            struct input_event ev;
+            rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_NORMAL, &ev);
+            if (rc == 0) {
+                printf(
+                    "Device: %s, Event: %s %s %d\n",
+                    libevdev_get_name(dev),
+                    libevdev_event_type_get_name(ev.type),
+                    libevdev_event_code_get_name(ev.type, ev.code),
+                    ev.value
+                );
+            }
 
             const uint32_t flags = in_dev->crtl_flags;
             if (flags & INPUT_DEV_CTRL_FLAG_EXIT) {
                 break;
-            }
-        }
+            }        
+        } while (rc == 1 || rc == 0 || rc == -EAGAIN);
     }
 
     return NULL;
