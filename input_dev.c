@@ -31,7 +31,7 @@ static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters
     }
 
     const char* name = libevdev_get_name(dev);
-    if (strcmp(name, filters->name) != 0) {
+    if ((name != NULL) && (strcmp(name, filters->name) != 0)) {
         fprintf(stderr, "The device name (%s) for device %s does not matches the expected one %s.\n", name, sysfs_entry, filters->name);
         libevdev_free(dev);
         close(fd);
