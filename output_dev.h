@@ -1,6 +1,5 @@
 #pragma once
 
-#include "rogue_enemy.h"
 #include "queue.h"
 
 #define OUTPUT_DEV_VENDOR_ID      0x4532
@@ -24,7 +23,7 @@ typedef struct output_dev {
 
     volatile uint32_t crtl_flags;
 
-    ev_queue_t *queue;
+    queue_t *queue;
 } output_dev_t;
 
 int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type);

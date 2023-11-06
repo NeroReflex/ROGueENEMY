@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <time.h>
 #include <stdatomic.h>
 #include <inttypes.h>
 #include <fcntl.h>
@@ -17,6 +18,8 @@
 
 #include <linux/uinput.h>
 #include <linux/input.h>
+
+#include <semaphore.h>
 
 #include <pthread.h>
 

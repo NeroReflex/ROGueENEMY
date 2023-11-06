@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rogue_enemy.h"
+#include "queue.h"
 
 #define INPUT_DEV_CTRL_FLAG_EXIT 0x00000001U
 
@@ -24,6 +24,8 @@ typedef struct input_dev {
     const iio_filters_t* iio_filters;
 
     volatile uint32_t crtl_flags;
+
+    queue_t *queue;
 } input_dev_t;
 
 void *input_dev_thread_func(void *ptr);

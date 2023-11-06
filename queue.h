@@ -2,20 +2,24 @@
 
 #include "rogue_enemy.h"
 
-typedef struct ev_queue {
-    int sem_id;
+typedef struct queue {
+    sem_t empty, full, mutex;
 
-    size_t in;
-    size_t out;
+    ssize_t front;
+    ssize_t rear;
 
     size_t array_size;
     void** array;
-} ev_queue_t;
+} queue_t;
 
-int queue_init(ev_queue_t* queue, key_t sem_key, size_t max_elements);
+int queue_init(queue_t* queue, size_t max_elements);
 
-void queue_destroy(ev_queue_t* queue);
+void queue_destroy(queue_t* queue);
 
-int queue_push(ev_queue_t* queue, void *in_item);
+int queue_push(queue_t* queue, void *in_item);
 
-int queue_pop(ev_queue_t* queue, void **out_item);
+int queue_push_timeout(queue_t* const  q, void *in_item, int timeout_ms);
+
+int queue_pop(queue_t* queue, void **out_item);
+
+int queue_pop_timeout(queue_t* const q, void **out_item, int timeout_ms);

@@ -1,4 +1,5 @@
 #include "output_dev.h"
+#include "queue.h"
 
 int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type) {
     int fd = open(uinput_path, O_WRONLY | O_NONBLOCK);
@@ -150,6 +151,17 @@ void *output_dev_thread_func(void *ptr) {
     output_dev_t *out_dev = (output_dev_t*)ptr;
 
     for (;;) {
+		void *raw_ev;
+		const int pop_res = queue_pop_timeout(out_dev->queue, &raw_ev, 1000);
+		if (pop_res == 0) {
+			// do stuff
+		} else if (pop_res == -1) {
+			// timed out read
+		} else {
+			fprintf(stderr, "Cannot read from input queue: %d\n", pop_res);
+			continue;
+		}
+
         const uint32_t flags = out_dev->crtl_flags;
 		if (flags & OUTPUT_DEV_CTRL_FLAG_EXIT) {
 			out_dev->crtl_flags &= ~OUTPUT_DEV_CTRL_FLAG_EXIT;

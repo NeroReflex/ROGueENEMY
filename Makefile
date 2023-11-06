@@ -1,4 +1,4 @@
-CFLAGS=-g -O0 -std=c11 -fPIE -pedantic -Wall # -Werror
+CFLAGS= -g -O0 -D _DEFAULT_SOURCE -D_POSIX_C_SOURCE=200112L -std=c11 -fPIE -pedantic -Wall # -Werror
 LDFLAGS=-lpthread -levdev
 CC=gcc
 OBJECTS=main.o input_dev.o output_dev.o queue.o

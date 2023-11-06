@@ -3,8 +3,8 @@
 #include "input_dev.h"
 #include "output_dev.h"
 
-ev_queue_t imu_ev;
-ev_queue_t gamepad_ev;
+queue_t imu_ev;
+queue_t gamepad_ev;
 
 static output_dev_t out_imu_dev = {
   .fd = -1,
@@ -26,6 +26,7 @@ static input_dev_t in_asus_kb_1_dev = {
   .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_1_filters,
+  .queue = &gamepad_ev,
 };
 
 static uinput_filters_t in_asus_kb_2_filters = {
@@ -36,6 +37,7 @@ static input_dev_t in_asus_kb_2_dev = {
   .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_2_filters,
+  .queue = &gamepad_ev,
 };
 
 static uinput_filters_t in_asus_kb_3_filters = {
@@ -46,6 +48,7 @@ static input_dev_t in_asus_kb_3_dev = {
   .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_3_filters,
+  .queue = &gamepad_ev,
 };
 
 static uinput_filters_t in_xbox_filters = {
@@ -56,6 +59,7 @@ static input_dev_t in_xbox_dev = {
   .dev_type = input_dev_type_uinput,
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_xbox_filters,
+  .queue = &gamepad_ev,
 };
 
 void request_termination() {
@@ -77,6 +81,9 @@ void sig_handler(int signo)
 }
 
 int main(int argc, char ** argv) {
+  queue_init(&gamepad_ev, 32);
+  queue_init(&imu_ev, 32);
+
   out_imu_dev.fd = create_output_dev("/dev/uinput", "Virtual IMU - ROGueENEMY", output_dev_imu);
   if (out_imu_dev.fd < 0) {
     // TODO: free(imu_dev.events_list);
@@ -94,11 +101,13 @@ int main(int argc, char ** argv) {
     return EXIT_FAILURE;
   }
 
+/*
   __sighandler_t sigint_hndl = signal(SIGINT, sig_handler); 
   if (sigint_hndl == SIG_ERR) {
     fprintf(stderr, "Error registering SIGINT handler\n");
     return EXIT_FAILURE;
   }
+*/
 
   int ret = 0;
 
