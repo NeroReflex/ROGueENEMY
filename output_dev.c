@@ -164,6 +164,8 @@ void *output_dev_thread_func(void *ptr) {
                 msg->ev.value
             );
 
+			// from now on it's forbidden to use this memory
+			msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
 		} else if (pop_res == -1) {
 			// timed out read
 		} else {
