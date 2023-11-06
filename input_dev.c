@@ -18,19 +18,19 @@ static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters
 
     int fd = open(sysfs_entry, O_RDWR);
     if (fd < 0) {
-        fprintf(stderr, "Cannot open %s, device skipped.\n", sysfs_entry);
+        //fprintf(stderr, "Cannot open %s, device skipped.\n", sysfs_entry);
         return NULL;
     }
 
     if (libevdev_new_from_fd(fd, &dev) != 0) {
-        fprintf(stderr, "Cannot initialize libevdev from this device (%s): skipping.\n", sysfs_entry);
+        //fprintf(stderr, "Cannot initialize libevdev from this device (%s): skipping.\n", sysfs_entry);
         close(fd);
         return NULL;
     }
 
     const char* name = libevdev_get_name(dev);
     if ((name != NULL) && (strcmp(name, filters->name) != 0)) {
-        fprintf(stderr, "The device name (%s) for device %s does not matches the expected one %s.\n", name, sysfs_entry, filters->name);
+        //fprintf(stderr, "The device name (%s) for device %s does not matches the expected one %s.\n", name, sysfs_entry, filters->name);
         libevdev_free(dev);
         close(fd);
         return NULL;
@@ -76,11 +76,6 @@ void* input_read_thread_func(void* ptr) {
         for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
             if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
                 msg = &ctx->messages[h];
-
-                // clear out flags
-                msg->flags = 0x00000000U;
-                
-                // search is over
                 break;
             }
         }
@@ -92,6 +87,9 @@ void* input_read_thread_func(void* ptr) {
 
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &msg->ev);
         if (rc == 0) {
+            // clear out flags
+            msg->flags = 0x00000000U;
+
             if (queue_push(ctx->queue, (void*)msg) != 0) {
                 fprintf(stderr, "Error pushing event.\n");
 
