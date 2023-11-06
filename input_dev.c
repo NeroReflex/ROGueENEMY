@@ -1,14 +1,12 @@
-#include <libevdev-1.0/libevdev/libevdev.h>
-#include <linux/input.h>
-#include <stdio.h>
-#include <signal.h>
+#include "input_dev.h"
+#include "message.h"
+#include "queue.h"
+
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <termios.h>
-
-#include "input_dev.h"
 
 #include <dirent.h> 
 #include <stdio.h> 
@@ -59,21 +57,48 @@ static char* open_sysfs[] = {
     NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 
 };
 
+#define MAX_MESSAGES_IN_FLIGHT 32
+
+struct input_ctx {
+    struct libevdev* dev;
+    queue_t* queue;
+    message_t messages[MAX_MESSAGES_IN_FLIGHT];
+};
+
 void* input_read_thread_func(void* ptr) {
-    struct libevdev* dev = (struct libevdev*)ptr;
+    struct input_ctx* ctx = (struct input_ctx*)ptr;
+    struct libevdev* dev = ctx->dev;
+
     int rc = 1;
 
     do {
-        struct input_event ev;
-        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &ev);
+        message_t* msg = NULL;
+        for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
+            if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
+                msg = &ctx->messages[h];
+
+                // clear out flags
+                msg->flags = 0x00000000U;
+                
+                // search is over
+                break;
+            }
+        }
+
+        if (msg == NULL) {
+            fprintf(stderr, "Events are stalled.\n");
+            continue;
+        }
+
+        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &msg->ev);
         if (rc == 0) {
-            printf(
-                "Device: %s, Event: %s %s %d\n",
-                libevdev_get_name(dev),
-                libevdev_event_type_get_name(ev.type),
-                libevdev_event_code_get_name(ev.type, ev.code),
-                ev.value
-            );
+            if (queue_push(ctx->queue, (void*)msg) != 0) {
+                fprintf(stderr, "Error pushing event.\n");
+
+                // flag the memory to be safe to reuse
+                msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
+                continue;
+            }
         }
     } while (rc == 1 || rc == 0 || rc == -EAGAIN);
 
@@ -83,7 +108,16 @@ void* input_read_thread_func(void* ptr) {
 void *input_dev_thread_func(void *ptr) {
     input_dev_t *in_dev = (input_dev_t*)ptr;
 
-    struct libevdev* dev = NULL;
+    struct input_ctx ctx = {
+        .dev = NULL,
+        .queue = in_dev->queue,
+        .messages = {}
+    };
+
+    for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
+        ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
+    }
+
     int open_sysfs_idx = -1;
 
     for (;;) {
@@ -94,9 +128,9 @@ void *input_dev_thread_func(void *ptr) {
         }
 
         // clean up from previous iteration
-        if (dev != NULL) {
-            libevdev_free(dev);
-            dev = NULL;
+        if (ctx.dev != NULL) {
+            libevdev_free(ctx.dev);
+            ctx.dev = NULL;
         }
 
         const int input_acquire_lock_result = pthread_mutex_lock(&input_acquire_mutex);
@@ -144,8 +178,8 @@ void *input_dev_thread_func(void *ptr) {
                 }
 
                 // try to open the device
-                dev = ev_matches(path, in_dev->ev_filters);
-                if (dev != NULL) {
+                ctx.dev = ev_matches(path, in_dev->ev_filters);
+                if (ctx.dev != NULL) {
                     open_sysfs_idx = 0;
                     while (open_sysfs[open_sysfs_idx] != NULL) {
                         ++open_sysfs_idx;
@@ -153,16 +187,16 @@ void *input_dev_thread_func(void *ptr) {
                     open_sysfs[open_sysfs_idx] = malloc(sizeof(path));
                     memcpy(open_sysfs[open_sysfs_idx], path, 512);    
 
-                    if (libevdev_has_event_type(dev, EV_FF)) {
+                    if (libevdev_has_event_type(ctx.dev, EV_FF)) {
                         printf("Opened device %s\n    name: %s\n    rumble: %s\n",
                             path,
-                            libevdev_get_name(dev),
-                            libevdev_has_event_code(dev, EV_FF, FF_RUMBLE) ? "true" : "false"
+                            libevdev_get_name(ctx.dev),
+                            libevdev_has_event_code(ctx.dev, EV_FF, FF_RUMBLE) ? "true" : "false"
                         );
                     } else {
                         printf("Opened device %s\n    name: %s\n    rumble: no EV_FF\n",
                             path,
-                            libevdev_get_name(dev)
+                            libevdev_get_name(ctx.dev)
                         );
                     }
                     
@@ -174,16 +208,16 @@ void *input_dev_thread_func(void *ptr) {
 
         pthread_mutex_unlock(&input_acquire_mutex);
 
-        if (dev == NULL) {
+        if (ctx.dev == NULL) {
             usleep(250000);
             continue;
         }
 
         pthread_t incoming_events_thread;
 
-        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)dev);
+        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)ctx.dev);
         if (incoming_events_thread_creation != 0) {
-            fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(dev), incoming_events_thread_creation);
+            fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(ctx.dev), incoming_events_thread_creation);
         }
 
         if (incoming_events_thread_creation == 0) {

@@ -1,5 +1,6 @@
 #include "output_dev.h"
 #include "queue.h"
+#include "message.h"
 
 int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type) {
     int fd = open(uinput_path, O_WRONLY | O_NONBLOCK);
@@ -154,7 +155,15 @@ void *output_dev_thread_func(void *ptr) {
 		void *raw_ev;
 		const int pop_res = queue_pop_timeout(out_dev->queue, &raw_ev, 1000);
 		if (pop_res == 0) {
-			// do stuff
+			message_t *const msg = (message_t *)raw_ev;
+
+			printf(
+                "Event: %s %s %d\n",
+                libevdev_event_type_get_name(msg->ev.type),
+                libevdev_event_code_get_name(msg->ev.type, msg->ev.code),
+                msg->ev.value
+            );
+
 		} else if (pop_res == -1) {
 			// timed out read
 		} else {
