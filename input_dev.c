@@ -111,7 +111,6 @@ void *input_dev_thread_func(void *ptr) {
     struct input_ctx ctx = {
         .dev = NULL,
         .queue = in_dev->queue,
-        .messages = {}
     };
 
     for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
