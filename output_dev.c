@@ -348,13 +348,6 @@ void *output_dev_thread_func(void *ptr) {
 			message_t *const msg = (message_t *)raw_ev;
 
 			for (uint32_t i = 0; i < msg->ev_count; ++i) {
-				printf(
-					"Event: %s %s %d\n",
-					libevdev_event_type_get_name(msg->ev[i].type),
-					libevdev_event_code_get_name(msg->ev[i].type, msg->ev[i].code),
-					msg->ev[i].value
-				);
-
 				gettimeofday(&now, NULL);
 
 				/*const*/ struct input_event ev = {
