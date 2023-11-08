@@ -337,6 +337,7 @@ create_output_dev_err:
 
 void *output_dev_thread_func(void *ptr) {
     output_dev_t *out_dev = (output_dev_t*)ptr;
+	struct timeval now = {0};
 
 	const int fd = out_dev->fd;
 
@@ -346,30 +347,51 @@ void *output_dev_thread_func(void *ptr) {
 		if (pop_res == 0) {
 			message_t *const msg = (message_t *)raw_ev;
 
-			printf(
-                "Event: %s %s %d\n",
-                libevdev_event_type_get_name(msg->ev.type),
-                libevdev_event_code_get_name(msg->ev.type, msg->ev.code),
-                msg->ev.value
-            );
+			for (uint32_t i = 0; i < msg->ev_count; ++i) {
+				printf(
+					"Event: %s %s %d\n",
+					libevdev_event_type_get_name(msg->ev[i].type),
+					libevdev_event_code_get_name(msg->ev[i].type, msg->ev[i].code),
+					msg->ev[i].value
+				);
 
-			struct timeval now = {0};
+				gettimeofday(&now, NULL);
+
+				/*const*/ struct input_event ev = {
+					.code = msg->ev[i].code,
+					.type = msg->ev[i].type,
+					.value = msg->ev[i].value,
+					.time = now,
+				};
+
+				if ((ev.type == EV_KEY) && (ev.code == KEY_F16)) {
+					ev.code = BTN_MODE;
+				}
+
+				const ssize_t written = write(fd, (void*)&ev, sizeof(ev));
+				if (written != sizeof(ev)) {
+					fprintf(
+						stderr,
+						"Error writing event %s %s %d: written %ld bytes out of %ld\n",
+						libevdev_event_type_get_name(ev.type),
+						libevdev_event_code_get_name(ev.type, ev.code),
+						ev.value,
+						written,
+						sizeof(ev)
+					);
+				}
+			}
+			
 			gettimeofday(&now, NULL);
-
-			/*const*/ struct input_event ev = {
-				.code = msg->ev.code,
-				.type = msg->ev.type,
-				.value = msg->ev.value,
+			const struct input_event syn_ev = {
+				.code = SYN_REPORT,
+				.type = EV_SYN,
+				.value = 0,
 				.time = now,
 			};
-
-			if ((ev.type == EV_KEY) && (ev.code == KEY_F16)) {
-				ev.code = BTN_MODE;
-			}
-
-			ssize_t written = write(fd, (void*)&ev, sizeof(ev));
-			if (written != sizeof(ev)) {
-				fprintf(stderr, "Error writing event: written %ld bytes out of %ld\n", written, sizeof(ev));
+			const ssize_t sync_written = write(fd, (void*)&syn_ev, sizeof(syn_ev));
+			if (sync_written != sizeof(syn_ev)) {
+				fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", sync_written, sizeof(syn_ev));
 			}
 
 			// from now on it's forbidden to use this memory

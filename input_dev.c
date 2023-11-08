@@ -2,6 +2,8 @@
 #include "message.h"
 #include "queue.h"
 
+#include <linux/input-event-codes.h>
+#include <linux/input.h>
 #include <unistd.h>
 #include <string.h>
 #include <fcntl.h>
@@ -58,6 +60,8 @@ static char* open_sysfs[] = {
 };
 
 #define MAX_MESSAGES_IN_FLIGHT 32
+#define DEFAULT_EVENTS_IN_REPORT 4
+
 
 struct input_ctx {
     struct libevdev* dev;
@@ -76,6 +80,7 @@ void* input_read_thread_func(void* ptr) {
         for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
             if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
                 msg = &ctx->messages[h];
+                msg->ev_count = 0;
                 break;
             }
         }
@@ -85,17 +90,30 @@ void* input_read_thread_func(void* ptr) {
             continue;
         }
 
-        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &msg->ev);
+        // TODO: malloc for msg->ev and assign the result
+
+        struct input_event read_ev;
+        rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &read_ev);
         if (rc == 0) {
-            // clear out flags
-            msg->flags = 0x00000000U;
+            if ((read_ev.type == EV_SYN) && (read_ev.code == SYN_REPORT)) {
+                // clear out flags
+                msg->flags = 0x00000000U;
 
-            if (queue_push(ctx->queue, (void*)msg) != 0) {
-                fprintf(stderr, "Error pushing event.\n");
+                if (queue_push(ctx->queue, (void*)msg) != 0) {
+                    fprintf(stderr, "Error pushing event.\n");
 
-                // flag the memory to be safe to reuse
-                msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
-                continue;
+                    // flag the memory to be safe to reuse
+                    msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
+                    continue;
+                }
+            } else {
+                if ((msg->ev_count+1) == msg->ev_size) {
+                    // perform a memove
+                } else {
+                    // just copy the input event
+                    msg->ev[msg->ev_count] = read_ev;
+                    ++msg->ev_count;
+                }
             }
         }
     } while (rc == 1 || rc == 0 || rc == -EAGAIN);
@@ -113,6 +131,8 @@ void *input_dev_thread_func(void *ptr) {
 
     for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
         ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
+        ctx.messages[h].ev_size = DEFAULT_EVENTS_IN_REPORT;
+        ctx.messages[h].ev = malloc(sizeof(struct input_event) * ctx.messages[h].ev_size);
     }
 
     int open_sysfs_idx = -1;
