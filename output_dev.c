@@ -1,6 +1,8 @@
 #include "output_dev.h"
 #include "queue.h"
 #include "message.h"
+#include <linux/input-event-codes.h>
+#include <unistd.h>
 
 int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type) {
     int fd = open(uinput_path, O_WRONLY | O_NONBLOCK);
@@ -133,6 +135,183 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 		}
 
 		case output_dev_gamepad: {
+			ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_BUTTONPAD);
+			ioctl(fd, UI_SET_EVBIT, EV_ABS);
+			ioctl(fd, UI_SET_EVBIT, EV_KEY);
+			ioctl(fd, UI_SET_EVBIT, EV_MSC);
+			//ioctl(fd, UI_SET_EVBIT, EV_SYN);
+			ioctl(fd, UI_SET_MSCBIT, MSC_TIMESTAMP);
+
+			ioctl(fd, UI_SET_ABSBIT, ABS_X);
+			ioctl(fd, UI_SET_ABSBIT, ABS_Y);
+			ioctl(fd, UI_SET_ABSBIT, ABS_Z);
+			ioctl(fd, UI_SET_ABSBIT, ABS_RX);
+			ioctl(fd, UI_SET_ABSBIT, ABS_RY);
+			ioctl(fd, UI_SET_ABSBIT, ABS_RZ);
+			ioctl(fd, UI_SET_ABSBIT, ABS_HAT0X);
+			ioctl(fd, UI_SET_ABSBIT, ABS_HAT0Y);
+
+			ioctl(fd, UI_SET_KEYBIT, BTN_SOUTH);
+			ioctl(fd, UI_SET_KEYBIT, BTN_EAST);
+			ioctl(fd, UI_SET_KEYBIT, BTN_NORTH);
+			ioctl(fd, UI_SET_KEYBIT, BTN_WEST);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TL);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TR);
+			ioctl(fd, UI_SET_KEYBIT, BTN_SELECT);
+			ioctl(fd, UI_SET_KEYBIT, BTN_START);
+			ioctl(fd, UI_SET_KEYBIT, BTN_MODE);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TRIGGER);
+			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBL);
+			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBR);
+			
+			const struct uinput_abs_setup devAbsX = {
+				.code = ABS_X,
+				.absinfo = {
+					.value = 0,
+					.minimum = -32768,
+					.maximum = +32768,
+					.resolution = 1,
+					.fuzz = 16,
+					.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsX) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			struct uinput_abs_setup devAbsY = {
+				.code = ABS_Y,
+				.absinfo = {
+					.value = 0,
+					.minimum = -32768,
+					.maximum = +32768,
+					.resolution = 1,
+					.fuzz = 16,
+					.flat = 128,
+				}
+			};
+
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsY) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+			
+			struct uinput_abs_setup devAbsZ = {
+				.code = ABS_Z,
+				.absinfo = {
+					.value = 0,
+					.minimum = 0,
+					.maximum = 255,
+					.resolution = 255,
+					//.fuzz = 16,
+					//.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsZ) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+			
+			struct uinput_abs_setup devAbsRX = {
+				.code = ABS_RX,
+				.absinfo = {
+					.value = 0,
+					.minimum = -32768,
+					.maximum = +32768,
+					.resolution = 1,
+					.fuzz = 16,
+					.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsRX) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			struct uinput_abs_setup devAbsRY = {
+				.code = ABS_RY,
+				.absinfo = {
+					.value = -1,
+					.minimum = -32768,
+					.maximum = +32768,
+					.resolution = 1,
+					.fuzz = 16,
+					.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsRY) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+			
+			struct uinput_abs_setup devAbsRZ = {
+				.code = ABS_RZ,
+				.absinfo = {
+					.value = 0,
+					.minimum = 0,
+					.maximum = 255,
+					.resolution = 255,
+					//.fuzz = 16,
+					//.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsRZ) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			struct uinput_abs_setup devAbsHat0X = {
+				.code = ABS_HAT0X,
+				.absinfo = {
+					.value = 0,
+					.minimum = -1,
+					.maximum = 1,
+					.resolution = 1,
+					//.fuzz = 16,
+					//.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsHat0X) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			struct uinput_abs_setup devAbsHat0Y = {
+				.code = ABS_HAT0Y,
+				.absinfo = {
+					.value = 0,
+					.minimum = -1,
+					.maximum = 1,
+					.resolution = 1,
+					//.fuzz = 16,
+					//.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsHat0Y) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			if(ioctl(fd, UI_DEV_SETUP, &dev) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			if(ioctl(fd, UI_DEV_CREATE) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
 
 			break;
 		}
@@ -151,6 +330,8 @@ create_output_dev_err:
 void *output_dev_thread_func(void *ptr) {
     output_dev_t *out_dev = (output_dev_t*)ptr;
 
+	const int fd = out_dev->fd;
+
     for (;;) {
 		void *raw_ev;
 		const int pop_res = queue_pop_timeout(out_dev->queue, &raw_ev, 1000);
@@ -163,6 +344,18 @@ void *output_dev_thread_func(void *ptr) {
                 libevdev_event_code_get_name(msg->ev.type, msg->ev.code),
                 msg->ev.value
             );
+
+			struct timeval now = {0};
+			gettimeofday(&now, NULL);
+
+			const struct input_event ev = {
+				.code = msg->ev.code,
+				.type = msg->ev.type,
+				.value = msg->ev.value,
+				.time = now,
+			};
+
+			write(fd, (void*)&ev, sizeof(ev));
 
 			// from now on it's forbidden to use this memory
 			msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
@@ -179,6 +372,9 @@ void *output_dev_thread_func(void *ptr) {
             break;
         }
     }
+
+	ioctl(fd, UI_DEV_DESTROY);
+	close(fd);
 
     return NULL;
 }
