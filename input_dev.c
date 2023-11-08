@@ -99,13 +99,20 @@ void* input_read_thread_func(void* ptr) {
         struct input_event read_ev;
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &read_ev);
         if (rc == 0) {
-
-            
+            printf(
+                "Event: %s %s %d\n",
+                libevdev_event_type_get_name(msg->ev[msg->ev_count].type),
+                libevdev_event_code_get_name(msg->ev[msg->ev_count].type, msg->ev[msg->ev_count].code),
+                msg->ev[msg->ev_count].value
+            );
 
             if ((!has_syn) || ((read_ev.type != EV_SYN) && (read_ev.code != SYN_REPORT))) {
                 if ((msg->ev_count+1) == msg->ev_size) {
                     // TODO: perform a memove
+                    printf("memove\n");
                 } else {
+                    printf("event\n");
+
                     // just copy the input event
                     msg->ev[msg->ev_count] = read_ev;
                     ++msg->ev_count;
@@ -113,6 +120,8 @@ void* input_read_thread_func(void* ptr) {
             }
 
             if ((!has_syn) || ((read_ev.type == EV_SYN) && (read_ev.code == SYN_REPORT))) {
+                printf("sync\n");
+
                 // clear out flags
                 msg->flags = 0x00000000U;
 
@@ -127,12 +136,7 @@ void* input_read_thread_func(void* ptr) {
                 msg = NULL;
             }
 
-            printf(
-                "Event: %s %s %d\n",
-                libevdev_event_type_get_name(msg->ev[msg->ev_count].type),
-                libevdev_event_code_get_name(msg->ev[msg->ev_count].type, msg->ev[msg->ev_count].code),
-                msg->ev[msg->ev_count].value
-            );
+            
         }
     } while (rc == 1 || rc == 0 || rc == -EAGAIN);
 
