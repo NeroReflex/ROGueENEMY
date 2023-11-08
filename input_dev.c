@@ -99,7 +99,8 @@ void* input_read_thread_func(void* ptr) {
         struct input_event read_ev;
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &read_ev);
         if (rc == 0) {
-            int is_syn = ((read_ev.type != EV_SYN) && (read_ev.code != SYN_REPORT));
+            const int is_syn = (read_ev.type == EV_SYN) && (read_ev.code == SYN_REPORT);
+            
             if ((!has_syn) || ((has_syn) && (!is_syn))) {
                 if ((msg->ev_count+1) == msg->ev_size) {
                     // TODO: perform a memove
