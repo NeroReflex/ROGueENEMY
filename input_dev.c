@@ -75,13 +75,16 @@ void* input_read_thread_func(void* ptr) {
 
     int rc = 1;
 
+    message_t* msg = NULL;
+
     do {
-        message_t* msg = NULL;
-        for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
-            if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
-                msg = &ctx->messages[h];
-                msg->ev_count = 0;
-                break;
+        if (msg == NULL) {
+            for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
+                if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
+                    msg = &ctx->messages[h];
+                    msg->ev_count = 0;
+                    break;
+                }
             }
         }
 
@@ -89,8 +92,6 @@ void* input_read_thread_func(void* ptr) {
             fprintf(stderr, "Events are stalled.\n");
             continue;
         }
-
-        // TODO: malloc for msg->ev and assign the result
 
         struct input_event read_ev;
         rc = libevdev_next_event(dev, LIBEVDEV_READ_FLAG_BLOCKING, &read_ev);
@@ -106,9 +107,11 @@ void* input_read_thread_func(void* ptr) {
                     msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
                     continue;
                 }
+
+                msg = NULL;
             } else {
                 if ((msg->ev_count+1) == msg->ev_size) {
-                    // perform a memove
+                    // TODO: perform a memove
                 } else {
                     // just copy the input event
                     msg->ev[msg->ev_count] = read_ev;
