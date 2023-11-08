@@ -104,14 +104,16 @@ void* input_read_thread_func(void* ptr) {
             if ((!has_syn) || ((has_syn) && (!is_syn))) {
                 if ((msg->ev_count+1) == msg->ev_size) {
                     // TODO: perform a memove
-                    printf("memove\n");
+                    fprintf(stderr, "MEMMOVE NEEDED\n");
                 } else {
+                    /*
                     printf(
                         "Event: %s %s %d\n",
                         libevdev_event_type_get_name(read_ev.type),
                         libevdev_event_code_get_name(read_ev.type, read_ev.code),
                         read_ev.value
                     );
+                    */
 
                     // just copy the input event
                     msg->ev[msg->ev_count] = read_ev;
@@ -120,7 +122,9 @@ void* input_read_thread_func(void* ptr) {
             }
 
             if ((!has_syn) || ((has_syn) && (is_syn))) {
+                /*
                 printf("Sync ---------------------------------------\n");
+                */
 
                 // clear out flags
                 msg->flags = 0x00000000U;
