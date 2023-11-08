@@ -2,15 +2,18 @@
 
 #include "queue.h"
 
-/*
-Emulates an Xbox controller:
+
+//Emulates an Xbox controller:
 #define OUTPUT_DEV_NAME             ""
 #define OUTPUT_DEV_VENDOR_ID        0x045e
 #define OUTPUT_DEV_PRODUCT_ID       0x028e
-*/
+
+/*
+// Emulates a DualShock controller
 #define OUTPUT_DEV_NAME             "Sony Interactive Entertainment DualSense Wireless Controller"
 #define OUTPUT_DEV_VENDOR_ID        0x054c
 #define OUTPUT_DEV_PRODUCT_ID       0x0ce6
+*/
 
 #define OUTPUT_DEV_CTRL_FLAG_EXIT 0x00000001U
 #define OUTPUT_DEV_CTRL_FLAG_DATA 0x00000002U
