@@ -156,7 +156,9 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_KEYBIT, BTN_NORTH);
 			ioctl(fd, UI_SET_KEYBIT, BTN_WEST);
 			ioctl(fd, UI_SET_KEYBIT, BTN_TL);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TL2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_TR);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TR2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_SELECT);
 			ioctl(fd, UI_SET_KEYBIT, BTN_START);
 			ioctl(fd, UI_SET_KEYBIT, BTN_MODE);
@@ -359,6 +361,12 @@ void *output_dev_thread_func(void *ptr) {
 
 				if ((ev.type == EV_KEY) && (ev.code == KEY_F16)) {
 					ev.code = BTN_MODE;
+				} else if ((ev.type == EV_KEY) && (ev.code == KEY_PROG1)) { // To be wired to F16
+					ev.code = BTN_TR2;
+				} else if ((ev.type == EV_KEY) && (ev.code == KEY_F18)) { // To be wired to F16
+					ev.code = BTN_TR2;
+				} else if ((ev.type == EV_KEY) && (ev.code == KEY_F17)) { // To be wired to F16
+					ev.code = BTN_TL2;
 				}
 
 				const ssize_t written = write(fd, (void*)&ev, sizeof(ev));
