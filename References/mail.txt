@@ -1,0 +1,37 @@
+From https://patchwork.kernel.org/project/linux-input/patch/20191204182942.v4.1.Ib53f70556ffe94d9a1903632ee9b0dc929f94557@changeid/
+
+Hi input maintainers,
+
+Here is an updated patch that refactors the ioctl handlers (properly
+allowing the size to be set from userspace). When calling the new
+ioctls, the call signature will look like this:
+
+```
+ioctl(fd, UI_SET_PHYS_STR(18), "00:11:22:33:44:55");
+```
+
+I've tested this on a Chromebook running kernel v4.19 with a sample
+program compiled for both 32-bit (i.e. gcc -m32 test.c) and 64-bit.
+
+The final uinput device looks like this:
+
+```
+udevadm info -a -p /devices/virtual/input/input18
+
+Udevadm info starts with the device specified by the devpath and then
+walks up the chain of parent devices. It prints for every device
+found, all possible attributes in the udev rules key format.
+A rule to match, can be composed by the attributes of the device
+and the attributes from one single parent device.
+
+  looking at device '/devices/virtual/input/input18':
+    KERNEL=="input18"
+    SUBSYSTEM=="input"
+    DRIVER==""
+    ATTR{inhibited}=="0"
+    ATTR{name}=="Test"
+    ATTR{phys}=="00:00:00:33:44:55"
+    ATTR{properties}=="0"
+    ATTR{uniq}=="00:11:22:00:00:00"
+
+```
