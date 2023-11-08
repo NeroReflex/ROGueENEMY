@@ -1,0 +1,90 @@
+Input driver version is 1.0.1
+Input device ID: bus 0x3 vendor 0x54c product 0xce6 version 0x8111
+Input device name: "Sony Interactive Entertainment DualSense Wireless Controller"
+Supported events:
+  Event type 0 (EV_SYN)
+  Event type 1 (EV_KEY)
+    Event code 304 (BTN_SOUTH)
+    Event code 305 (BTN_EAST)
+    Event code 307 (BTN_NORTH)
+    Event code 308 (BTN_WEST)
+    Event code 310 (BTN_TL)
+    Event code 311 (BTN_TR)
+    Event code 312 (BTN_TL2)
+    Event code 313 (BTN_TR2)
+    Event code 314 (BTN_SELECT)
+    Event code 315 (BTN_START)
+    Event code 316 (BTN_MODE)
+    Event code 317 (BTN_THUMBL)
+    Event code 318 (BTN_THUMBR)
+  Event type 3 (EV_ABS)
+    Event code 0 (ABS_X)
+      Value    127
+      Min        0
+      Max      255
+    Event code 1 (ABS_Y)
+      Value    120
+      Min        0
+      Max      255
+    Event code 2 (ABS_Z)
+      Value      0
+      Min        0
+      Max      255
+    Event code 3 (ABS_RX)
+      Value    130
+      Min        0
+      Max      255
+    Event code 4 (ABS_RY)
+      Value    128
+      Min        0
+      Max      255
+    Event code 5 (ABS_RZ)
+      Value      0
+      Min        0
+      Max      255
+    Event code 16 (ABS_HAT0X)
+      Value      0
+      Min       -1
+      Max        1
+    Event code 17 (ABS_HAT0Y)
+      Value      0
+      Min       -1
+      Max        1
+Properties:
+Testing ... (interrupt to exit)
+Event: time 1694892414.772800, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892414.772800, -------------- SYN_REPORT ------------
+Event: time 1694892414.912672, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892414.912672, -------------- SYN_REPORT ------------
+Event: time 1694892415.008808, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892415.008808, -------------- SYN_REPORT ------------
+Event: time 1694892415.112483, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892415.112483, -------------- SYN_REPORT ------------
+Event: time 1694892415.216719, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892415.216719, -------------- SYN_REPORT ------------
+Event: time 1694892415.312802, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892415.312802, -------------- SYN_REPORT ------------
+Event: time 1694892415.412450, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892415.412450, -------------- SYN_REPORT ------------
+Event: time 1694892415.512728, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892415.512728, -------------- SYN_REPORT ------------
+Event: time 1694892415.620794, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892415.620794, -------------- SYN_REPORT ------------
+Event: time 1694892415.704793, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892415.704793, -------------- SYN_REPORT ------------
+Event: time 1694892415.812791, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892415.812791, -------------- SYN_REPORT ------------
+Event: time 1694892415.892634, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892415.892634, -------------- SYN_REPORT ------------
+Event: time 1694892416.012779, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892416.012779, -------------- SYN_REPORT ------------
+Event: time 1694892416.088410, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892416.088410, -------------- SYN_REPORT ------------
+Event: time 1694892416.208780, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892416.208780, -------------- SYN_REPORT ------------
+Event: time 1694892416.280078, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892416.280078, -------------- SYN_REPORT ------------
+Event: time 1694892416.408380, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1694892416.408380, -------------- SYN_REPORT ------------
+Event: time 1694892416.492605, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1694892416.492605, -------------- SYN_REPORT ------------

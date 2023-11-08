@@ -1,0 +1,74 @@
+Input driver version is 1.0.1
+Input device ID: bus 0x3 vendor 0x54c product 0xce6 version 0x8111
+Input device name: "Sony Interactive Entertainment DualSense Wireless Controller"
+Supported events:
+  Event type 0 (EV_SYN)
+  Event type 1 (EV_KEY)
+    Event code 304 (BTN_SOUTH)
+    Event code 305 (BTN_EAST)
+    Event code 307 (BTN_NORTH)
+    Event code 308 (BTN_WEST)
+    Event code 310 (BTN_TL)
+    Event code 311 (BTN_TR)
+    Event code 312 (BTN_TL2)
+    Event code 313 (BTN_TR2)
+    Event code 314 (BTN_SELECT)
+    Event code 315 (BTN_START)
+    Event code 316 (BTN_MODE)
+    Event code 317 (BTN_THUMBL)
+    Event code 318 (BTN_THUMBR)
+  Event type 3 (EV_ABS)
+    Event code 0 (ABS_X)
+      Value    127
+      Min        0
+      Max      255
+    Event code 1 (ABS_Y)
+      Value    120
+      Min        0
+      Max      255
+    Event code 2 (ABS_Z)
+      Value      0
+      Min        0
+      Max      255
+    Event code 3 (ABS_RX)
+      Value    130
+      Min        0
+      Max      255
+    Event code 4 (ABS_RY)
+      Value    128
+      Min        0
+      Max      255
+    Event code 5 (ABS_RZ)
+      Value      0
+      Min        0
+      Max      255
+    Event code 16 (ABS_HAT0X)
+      Value      0
+      Min       -1
+      Max        1
+    Event code 17 (ABS_HAT0Y)
+      Value      0
+      Min       -1
+      Max        1
+Properties:
+Testing ... (interrupt to exit)
+Event: time 1694892362.065654, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1694892362.065654, -------------- SYN_REPORT ------------
+Event: time 1694892362.233656, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1694892362.233656, -------------- SYN_REPORT ------------
+Event: time 1694892362.405000, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1694892362.405000, -------------- SYN_REPORT ------------
+Event: time 1694892362.577348, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1694892362.577348, -------------- SYN_REPORT ------------
+Event: time 1694892362.733641, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1694892362.733641, -------------- SYN_REPORT ------------
+Event: time 1694892362.885553, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1694892362.885553, -------------- SYN_REPORT ------------
+Event: time 1694892363.029644, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1694892363.029644, -------------- SYN_REPORT ------------
+Event: time 1694892363.193452, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1694892363.193452, -------------- SYN_REPORT ------------
+Event: time 1694892363.309662, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1694892363.309662, -------------- SYN_REPORT ------------
+Event: time 1694892363.465634, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1694892363.465634, -------------- SYN_REPORT ------------

@@ -1,0 +1,190 @@
+Input driver version is 1.0.1
+Input device ID: bus 0x3 vendor 0x54c product 0xce6 version 0x8111
+Input device name: "Sony Interactive Entertainment DualSense Wireless Controller"
+Supported events:
+  Event type 0 (EV_SYN)
+  Event type 1 (EV_KEY)
+    Event code 304 (BTN_SOUTH)
+    Event code 305 (BTN_EAST)
+    Event code 307 (BTN_NORTH)
+    Event code 308 (BTN_WEST)
+    Event code 310 (BTN_TL)
+    Event code 311 (BTN_TR)
+    Event code 312 (BTN_TL2)
+    Event code 313 (BTN_TR2)
+    Event code 314 (BTN_SELECT)
+    Event code 315 (BTN_START)
+    Event code 316 (BTN_MODE)
+    Event code 317 (BTN_THUMBL)
+    Event code 318 (BTN_THUMBR)
+  Event type 3 (EV_ABS)
+    Event code 0 (ABS_X)
+      Value    126
+      Min        0
+      Max      255
+    Event code 1 (ABS_Y)
+      Value    121
+      Min        0
+      Max      255
+    Event code 2 (ABS_Z)
+      Value      0
+      Min        0
+      Max      255
+    Event code 3 (ABS_RX)
+      Value    129
+      Min        0
+      Max      255
+    Event code 4 (ABS_RY)
+      Value    124
+      Min        0
+      Max      255
+    Event code 5 (ABS_RZ)
+      Value      0
+      Min        0
+      Max      255
+    Event code 16 (ABS_HAT0X)
+      Value      0
+      Min       -1
+      Max        1
+    Event code 17 (ABS_HAT0Y)
+      Value      0
+      Min       -1
+      Max        1
+Properties:
+Testing ... (interrupt to exit)
+Event: time 1694892092.873234, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892092.873234, -------------- SYN_REPORT ------------
+Event: time 1694892092.876901, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892092.876901, -------------- SYN_REPORT ------------
+Event: time 1694892092.897281, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892092.897281, -------------- SYN_REPORT ------------
+Event: time 1694892092.900972, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892092.900972, -------------- SYN_REPORT ------------
+Event: time 1694892094.013232, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892094.013232, -------------- SYN_REPORT ------------
+Event: time 1694892094.017233, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892094.017233, -------------- SYN_REPORT ------------
+Event: time 1694892094.361553, type 1 (EV_KEY), code 316 (BTN_MODE), value 1
+Event: time 1694892094.361553, -------------- SYN_REPORT ------------
+Event: time 1694892094.453558, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892094.453558, -------------- SYN_REPORT ------------
+Event: time 1694892094.457545, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892094.457545, -------------- SYN_REPORT ------------
+Event: time 1694892094.585548, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892094.585548, -------------- SYN_REPORT ------------
+Event: time 1694892094.589429, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892094.589429, -------------- SYN_REPORT ------------
+Event: time 1694892094.593549, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892094.593549, -------------- SYN_REPORT ------------
+Event: time 1694892094.597541, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892094.597541, -------------- SYN_REPORT ------------
+Event: time 1694892094.641399, type 1 (EV_KEY), code 316 (BTN_MODE), value 0
+Event: time 1694892094.641399, -------------- SYN_REPORT ------------
+Event: time 1694892094.833308, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892094.833308, -------------- SYN_REPORT ------------
+Event: time 1694892094.837552, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892094.837552, -------------- SYN_REPORT ------------
+Event: time 1694892094.869558, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892094.869558, -------------- SYN_REPORT ------------
+Event: time 1694892094.873548, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892094.873548, -------------- SYN_REPORT ------------
+Event: time 1694892094.949545, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892094.949545, -------------- SYN_REPORT ------------
+Event: time 1694892094.953507, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892094.953507, -------------- SYN_REPORT ------------
+Event: time 1694892095.053538, type 1 (EV_KEY), code 316 (BTN_MODE), value 1
+Event: time 1694892095.053538, -------------- SYN_REPORT ------------
+Event: time 1694892095.153349, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.153349, -------------- SYN_REPORT ------------
+Event: time 1694892095.157540, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.157540, -------------- SYN_REPORT ------------
+Event: time 1694892095.221515, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.221515, -------------- SYN_REPORT ------------
+Event: time 1694892095.225536, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.225536, -------------- SYN_REPORT ------------
+Event: time 1694892095.249195, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.249195, -------------- SYN_REPORT ------------
+Event: time 1694892095.253214, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.253214, -------------- SYN_REPORT ------------
+Event: time 1694892095.265216, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.265216, -------------- SYN_REPORT ------------
+Event: time 1694892095.269217, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.269217, -------------- SYN_REPORT ------------
+Event: time 1694892095.273219, type 1 (EV_KEY), code 316 (BTN_MODE), value 0
+Event: time 1694892095.273219, -------------- SYN_REPORT ------------
+Event: time 1694892095.417400, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.417400, -------------- SYN_REPORT ------------
+Event: time 1694892095.421411, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.421411, -------------- SYN_REPORT ------------
+Event: time 1694892095.457535, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.457535, -------------- SYN_REPORT ------------
+Event: time 1694892095.461492, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.461492, -------------- SYN_REPORT ------------
+Event: time 1694892095.541545, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.541545, -------------- SYN_REPORT ------------
+Event: time 1694892095.545372, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.545372, -------------- SYN_REPORT ------------
+Event: time 1694892095.573542, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.573542, -------------- SYN_REPORT ------------
+Event: time 1694892095.577390, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.577390, -------------- SYN_REPORT ------------
+Event: time 1694892095.621391, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.621391, -------------- SYN_REPORT ------------
+Event: time 1694892095.625439, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.625439, -------------- SYN_REPORT ------------
+Event: time 1694892095.661422, type 1 (EV_KEY), code 316 (BTN_MODE), value 1
+Event: time 1694892095.661422, -------------- SYN_REPORT ------------
+Event: time 1694892095.813504, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.813504, -------------- SYN_REPORT ------------
+Event: time 1694892095.817532, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.817532, -------------- SYN_REPORT ------------
+Event: time 1694892095.821232, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.821232, -------------- SYN_REPORT ------------
+Event: time 1694892095.825535, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.825535, -------------- SYN_REPORT ------------
+Event: time 1694892095.901542, type 1 (EV_KEY), code 316 (BTN_MODE), value 0
+Event: time 1694892095.901542, -------------- SYN_REPORT ------------
+Event: time 1694892095.989567, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892095.989567, -------------- SYN_REPORT ------------
+Event: time 1694892095.993403, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892095.993403, -------------- SYN_REPORT ------------
+Event: time 1694892096.169536, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892096.169536, -------------- SYN_REPORT ------------
+Event: time 1694892096.173351, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892096.173351, -------------- SYN_REPORT ------------
+Event: time 1694892096.225351, type 1 (EV_KEY), code 316 (BTN_MODE), value 1
+Event: time 1694892096.225351, -------------- SYN_REPORT ------------
+Event: time 1694892096.265271, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892096.265271, -------------- SYN_REPORT ------------
+Event: time 1694892096.269326, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892096.269326, -------------- SYN_REPORT ------------
+Event: time 1694892096.385474, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892096.385474, -------------- SYN_REPORT ------------
+Event: time 1694892096.389418, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892096.389418, -------------- SYN_REPORT ------------
+Event: time 1694892096.401520, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892096.401520, -------------- SYN_REPORT ------------
+Event: time 1694892096.405347, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892096.405347, -------------- SYN_REPORT ------------
+Event: time 1694892096.433521, type 1 (EV_KEY), code 316 (BTN_MODE), value 0
+Event: time 1694892096.433521, -------------- SYN_REPORT ------------
+Event: time 1694892096.505530, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892096.505530, -------------- SYN_REPORT ------------
+Event: time 1694892096.509498, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892096.509498, -------------- SYN_REPORT ------------
+Event: time 1694892096.589497, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892096.589497, -------------- SYN_REPORT ------------
+Event: time 1694892096.593152, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892096.593152, -------------- SYN_REPORT ------------
+Event: time 1694892096.717501, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892096.717501, -------------- SYN_REPORT ------------
+Event: time 1694892096.721291, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892096.721291, -------------- SYN_REPORT ------------
+Event: time 1694892096.865472, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892096.865472, -------------- SYN_REPORT ------------
+Event: time 1694892096.869508, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892096.869508, -------------- SYN_REPORT ------------
+Event: time 1694892097.121531, type 3 (EV_ABS), code 3 (ABS_RX), value 130
+Event: time 1694892097.121531, -------------- SYN_REPORT ------------
+Event: time 1694892097.125504, type 3 (EV_ABS), code 3 (ABS_RX), value 129
+Event: time 1694892097.125504, -------------- SYN_REPORT ------------
