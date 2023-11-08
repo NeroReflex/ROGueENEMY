@@ -135,7 +135,7 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 		}
 
 		case output_dev_gamepad: {
-			ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_BUTTONPAD);
+			//ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_BUTTONPAD);
 			ioctl(fd, UI_SET_EVBIT, EV_ABS);
 			ioctl(fd, UI_SET_EVBIT, EV_KEY);
 			ioctl(fd, UI_SET_EVBIT, EV_MSC);
