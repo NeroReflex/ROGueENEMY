@@ -163,7 +163,15 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_KEYBIT, BTN_TRIGGER);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBL);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBR);
-			
+
+			ioctl(fd, UI_SET_KEYBIT, KEY_F15);
+			ioctl(fd, UI_SET_KEYBIT, KEY_F16);
+			ioctl(fd, UI_SET_KEYBIT, KEY_F17);
+			ioctl(fd, UI_SET_KEYBIT, KEY_F18);
+
+			ioctl(fd, UI_SET_KEYBIT, KEY_PROG1);
+			ioctl(fd, UI_SET_KEYBIT, KEY_PROG2);
+
 			const struct uinput_abs_setup devAbsX = {
 				.code = ABS_X,
 				.absinfo = {
