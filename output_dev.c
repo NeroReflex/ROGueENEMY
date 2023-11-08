@@ -356,12 +356,16 @@ void *output_dev_thread_func(void *ptr) {
 			struct timeval now = {0};
 			gettimeofday(&now, NULL);
 
-			const struct input_event ev = {
+			/*const*/ struct input_event ev = {
 				.code = msg->ev.code,
 				.type = msg->ev.type,
 				.value = msg->ev.value,
 				.time = now,
 			};
+
+			if ((ev.type == EV_KEY) && (ev.code == KEY_F16)) {
+				ev.code = BTN_MODE;
+			}
 
 			ssize_t written = write(fd, (void*)&ev, sizeof(ev));
 			if (written != sizeof(ev)) {
