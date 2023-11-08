@@ -4,7 +4,7 @@
 
 
 //Emulates an Xbox controller:
-#define OUTPUT_DEV_NAME             ""
+#define OUTPUT_DEV_NAME             "Microsoft X-Box 360 pad"
 #define OUTPUT_DEV_VENDOR_ID        0x045e
 #define OUTPUT_DEV_PRODUCT_ID       0x028e
 
