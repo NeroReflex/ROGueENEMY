@@ -139,7 +139,7 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_EVBIT, EV_ABS);
 			ioctl(fd, UI_SET_EVBIT, EV_KEY);
 			ioctl(fd, UI_SET_EVBIT, EV_MSC);
-			//ioctl(fd, UI_SET_EVBIT, EV_SYN);
+			ioctl(fd, UI_SET_EVBIT, EV_SYN);
 			ioctl(fd, UI_SET_MSCBIT, MSC_TIMESTAMP);
 
 			ioctl(fd, UI_SET_ABSBIT, ABS_X);
@@ -205,7 +205,7 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 					.value = 0,
 					.minimum = 0,
 					.maximum = 255,
-					.resolution = 255,
+					.resolution = 1,
 					//.fuzz = 16,
 					//.flat = 128,
 				}
@@ -256,7 +256,7 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 					.value = 0,
 					.minimum = 0,
 					.maximum = 255,
-					.resolution = 255,
+					.resolution = 1,
 					//.fuzz = 16,
 					//.flat = 128,
 				}
@@ -355,10 +355,10 @@ void *output_dev_thread_func(void *ptr) {
 				.time = now,
 			};
 
-			if (ev.code != EV_SYN) {
-				write(fd, (void*)&ev, sizeof(ev));
+			ssize_t written = write(fd, (void*)&ev, sizeof(ev));
+			if (written != sizeof(ev)) {
+				fprintf(stderr, "Error writing event: written %ld bytes out of %ld\n", written, sizeof(ev));
 			}
-			
 
 			// from now on it's forbidden to use this memory
 			msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
