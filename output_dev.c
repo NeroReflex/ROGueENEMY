@@ -355,7 +355,10 @@ void *output_dev_thread_func(void *ptr) {
 				.time = now,
 			};
 
-			write(fd, (void*)&ev, sizeof(ev));
+			if (ev.code != EV_SYN) {
+				write(fd, (void*)&ev, sizeof(ev));
+			}
+			
 
 			// from now on it's forbidden to use this memory
 			msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
