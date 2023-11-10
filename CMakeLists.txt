@@ -13,7 +13,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # Adding something we can run - Output name matches target name
-add_executable(rogue_enemy main.c imu_output.c gamepad_output.c)
+add_executable(rogue_enemy main.c dev_iio.c input_dev.c output_dev.c queue.c)
 
 target_link_libraries(rogue_enemy PRIVATE Threads::Threads)
 
