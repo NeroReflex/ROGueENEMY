@@ -343,6 +343,10 @@ void *output_dev_thread_func(void *ptr) {
 
 	const int fd = out_dev->fd;
 
+	gettimeofday(&now, NULL);
+	__time_t secAtInit = now.tv_sec;
+	__time_t usecAtInit = now.tv_usec;
+
     for (;;) {
 		void *raw_ev;
 		const int pop_res = queue_pop_timeout(out_dev->queue, &raw_ev, 1000);
@@ -382,7 +386,19 @@ void *output_dev_thread_func(void *ptr) {
 					);
 				}
 			}
-			
+
+			gettimeofday(&now, NULL);
+			const struct input_event timestamp_ev = {
+				.code = MSC_TIMESTAMP,
+				.type = EV_MSC,
+				.value = (now.tv_sec - secAtInit)*1000000 + (now.tv_usec - usecAtInit),
+				.time = now,
+			};
+			const ssize_t timestamp_written = write(fd, (void*)&timestamp_ev, sizeof(timestamp_ev));
+			if (timestamp_written != sizeof(timestamp_ev)) {
+				fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", timestamp_written, sizeof(timestamp_ev));
+			}
+
 			gettimeofday(&now, NULL);
 			const struct input_event syn_ev = {
 				.code = SYN_REPORT,
