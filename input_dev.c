@@ -106,7 +106,7 @@ static void* iio_read_thread_func(void* ptr) {
         }
 
         if (msg == NULL) {
-            fprintf(stderr, "Events are stalled.\n");
+            fprintf(stderr, "iio: Events are stalled.\n");
             continue;
         }
 
@@ -157,7 +157,7 @@ static void* input_read_thread_func(void* ptr) {
         }
 
         if (msg == NULL) {
-            fprintf(stderr, "Events are stalled.\n");
+            fprintf(stderr, "udev: Events are stalled.\n");
             continue;
         }
 
