@@ -140,7 +140,9 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_EVBIT, EV_KEY);
 			ioctl(fd, UI_SET_EVBIT, EV_MSC);
 			ioctl(fd, UI_SET_EVBIT, EV_SYN);
+#if defined(INCLUDE_TIMESTAMP)
 			ioctl(fd, UI_SET_MSCBIT, MSC_TIMESTAMP);
+#endif
 
 			ioctl(fd, UI_SET_ABSBIT, ABS_X);
 			ioctl(fd, UI_SET_ABSBIT, ABS_Y);
@@ -156,9 +158,9 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_KEYBIT, BTN_NORTH);
 			ioctl(fd, UI_SET_KEYBIT, BTN_WEST);
 			ioctl(fd, UI_SET_KEYBIT, BTN_TL);
-			ioctl(fd, UI_SET_KEYBIT, BTN_TL2);
+			//ioctl(fd, UI_SET_KEYBIT, BTN_TL2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_TR);
-			ioctl(fd, UI_SET_KEYBIT, BTN_TR2);
+			//ioctl(fd, UI_SET_KEYBIT, BTN_TR2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_SELECT);
 			ioctl(fd, UI_SET_KEYBIT, BTN_START);
 			ioctl(fd, UI_SET_KEYBIT, BTN_MODE);
@@ -166,13 +168,13 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBL);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBR);
 
-			ioctl(fd, UI_SET_KEYBIT, KEY_F15);
-			ioctl(fd, UI_SET_KEYBIT, KEY_F16);
-			ioctl(fd, UI_SET_KEYBIT, KEY_F17);
-			ioctl(fd, UI_SET_KEYBIT, KEY_F18);
+			//ioctl(fd, UI_SET_KEYBIT, KEY_F15);
+			//ioctl(fd, UI_SET_KEYBIT, KEY_F16);
+			//ioctl(fd, UI_SET_KEYBIT, KEY_F17);
+			//ioctl(fd, UI_SET_KEYBIT, KEY_F18);
 
-			ioctl(fd, UI_SET_KEYBIT, KEY_PROG1);
-			ioctl(fd, UI_SET_KEYBIT, KEY_PROG2);
+			//ioctl(fd, UI_SET_KEYBIT, KEY_PROG1);
+			//ioctl(fd, UI_SET_KEYBIT, KEY_PROG2);
 
 			const struct uinput_abs_setup devAbsX = {
 				.code = ABS_X,
@@ -343,9 +345,11 @@ void *output_dev_thread_func(void *ptr) {
 
 	const int fd = out_dev->fd;
 
+#if defined(INCLUDE_TIMESTAMP)
 	gettimeofday(&now, NULL);
 	__time_t secAtInit = now.tv_sec;
 	__time_t usecAtInit = now.tv_usec;
+#endif
 
     for (;;) {
 		void *raw_ev;
@@ -387,6 +391,7 @@ void *output_dev_thread_func(void *ptr) {
 				}
 			}
 
+#if defined(INCLUDE_TIMESTAMP)
 			gettimeofday(&now, NULL);
 			const struct input_event timestamp_ev = {
 				.code = MSC_TIMESTAMP,
@@ -398,6 +403,7 @@ void *output_dev_thread_func(void *ptr) {
 			if (timestamp_written != sizeof(timestamp_ev)) {
 				fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", timestamp_written, sizeof(timestamp_ev));
 			}
+#endif
 
 			gettimeofday(&now, NULL);
 			const struct input_event syn_ev = {

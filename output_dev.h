@@ -31,6 +31,8 @@
 
 #define GYRO_DEADZONE 1 // degrees/s to count as zero movement
 
+#undef INCLUDE_TIMESTAMP
+
 typedef enum output_dev_type {
     output_dev_gamepad,
     output_dev_imu,
