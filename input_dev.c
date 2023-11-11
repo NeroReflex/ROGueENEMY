@@ -166,9 +166,9 @@ static void* input_read_thread_func(void* ptr) {
         if (rc == 0) {
             const int is_syn = (read_ev.type == EV_SYN) && (read_ev.code == SYN_REPORT);
             
-            if ((read_ev.code == MSC_TIMESTAMP) && (read_ev.type = EV_MSC)) {
+            if ((read_ev.code == MSC_TIMESTAMP) && (read_ev.type == EV_MSC)) {
                 // the output device will handle that
-                printf("MSC_TIMESTAMP found. Ignoring...");
+                //printf("MSC_TIMESTAMP found. Ignoring...\n");
                 continue;
             }
 
