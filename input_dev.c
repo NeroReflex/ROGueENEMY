@@ -100,7 +100,6 @@ static void* iio_read_thread_func(void* ptr) {
                 if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
                     msg = &ctx->messages[h];
                     msg->ev_count = 0;
-                    printf("FOUND ONE!!!!");
                     break;
                 }
             }
@@ -314,7 +313,7 @@ static void input_iio(
 
         pthread_t incoming_events_thread;
 
-        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, iio_read_thread_func, (void*)&ctx);
+        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, iio_read_thread_func, (void*)ctx);
         if (incoming_events_thread_creation != 0) {
             fprintf(stderr, "Error creating the input thread for device %s: %d\n", dev_iio_get_name(ctx->iio_dev), incoming_events_thread_creation);
         }
@@ -426,7 +425,7 @@ static void input_udev(
 
         pthread_t incoming_events_thread;
 
-        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)&ctx);
+        const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)ctx);
         if (incoming_events_thread_creation != 0) {
             fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(ctx->dev), incoming_events_thread_creation);
         }
@@ -446,7 +445,6 @@ void *input_dev_thread_func(void *ptr) {
     };
 
     for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
-        printf("INIT!!!!");
         ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
         ctx.messages[h].ev_size = DEFAULT_EVENTS_IN_REPORT;
         ctx.messages[h].ev = malloc(sizeof(struct input_event) * ctx.messages[h].ev_size);
