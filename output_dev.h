@@ -2,10 +2,17 @@
 
 #include "queue.h"
 
+/*
 // Emulates a "Generic" controller:
 #define OUTPUT_DEV_NAME             "Generic Controller XD"
 #define OUTPUT_DEV_VENDOR_ID        0x108c
 #define OUTPUT_DEV_PRODUCT_ID       0x0323
+*/
+
+// Emulates a steam controller
+#define OUTPUT_DEV_NAME             "Steam Controller"
+#define OUTPUT_DEV_VENDOR_ID        0x28de
+#define OUTPUT_DEV_PRODUCT_ID       0x1102
 
 /*
 //Emulates an Xbox one wireless controller:

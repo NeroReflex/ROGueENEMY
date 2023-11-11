@@ -1,0 +1,73 @@
+Select the device event number [0-17]: 17
+Input driver version is 1.0.1
+Input device ID: bus 0x3 vendor 0x28de product 0x1102 version 0x111
+Input device name: "Steam Controller"
+Supported events:
+  Event type 0 (EV_SYN)
+  Event type 1 (EV_KEY)
+    Event code 289 (BTN_THUMB)
+    Event code 290 (BTN_THUMB2)
+    Event code 304 (BTN_SOUTH)
+    Event code 305 (BTN_EAST)
+    Event code 307 (BTN_NORTH)
+    Event code 308 (BTN_WEST)
+    Event code 310 (BTN_TL)
+    Event code 311 (BTN_TR)
+    Event code 312 (BTN_TL2)
+    Event code 313 (BTN_TR2)
+    Event code 314 (BTN_SELECT)
+    Event code 315 (BTN_START)
+    Event code 316 (BTN_MODE)
+    Event code 317 (BTN_THUMBL)
+    Event code 318 (BTN_THUMBR)
+    Event code 336 (BTN_GEAR_DOWN)
+    Event code 337 (BTN_GEAR_UP)
+    Event code 544 (BTN_DPAD_UP)
+    Event code 545 (BTN_DPAD_DOWN)
+    Event code 546 (BTN_DPAD_LEFT)
+    Event code 547 (BTN_DPAD_RIGHT)
+  Event type 3 (EV_ABS)
+    Event code 0 (ABS_X)
+      Value      0
+      Min   -32767
+      Max    32767
+      Resolution      51
+    Event code 1 (ABS_Y)
+      Value      0
+      Min   -32767
+      Max    32767
+      Resolution      51
+    Event code 3 (ABS_RX)
+      Value      0
+      Min   -32767
+      Max    32767
+      Fuzz     256
+      Resolution    1638
+    Event code 4 (ABS_RY)
+      Value      0
+      Min   -32767
+      Max    32767
+      Fuzz     256
+      Resolution    1638
+    Event code 16 (ABS_HAT0X)
+      Value      0
+      Min   -32767
+      Max    32767
+      Fuzz     256
+      Resolution    1638
+    Event code 17 (ABS_HAT0Y)
+      Value      0
+      Min   -32767
+      Max    32767
+      Fuzz     256
+      Resolution    1638
+    Event code 20 (ABS_HAT2X)
+      Value      0
+      Min        0
+      Max      255
+      Resolution      51
+    Event code 21 (ABS_HAT2Y)
+      Value      0
+      Min        0
+      Max      255
+      Resolution      51
