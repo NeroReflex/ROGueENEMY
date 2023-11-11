@@ -176,14 +176,14 @@ static void* input_read_thread_func(void* ptr) {
                     // TODO: perform a memove
                     fprintf(stderr, "MEMMOVE NEEDED\n");
                 } else {
-                    /*
+#if defined(INCLUDE_INPUT_DEBUG)
                     printf(
-                        "Event: %s %s %d\n",
+                        "Input: %s %s %d\n",
                         libevdev_event_type_get_name(read_ev.type),
                         libevdev_event_code_get_name(read_ev.type, read_ev.code),
                         read_ev.value
                     );
-                    */
+#endif
 
                     // just copy the input event
                     msg->ev[msg->ev_count] = read_ev;

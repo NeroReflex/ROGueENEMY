@@ -377,7 +377,7 @@ void *output_dev_thread_func(void *ptr) {
 					ev.code = BTN_TL2;
 				}
 
-#if defined(INCLUDE_DEBUG)
+#if defined(INCLUDE_OUTPUT_DEBUG)
 				printf(
 					"Received event %s (%s): %d\n",
 					libevdev_event_type_get_name(ev.type),

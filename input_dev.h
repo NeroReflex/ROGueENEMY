@@ -2,6 +2,8 @@
 
 #include "queue.h"
 
+#define INCLUDE_INPUT_DEBUG
+
 #define INPUT_DEV_CTRL_FLAG_EXIT 0x00000001U
 
 typedef enum input_dev_type {
