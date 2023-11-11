@@ -1,0 +1,53 @@
+Event: time 1699561636.154421, type 1 (EV_KEY), code 314 (BTN_SELECT), value 1
+Event: time 1699561636.154421, -------------- SYN_REPORT ------------
+Event: time 1699561636.173527, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 13
+Event: time 1699561636.173527, -------------- SYN_REPORT ------------
+Event: time 1699561636.181607, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 26
+Event: time 1699561636.181607, -------------- SYN_REPORT ------------
+Event: time 1699561636.189947, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 20
+Event: time 1699561636.189947, -------------- SYN_REPORT ------------
+Event: time 1699561636.199124, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 7
+Event: time 1699561636.199124, -------------- SYN_REPORT ------------
+Event: time 1699561636.216890, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 1
+Event: time 1699561636.216890, -------------- SYN_REPORT ------------
+Event: time 1699561636.234991, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 0
+Event: time 1699561636.234991, -------------- SYN_REPORT ------------
+Event: time 1699561636.243909, type 1 (EV_KEY), code 314 (BTN_SELECT), value 0
+Event: time 1699561636.243909, -------------- SYN_REPORT ------------
+Event: time 1699561636.955997, type 1 (EV_KEY), code 314 (BTN_SELECT), value 1
+Event: time 1699561636.955997, -------------- SYN_REPORT ------------
+Event: time 1699561636.964431, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 13
+Event: time 1699561636.964431, -------------- SYN_REPORT ------------
+Event: time 1699561636.975576, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 45
+Event: time 1699561636.975576, -------------- SYN_REPORT ------------
+Event: time 1699561636.982282, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 51
+Event: time 1699561636.982282, -------------- SYN_REPORT ------------
+Event: time 1699561637.000538, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 39
+Event: time 1699561637.000538, -------------- SYN_REPORT ------------
+Event: time 1699561637.017912, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 26
+Event: time 1699561637.017912, -------------- SYN_REPORT ------------
+Event: time 1699561637.027140, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 7
+Event: time 1699561637.027140, -------------- SYN_REPORT ------------
+Event: time 1699561637.036129, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 0
+Event: time 1699561637.036129, type 1 (EV_KEY), code 314 (BTN_SELECT), value 0
+Event: time 1699561637.036129, -------------- SYN_REPORT ------------
+Event: time 1699561637.774076, type 1 (EV_KEY), code 314 (BTN_SELECT), value 1
+Event: time 1699561637.774076, -------------- SYN_REPORT ------------
+Event: time 1699561637.809946, type 1 (EV_KEY), code 314 (BTN_SELECT), value 0
+Event: time 1699561637.809946, -------------- SYN_REPORT ------------
+Event: time 1699561638.512087, type 1 (EV_KEY), code 314 (BTN_SELECT), value 1
+Event: time 1699561638.512087, -------------- SYN_REPORT ------------
+Event: time 1699561638.521027, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 13
+Event: time 1699561638.521027, -------------- SYN_REPORT ------------
+Event: time 1699561638.530592, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 26
+Event: time 1699561638.530592, -------------- SYN_REPORT ------------
+Event: time 1699561638.558248, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 20
+Event: time 1699561638.558248, -------------- SYN_REPORT ------------
+Event: time 1699561638.566341, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 13
+Event: time 1699561638.566341, -------------- SYN_REPORT ------------
+Event: time 1699561638.574958, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 1
+Event: time 1699561638.574958, -------------- SYN_REPORT ------------
+Event: time 1699561638.584186, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 0
+Event: time 1699561638.584186, type 1 (EV_KEY), code 314 (BTN_SELECT), value 0
+Event: time 1699561638.584186, -------------- SYN_REPORT ------------
+

@@ -1,0 +1,17 @@
+Event: time 1699561719.409842, type 1 (EV_KEY), code 310 (BTN_TL), value 1
+Event: time 1699561719.409842, -------------- SYN_REPORT ------------
+Event: time 1699561719.607842, type 1 (EV_KEY), code 310 (BTN_TL), value 0
+Event: time 1699561719.607842, -------------- SYN_REPORT ------------
+Event: time 1699561720.220071, type 1 (EV_KEY), code 310 (BTN_TL), value 1
+Event: time 1699561720.220071, -------------- SYN_REPORT ------------
+Event: time 1699561720.364337, type 1 (EV_KEY), code 310 (BTN_TL), value 0
+Event: time 1699561720.364337, -------------- SYN_REPORT ------------
+Event: time 1699561721.014707, type 1 (EV_KEY), code 310 (BTN_TL), value 1
+Event: time 1699561721.014707, -------------- SYN_REPORT ------------
+Event: time 1699561721.192129, type 1 (EV_KEY), code 310 (BTN_TL), value 0
+Event: time 1699561721.192129, -------------- SYN_REPORT ------------
+Event: time 1699561721.849644, type 1 (EV_KEY), code 310 (BTN_TL), value 1
+Event: time 1699561721.849644, -------------- SYN_REPORT ------------
+Event: time 1699561721.983997, type 1 (EV_KEY), code 310 (BTN_TL), value 0
+Event: time 1699561721.983997, -------------- SYN_REPORT ------------
+

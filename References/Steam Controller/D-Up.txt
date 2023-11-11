@@ -1,0 +1,45 @@
+Event: time 1699561308.820637, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -5104
+Event: time 1699561308.820637, type 3 (EV_ABS), code 17 (ABS_HAT0Y), value -29726
+Event: time 1699561308.820637, type 1 (EV_KEY), code 289 (BTN_THUMB), value 1
+Event: time 1699561308.820637, -------------- SYN_REPORT ------------
+Event: time 1699561308.829391, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -9714
+Event: time 1699561308.829391, type 3 (EV_ABS), code 17 (ABS_HAT0Y), value -28842
+Event: time 1699561308.829391, -------------- SYN_REPORT ------------
+Event: time 1699561308.838446, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -10372
+Event: time 1699561308.838446, -------------- SYN_REPORT ------------
+Event: time 1699561308.847639, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -10603
+Event: time 1699561308.847639, -------------- SYN_REPORT ------------
+Event: time 1699561308.874413, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -10356
+Event: time 1699561308.874413, -------------- SYN_REPORT ------------
+Event: time 1699561308.893099, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -10393
+Event: time 1699561308.893099, type 1 (EV_KEY), code 544 (BTN_DPAD_UP), value 1
+Event: time 1699561308.893099, -------------- SYN_REPORT ------------
+Event: time 1699561308.910408, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -10355
+Event: time 1699561308.910408, -------------- SYN_REPORT ------------
+Event: time 1699561308.928453, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -10199
+Event: time 1699561308.928453, -------------- SYN_REPORT ------------
+Event: time 1699561308.946398, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -10022
+Event: time 1699561308.946398, -------------- SYN_REPORT ------------
+Event: time 1699561308.964416, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -9961
+Event: time 1699561308.964416, -------------- SYN_REPORT ------------
+Event: time 1699561308.973595, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -9771
+Event: time 1699561308.973595, -------------- SYN_REPORT ------------
+Event: time 1699561308.982399, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -9577
+Event: time 1699561308.982399, -------------- SYN_REPORT ------------
+Event: time 1699561309.000500, type 1 (EV_KEY), code 544 (BTN_DPAD_UP), value 0
+Event: time 1699561309.000500, -------------- SYN_REPORT ------------
+Event: time 1699561309.020426, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -9777
+Event: time 1699561309.020426, -------------- SYN_REPORT ------------
+Event: time 1699561309.027396, type 3 (EV_ABS), code 17 (ABS_HAT0Y), value -29530
+Event: time 1699561309.027396, -------------- SYN_REPORT ------------
+Event: time 1699561309.037758, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -8330
+Event: time 1699561309.037758, type 3 (EV_ABS), code 17 (ABS_HAT0Y), value -30118
+Event: time 1699561309.037758, -------------- SYN_REPORT ------------
+Event: time 1699561309.045425, type 3 (EV_ABS), code 16 (ABS_HAT0X), value -5498
+Event: time 1699561309.045425, type 3 (EV_ABS), code 17 (ABS_HAT0Y), value -28940
+Event: time 1699561309.045425, -------------- SYN_REPORT ------------
+Event: time 1699561309.054420, type 3 (EV_ABS), code 16 (ABS_HAT0X), value 0
+Event: time 1699561309.054420, type 3 (EV_ABS), code 17 (ABS_HAT0Y), value 0
+Event: time 1699561309.054420, type 1 (EV_KEY), code 289 (BTN_THUMB), value 0
+Event: time 1699561309.054420, -------------- SYN_REPORT ------------
+

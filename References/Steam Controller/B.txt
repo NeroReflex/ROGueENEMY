@@ -1,0 +1,17 @@
+Event: time 1699561218.653388, type 1 (EV_KEY), code 305 (BTN_EAST), value 1
+Event: time 1699561218.653388, -------------- SYN_REPORT ------------
+Event: time 1699561218.706469, type 1 (EV_KEY), code 305 (BTN_EAST), value 0
+Event: time 1699561218.706469, -------------- SYN_REPORT ------------
+Event: time 1699561219.300279, type 1 (EV_KEY), code 305 (BTN_EAST), value 1
+Event: time 1699561219.300279, -------------- SYN_REPORT ------------
+Event: time 1699561219.391048, type 1 (EV_KEY), code 305 (BTN_EAST), value 0
+Event: time 1699561219.391048, -------------- SYN_REPORT ------------
+Event: time 1699561219.894251, type 1 (EV_KEY), code 305 (BTN_EAST), value 1
+Event: time 1699561219.894251, -------------- SYN_REPORT ------------
+Event: time 1699561219.966270, type 1 (EV_KEY), code 305 (BTN_EAST), value 0
+Event: time 1699561219.966270, -------------- SYN_REPORT ------------
+Event: time 1699561220.533763, type 1 (EV_KEY), code 305 (BTN_EAST), value 1
+Event: time 1699561220.533763, -------------- SYN_REPORT ------------
+Event: time 1699561220.606831, type 1 (EV_KEY), code 305 (BTN_EAST), value 0
+Event: time 1699561220.606831, -------------- SYN_REPORT ------------
+

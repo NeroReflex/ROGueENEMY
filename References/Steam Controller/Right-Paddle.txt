@@ -1,0 +1,17 @@
+Event: time 1699561861.304296, type 1 (EV_KEY), code 337 (BTN_GEAR_UP), value 1
+Event: time 1699561861.304296, -------------- SYN_REPORT ------------
+Event: time 1699561861.421049, type 1 (EV_KEY), code 337 (BTN_GEAR_UP), value 0
+Event: time 1699561861.421049, -------------- SYN_REPORT ------------
+Event: time 1699561862.024101, type 1 (EV_KEY), code 337 (BTN_GEAR_UP), value 1
+Event: time 1699561862.024101, -------------- SYN_REPORT ------------
+Event: time 1699561862.131905, type 1 (EV_KEY), code 337 (BTN_GEAR_UP), value 0
+Event: time 1699561862.131905, -------------- SYN_REPORT ------------
+Event: time 1699561862.736866, type 1 (EV_KEY), code 337 (BTN_GEAR_UP), value 1
+Event: time 1699561862.736866, -------------- SYN_REPORT ------------
+Event: time 1699561862.834132, type 1 (EV_KEY), code 337 (BTN_GEAR_UP), value 0
+Event: time 1699561862.834132, -------------- SYN_REPORT ------------
+Event: time 1699561863.409960, type 1 (EV_KEY), code 337 (BTN_GEAR_UP), value 1
+Event: time 1699561863.409960, -------------- SYN_REPORT ------------
+Event: time 1699561863.518363, type 1 (EV_KEY), code 337 (BTN_GEAR_UP), value 0
+Event: time 1699561863.518363, -------------- SYN_REPORT ------------
+

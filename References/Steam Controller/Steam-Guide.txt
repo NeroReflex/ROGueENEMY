@@ -1,0 +1,17 @@
+Event: time 1699561922.698660, type 1 (EV_KEY), code 316 (BTN_MODE), value 1
+Event: time 1699561922.698660, -------------- SYN_REPORT ------------
+Event: time 1699561922.769238, type 1 (EV_KEY), code 316 (BTN_MODE), value 0
+Event: time 1699561922.769238, -------------- SYN_REPORT ------------
+Event: time 1699561923.462490, type 1 (EV_KEY), code 316 (BTN_MODE), value 1
+Event: time 1699561923.462490, -------------- SYN_REPORT ------------
+Event: time 1699561923.516266, type 1 (EV_KEY), code 316 (BTN_MODE), value 0
+Event: time 1699561923.516266, -------------- SYN_REPORT ------------
+Event: time 1699561924.236559, type 1 (EV_KEY), code 316 (BTN_MODE), value 1
+Event: time 1699561924.236559, -------------- SYN_REPORT ------------
+Event: time 1699561924.290297, type 1 (EV_KEY), code 316 (BTN_MODE), value 0
+Event: time 1699561924.290297, -------------- SYN_REPORT ------------
+Event: time 1699561924.974701, type 1 (EV_KEY), code 316 (BTN_MODE), value 1
+Event: time 1699561924.974701, -------------- SYN_REPORT ------------
+Event: time 1699561925.046320, type 1 (EV_KEY), code 316 (BTN_MODE), value 0
+Event: time 1699561925.046320, -------------- SYN_REPORT ------------
+

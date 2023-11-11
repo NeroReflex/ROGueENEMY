@@ -1,0 +1,65 @@
+Event: time 1699561833.519055, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 3
+Event: time 1699561833.519055, -------------- SYN_REPORT ------------
+Event: time 1699561833.527871, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 255
+Event: time 1699561833.527871, -------------- SYN_REPORT ------------
+Event: time 1699561833.563875, type 1 (EV_KEY), code 312 (BTN_TL2), value 1
+Event: time 1699561833.563875, -------------- SYN_REPORT ------------
+Event: time 1699561833.698901, type 1 (EV_KEY), code 312 (BTN_TL2), value 0
+Event: time 1699561833.698901, -------------- SYN_REPORT ------------
+Event: time 1699561833.716836, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 208
+Event: time 1699561833.716836, -------------- SYN_REPORT ------------
+Event: time 1699561833.727354, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 101
+Event: time 1699561833.727354, -------------- SYN_REPORT ------------
+Event: time 1699561833.734863, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 7
+Event: time 1699561833.734863, -------------- SYN_REPORT ------------
+Event: time 1699561833.743887, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 0
+Event: time 1699561833.743887, -------------- SYN_REPORT ------------
+Event: time 1699561834.220876, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 46
+Event: time 1699561834.220876, -------------- SYN_REPORT ------------
+Event: time 1699561834.229905, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 182
+Event: time 1699561834.229905, -------------- SYN_REPORT ------------
+Event: time 1699561834.238938, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 255
+Event: time 1699561834.238938, -------------- SYN_REPORT ------------
+Event: time 1699561834.247937, type 1 (EV_KEY), code 312 (BTN_TL2), value 1
+Event: time 1699561834.247937, -------------- SYN_REPORT ------------
+Event: time 1699561834.374773, type 1 (EV_KEY), code 312 (BTN_TL2), value 0
+Event: time 1699561834.374773, -------------- SYN_REPORT ------------
+Event: time 1699561834.393395, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 186
+Event: time 1699561834.393395, -------------- SYN_REPORT ------------
+Event: time 1699561834.401372, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 41
+Event: time 1699561834.401372, -------------- SYN_REPORT ------------
+Event: time 1699561834.409863, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 0
+Event: time 1699561834.409863, -------------- SYN_REPORT ------------
+Event: time 1699561834.895936, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 63
+Event: time 1699561834.895936, -------------- SYN_REPORT ------------
+Event: time 1699561834.905425, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 249
+Event: time 1699561834.905425, -------------- SYN_REPORT ------------
+Event: time 1699561834.913933, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 255
+Event: time 1699561834.913933, -------------- SYN_REPORT ------------
+Event: time 1699561834.923357, type 1 (EV_KEY), code 312 (BTN_TL2), value 1
+Event: time 1699561834.923357, -------------- SYN_REPORT ------------
+Event: time 1699561835.040098, type 1 (EV_KEY), code 312 (BTN_TL2), value 0
+Event: time 1699561835.040098, -------------- SYN_REPORT ------------
+Event: time 1699561835.049824, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 234
+Event: time 1699561835.049824, -------------- SYN_REPORT ------------
+Event: time 1699561835.060731, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 104
+Event: time 1699561835.060731, -------------- SYN_REPORT ------------
+Event: time 1699561835.068806, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 0
+Event: time 1699561835.068806, -------------- SYN_REPORT ------------
+Event: time 1699561835.543960, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 133
+Event: time 1699561835.543960, -------------- SYN_REPORT ------------
+Event: time 1699561835.553609, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 255
+Event: time 1699561835.553609, -------------- SYN_REPORT ------------
+Event: time 1699561835.562264, type 1 (EV_KEY), code 312 (BTN_TL2), value 1
+Event: time 1699561835.562264, -------------- SYN_REPORT ------------
+Event: time 1699561835.678930, type 1 (EV_KEY), code 312 (BTN_TL2), value 0
+Event: time 1699561835.678930, -------------- SYN_REPORT ------------
+Event: time 1699561835.688903, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 241
+Event: time 1699561835.688903, -------------- SYN_REPORT ------------
+Event: time 1699561835.699522, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 115
+Event: time 1699561835.699522, -------------- SYN_REPORT ------------
+Event: time 1699561835.705924, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 4
+Event: time 1699561835.705924, -------------- SYN_REPORT ------------
+Event: time 1699561835.714909, type 3 (EV_ABS), code 21 (ABS_HAT2Y), value 0
+Event: time 1699561835.714909, -------------- SYN_REPORT ------------
+

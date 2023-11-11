@@ -1,0 +1,17 @@
+Event: time 1699561889.260071, type 1 (EV_KEY), code 336 (BTN_GEAR_DOWN), value 1
+Event: time 1699561889.260071, -------------- SYN_REPORT ------------
+Event: time 1699561889.358881, type 1 (EV_KEY), code 336 (BTN_GEAR_DOWN), value 0
+Event: time 1699561889.358881, -------------- SYN_REPORT ------------
+Event: time 1699561889.925870, type 1 (EV_KEY), code 336 (BTN_GEAR_DOWN), value 1
+Event: time 1699561889.925870, -------------- SYN_REPORT ------------
+Event: time 1699561890.016724, type 1 (EV_KEY), code 336 (BTN_GEAR_DOWN), value 0
+Event: time 1699561890.016724, -------------- SYN_REPORT ------------
+Event: time 1699561890.556095, type 1 (EV_KEY), code 336 (BTN_GEAR_DOWN), value 1
+Event: time 1699561890.556095, -------------- SYN_REPORT ------------
+Event: time 1699561890.655039, type 1 (EV_KEY), code 336 (BTN_GEAR_DOWN), value 0
+Event: time 1699561890.655039, -------------- SYN_REPORT ------------
+Event: time 1699561891.221908, type 1 (EV_KEY), code 336 (BTN_GEAR_DOWN), value 1
+Event: time 1699561891.221908, -------------- SYN_REPORT ------------
+Event: time 1699561891.321395, type 1 (EV_KEY), code 336 (BTN_GEAR_DOWN), value 0
+Event: time 1699561891.321395, -------------- SYN_REPORT ------------
+

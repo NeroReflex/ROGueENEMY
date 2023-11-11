@@ -1,0 +1,17 @@
+Event: time 1699561141.364991, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1699561141.364991, -------------- SYN_REPORT ------------
+Event: time 1699561141.427501, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1699561141.427501, -------------- SYN_REPORT ------------
+Event: time 1699561142.372999, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1699561142.372999, -------------- SYN_REPORT ------------
+Event: time 1699561142.453577, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1699561142.453577, -------------- SYN_REPORT ------------
+Event: time 1699561143.291080, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1699561143.291080, -------------- SYN_REPORT ------------
+Event: time 1699561143.362822, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1699561143.362822, -------------- SYN_REPORT ------------
+Event: time 1699561144.245105, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 1
+Event: time 1699561144.245105, -------------- SYN_REPORT ------------
+Event: time 1699561144.307743, type 1 (EV_KEY), code 304 (BTN_SOUTH), value 0
+Event: time 1699561144.307743, -------------- SYN_REPORT ------------
+

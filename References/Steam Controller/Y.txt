@@ -1,0 +1,17 @@
+Event: time 1699561270.865094, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1699561270.865094, -------------- SYN_REPORT ------------
+Event: time 1699561270.937264, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1699561270.937264, -------------- SYN_REPORT ------------
+Event: time 1699561271.531387, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1699561271.531387, -------------- SYN_REPORT ------------
+Event: time 1699561271.612145, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1699561271.612145, -------------- SYN_REPORT ------------
+Event: time 1699561272.143583, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1699561272.143583, -------------- SYN_REPORT ------------
+Event: time 1699561272.224726, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1699561272.224726, -------------- SYN_REPORT ------------
+Event: time 1699561272.791207, type 1 (EV_KEY), code 308 (BTN_WEST), value 1
+Event: time 1699561272.791207, -------------- SYN_REPORT ------------
+Event: time 1699561272.863973, type 1 (EV_KEY), code 308 (BTN_WEST), value 0
+Event: time 1699561272.863973, -------------- SYN_REPORT ------------
+

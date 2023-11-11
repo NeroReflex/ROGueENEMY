@@ -1,0 +1,33 @@
+Event: time 1699561662.921947, type 1 (EV_KEY), code 315 (BTN_START), value 1
+Event: time 1699561662.921947, -------------- SYN_REPORT ------------
+Event: time 1699561662.993964, type 1 (EV_KEY), code 315 (BTN_START), value 0
+Event: time 1699561662.993964, -------------- SYN_REPORT ------------
+Event: time 1699561663.570121, type 1 (EV_KEY), code 315 (BTN_START), value 1
+Event: time 1699561663.570121, -------------- SYN_REPORT ------------
+Event: time 1699561663.651124, type 1 (EV_KEY), code 315 (BTN_START), value 0
+Event: time 1699561663.651124, -------------- SYN_REPORT ------------
+Event: time 1699561664.254661, type 1 (EV_KEY), code 315 (BTN_START), value 1
+Event: time 1699561664.254661, -------------- SYN_REPORT ------------
+Event: time 1699561664.263353, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 1
+Event: time 1699561664.263353, -------------- SYN_REPORT ------------
+Event: time 1699561664.273616, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 7
+Event: time 1699561664.273616, -------------- SYN_REPORT ------------
+Event: time 1699561664.299100, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 1
+Event: time 1699561664.299100, -------------- SYN_REPORT ------------
+Event: time 1699561664.307921, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 0
+Event: time 1699561664.307921, -------------- SYN_REPORT ------------
+Event: time 1699561664.326762, type 1 (EV_KEY), code 315 (BTN_START), value 0
+Event: time 1699561664.326762, -------------- SYN_REPORT ------------
+Event: time 1699561664.948530, type 1 (EV_KEY), code 315 (BTN_START), value 1
+Event: time 1699561664.948530, -------------- SYN_REPORT ------------
+Event: time 1699561664.965400, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 7
+Event: time 1699561664.965400, -------------- SYN_REPORT ------------
+Event: time 1699561664.973949, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 13
+Event: time 1699561664.973949, -------------- SYN_REPORT ------------
+Event: time 1699561664.993497, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 7
+Event: time 1699561664.993497, -------------- SYN_REPORT ------------
+Event: time 1699561665.009929, type 3 (EV_ABS), code 20 (ABS_HAT2X), value 0
+Event: time 1699561665.009929, -------------- SYN_REPORT ------------
+Event: time 1699561665.029483, type 1 (EV_KEY), code 315 (BTN_START), value 0
+Event: time 1699561665.029483, -------------- SYN_REPORT ------------
+

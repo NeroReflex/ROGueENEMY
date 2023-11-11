@@ -1,0 +1,17 @@
+Event: time 1699561244.115192, type 1 (EV_KEY), code 307 (BTN_NORTH), value 1
+Event: time 1699561244.115192, -------------- SYN_REPORT ------------
+Event: time 1699561244.196468, type 1 (EV_KEY), code 307 (BTN_NORTH), value 0
+Event: time 1699561244.196468, -------------- SYN_REPORT ------------
+Event: time 1699561244.853162, type 1 (EV_KEY), code 307 (BTN_NORTH), value 1
+Event: time 1699561244.853162, -------------- SYN_REPORT ------------
+Event: time 1699561244.943194, type 1 (EV_KEY), code 307 (BTN_NORTH), value 0
+Event: time 1699561244.943194, -------------- SYN_REPORT ------------
+Event: time 1699561245.609200, type 1 (EV_KEY), code 307 (BTN_NORTH), value 1
+Event: time 1699561245.609200, -------------- SYN_REPORT ------------
+Event: time 1699561245.672375, type 1 (EV_KEY), code 307 (BTN_NORTH), value 0
+Event: time 1699561245.672375, -------------- SYN_REPORT ------------
+Event: time 1699561246.302229, type 1 (EV_KEY), code 307 (BTN_NORTH), value 1
+Event: time 1699561246.302229, -------------- SYN_REPORT ------------
+Event: time 1699561246.365399, type 1 (EV_KEY), code 307 (BTN_NORTH), value 0
+Event: time 1699561246.365399, -------------- SYN_REPORT ------------
+

@@ -1,0 +1,17 @@
+Event: time 1699561553.564035, type 1 (EV_KEY), code 317 (BTN_THUMBL), value 1
+Event: time 1699561553.564035, -------------- SYN_REPORT ------------
+Event: time 1699561553.699033, type 1 (EV_KEY), code 317 (BTN_THUMBL), value 0
+Event: time 1699561553.699033, -------------- SYN_REPORT ------------
+Event: time 1699561554.951570, type 1 (EV_KEY), code 317 (BTN_THUMBL), value 1
+Event: time 1699561554.951570, -------------- SYN_REPORT ------------
+Event: time 1699561555.076191, type 1 (EV_KEY), code 317 (BTN_THUMBL), value 0
+Event: time 1699561555.076191, -------------- SYN_REPORT ------------
+Event: time 1699561556.301560, type 1 (EV_KEY), code 317 (BTN_THUMBL), value 1
+Event: time 1699561556.301560, -------------- SYN_REPORT ------------
+Event: time 1699561556.418216, type 1 (EV_KEY), code 317 (BTN_THUMBL), value 0
+Event: time 1699561556.418216, -------------- SYN_REPORT ------------
+Event: time 1699561557.687293, type 1 (EV_KEY), code 317 (BTN_THUMBL), value 1
+Event: time 1699561557.687293, -------------- SYN_REPORT ------------
+Event: time 1699561557.805360, type 1 (EV_KEY), code 317 (BTN_THUMBL), value 0
+Event: time 1699561557.805360, -------------- SYN_REPORT ------------
+
