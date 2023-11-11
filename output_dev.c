@@ -379,7 +379,7 @@ void *output_dev_thread_func(void *ptr) {
 
 #if defined(INCLUDE_OUTPUT_DEBUG)
 				printf(
-					"Received event %s (%s): %d\n",
+					"Output: Received event %s (%s): %d\n",
 					libevdev_event_type_get_name(ev.type),
 					libevdev_event_code_get_name(ev.type, ev.code),
 					ev.value
