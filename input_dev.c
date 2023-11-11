@@ -168,6 +168,7 @@ static void* input_read_thread_func(void* ptr) {
             
             if ((read_ev.code == MSC_TIMESTAMP) && (read_ev.type = EV_MSC)) {
                 // the output device will handle that
+                printf("MSC_TIMESTAMP found. Ignoring...");
                 continue;
             }
 
