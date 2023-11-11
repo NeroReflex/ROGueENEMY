@@ -22,6 +22,7 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 	dev.id.bustype = BUS_VIRTUAL;
 	dev.id.vendor = OUTPUT_DEV_VENDOR_ID;
 	dev.id.product = OUTPUT_DEV_PRODUCT_ID;
+	dev.id.version = OUTPUT_DEV_VERSION;
 	
 	switch (type) {
 		case output_dev_imu: {

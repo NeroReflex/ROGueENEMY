@@ -84,7 +84,7 @@ int main(int argc, char ** argv) {
   queue_init(&gamepad_ev, 32);
   queue_init(&imu_ev, 32);
 
-  out_imu_dev.fd = create_output_dev("/dev/uinput", OUTPUT_DEV_NAME " - ROGueENEMY", output_dev_imu);
+  out_imu_dev.fd = create_output_dev("/dev/uinput", OUTPUT_DEV_NAME /*" - ROGueENEMY" */, output_dev_imu);
   if (out_imu_dev.fd < 0) {
     // TODO: free(imu_dev.events_list);
     // TODO: free(gamepadd_dev.events_list);
@@ -92,7 +92,7 @@ int main(int argc, char ** argv) {
     return EXIT_FAILURE;
   }
 
-  out_gamepadd_dev.fd = create_output_dev("/dev/uinput", OUTPUT_DEV_NAME " - ROGueENEMY", output_dev_gamepad);
+  out_gamepadd_dev.fd = create_output_dev("/dev/uinput", OUTPUT_DEV_NAME /* " - ROGueENEMY" */, output_dev_gamepad);
   if (out_gamepadd_dev.fd < 0) {
     close(out_imu_dev.fd);
     // TODO: free(imu_dev.events_list);
