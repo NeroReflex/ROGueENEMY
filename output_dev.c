@@ -159,9 +159,9 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_KEYBIT, BTN_NORTH);
 			ioctl(fd, UI_SET_KEYBIT, BTN_WEST);
 			ioctl(fd, UI_SET_KEYBIT, BTN_TL);
-			//ioctl(fd, UI_SET_KEYBIT, BTN_TL2);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TL2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_TR);
-			//ioctl(fd, UI_SET_KEYBIT, BTN_TR2);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TR2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_SELECT);
 			ioctl(fd, UI_SET_KEYBIT, BTN_START);
 			ioctl(fd, UI_SET_KEYBIT, BTN_MODE);
