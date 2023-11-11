@@ -377,6 +377,15 @@ void *output_dev_thread_func(void *ptr) {
 					ev.code = BTN_TL2;
 				}
 
+#if defined(INCLUDE_DEBUG)
+				printf(
+					"Received event %s (%s): %d\n",
+					libevdev_event_type_get_name(ev.type),
+					libevdev_event_code_get_name(ev.type, ev.code),
+					ev.value
+				);
+#endif
+
 				const ssize_t written = write(fd, (void*)&ev, sizeof(ev));
 				if (written != sizeof(ev)) {
 					fprintf(
