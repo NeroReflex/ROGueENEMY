@@ -165,7 +165,7 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_KEYBIT, BTN_SELECT);
 			ioctl(fd, UI_SET_KEYBIT, BTN_START);
 			ioctl(fd, UI_SET_KEYBIT, BTN_MODE);
-			//ioctl(fd, UI_SET_KEYBIT, BTN_TRIGGER);
+			ioctl(fd, UI_SET_KEYBIT, BTN_BACK);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBL);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBR);
 
@@ -372,7 +372,7 @@ void *output_dev_thread_func(void *ptr) {
 				if ((ev.type == EV_KEY) && (ev.code == KEY_F16)) {
 					ev.code = BTN_MODE;
 				} else if ((ev.type == EV_KEY) && (ev.code == KEY_PROG1)) { // To be wired to F16
-					ev.code = BTN_TR2;
+					ev.code = BTN_BACK;
 				} else if ((ev.type == EV_KEY) && (ev.code == KEY_F18)) { // To be wired to F16
 					ev.code = BTN_GEAR_UP;
 				} else if ((ev.type == EV_KEY) && (ev.code == KEY_F17)) { // To be wired to F16
