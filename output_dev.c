@@ -159,15 +159,20 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_KEYBIT, BTN_NORTH);
 			ioctl(fd, UI_SET_KEYBIT, BTN_WEST);
 			ioctl(fd, UI_SET_KEYBIT, BTN_TL);
-			ioctl(fd, UI_SET_KEYBIT, BTN_GEAR_DOWN);
 			ioctl(fd, UI_SET_KEYBIT, BTN_TR);
-			ioctl(fd, UI_SET_KEYBIT, BTN_GEAR_UP);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TL2);
+			ioctl(fd, UI_SET_KEYBIT, BTN_TR2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_SELECT);
 			ioctl(fd, UI_SET_KEYBIT, BTN_START);
 			ioctl(fd, UI_SET_KEYBIT, BTN_MODE);
-			ioctl(fd, UI_SET_KEYBIT, BTN_BACK);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBL);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBR);
+			ioctl(fd, UI_SET_KEYBIT, BTN_GEAR_DOWN);
+			ioctl(fd, UI_SET_KEYBIT, BTN_GEAR_UP);
+			ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_UP);
+		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_DOWN);
+		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_LEFT);
+		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_RIGHT);
 
 			ioctl(fd, UI_SET_KEYBIT, KEY_F12);
 			//ioctl(fd, UI_SET_KEYBIT, KEY_F15);
@@ -315,6 +320,40 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 				goto create_output_dev_err;
 			}
 
+			struct uinput_abs_setup devAbsHat2X = {
+				.code = ABS_HAT2X,
+				.absinfo = {
+					.value = 0,
+					.minimum = 0,
+					.maximum = 255,
+					.resolution = 51,
+					//.fuzz = 16,
+					//.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsHat2X) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			struct uinput_abs_setup devAbsHat2Y = {
+				.code = ABS_HAT2Y,
+				.absinfo = {
+					.value = 0,
+					.minimum = 0,
+					.maximum = 255,
+					.resolution = 51,
+					//.fuzz = 16,
+					//.flat = 128,
+				}
+			};
+			if(ioctl(fd, UI_ABS_SETUP, &devAbsHat2Y) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
 			if(ioctl(fd, UI_DEV_SETUP, &dev) < 0) {
 				fd = -1;
 				close(fd);
@@ -372,7 +411,7 @@ void *output_dev_thread_func(void *ptr) {
 				if ((ev.type == EV_KEY) && (ev.code == KEY_F16)) {
 					ev.code = BTN_MODE;
 				} else if ((ev.type == EV_KEY) && (ev.code == KEY_PROG1)) { // To be wired to F16
-					ev.code = BTN_BACK;
+					ev.code = BTN_TR2;
 				} else if ((ev.type == EV_KEY) && (ev.code == KEY_F18)) { // To be wired to F16
 					ev.code = BTN_GEAR_UP;
 				} else if ((ev.type == EV_KEY) && (ev.code == KEY_F17)) { // To be wired to F16
