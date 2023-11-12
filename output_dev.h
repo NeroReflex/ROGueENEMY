@@ -5,7 +5,7 @@
 // Emulates a "Generic" controller:
 #define OUTPUT_DEV_NAME             "ROGueENEMY"
 #define OUTPUT_DEV_VENDOR_ID        0x108c
-#define OUTPUT_DEV_PRODUCT_ID       0x0323
+#define OUTPUT_DEV_PRODUCT_ID       0x0325
 #define OUTPUT_DEV_VERSION          0x0111
 
 /*
