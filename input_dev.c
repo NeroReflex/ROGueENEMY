@@ -55,10 +55,13 @@ static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters
 static dev_iio_t* iio_matches(const char* sysfs_entry, const iio_filters_t* const filters) {
     dev_iio_t *const dev_iio = dev_iio_create(sysfs_entry);
     if (dev_iio == NULL) {
+        fprintf(stderr, "Could not create iio device.\n");
         return NULL;
     }
 
-    if (strcmp(dev_iio_get_name(dev_iio), filters->name) != 0) {
+    const char* const iio_name = dev_iio_get_name(dev_iio);
+    if (strcmp(iio_name, filters->name) != 0) {
+        fprintf(stderr, "Error: iio device name does not match, expected %s got %s.\n", iio_name, filters->name);
         dev_iio_destroy(dev_iio);
         return NULL;
     }
@@ -278,7 +281,7 @@ static void input_iio(
                 int skip = 0;
                 for (int o = 0; o < (sizeof(open_sysfs) / sizeof(const char*)); ++o) {
                     if ((open_sysfs[o] != NULL) && (strcmp(open_sysfs[o], path) == 0)) {
-                        fprintf(stderr, "already opened iio device %s: skip.", path);
+                        fprintf(stderr, "already opened iio device %s: skip.\n", path);
                         skip = 1;
                         break;
                     }
@@ -307,7 +310,7 @@ static void input_iio(
                     
                     break;
                 } else {
-                    fprintf(stderr, "iio Device does not match :(");
+                    fprintf(stderr, "iio Device does not match :(\n");
                 }
             }
             closedir(d);
