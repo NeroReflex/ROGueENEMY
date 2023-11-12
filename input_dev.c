@@ -325,7 +325,7 @@ static void input_iio(
 
                 // try to open the device
                 ctx->iio_dev = iio_matches(path, in_dev->iio_filters);
-                if (ctx->dev != NULL) {
+                if (ctx->iio_dev != NULL) {
                     open_sysfs_idx = 0;
                     while (open_sysfs[open_sysfs_idx] != NULL) {
                         ++open_sysfs_idx;
@@ -340,7 +340,8 @@ static void input_iio(
                     
                     break;
                 } else {
-                    fprintf(stderr, "iio device in %s does not match\n", path);
+                    fprintf(stderr, "iio device in %s does NOT matches\n", path);
+                    ctx->iio_dev = NULL;
                 }
             }
             closedir(d);

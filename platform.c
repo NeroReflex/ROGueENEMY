@@ -43,7 +43,7 @@ int cycle_mode() {
 
     char new_mode_str[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
     unsigned long new_mode = (global_platform->mode + 1) % global_platform->modes_count;
-    sprintf(new_mode_str, "%lu", new_mode);
+    sprintf(new_mode_str, "%lu\n", new_mode);
 
     FILE* mode_file = fopen(platform_input_path, "r");
     if (mode_file == NULL) {
