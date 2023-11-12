@@ -23,12 +23,10 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 	dev.id.vendor = OUTPUT_DEV_VENDOR_ID;
 	dev.id.product = OUTPUT_DEV_PRODUCT_ID;
 	dev.id.version = OUTPUT_DEV_VERSION;
-	
-#if defined(UI_SET_PHYS_STR)
-	ioctl(fd, UI_SET_PHYS_STR, PHYS_STR);
-#else
-	#warning Controller and gyroscope won't be recognized as a single device
-#endif
+
+	if (ioctl(fd, /*UI_SET_PHYS_STR*/ 18, PHYS_STR) != 0) {
+		fprintf(stderr, "Controller and gyroscope will NOT be recognized as a single device!\n");
+	}
 
 	switch (type) {
 		case output_dev_imu: {
