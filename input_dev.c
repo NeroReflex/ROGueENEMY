@@ -113,10 +113,11 @@ static void* iio_read_thread_func(void* ptr) {
             continue;
         }
 
-        const int res = dev_iio_read(ctx->iio_dev, msg->ev, msg->ev_size, &msg->ev_count);
-        if (res == 0) {
-
-        } else if (res == -ENOMEM) {
+        rc = dev_iio_read(ctx->iio_dev, msg->ev, msg->ev_size, &msg->ev_count);
+        if (rc == 0) {
+            fprintf(stderr, "Error: reading %s: %d\n", dev_iio_get_name(ctx->iio_dev), rc);
+            break;
+        } else if (rc == -ENOMEM) {
             fprintf(stderr, "Error: out-of-memory will skip the current frame.\n");
             continue;
         }
@@ -274,7 +275,7 @@ static void input_iio(
                 }
 
                 sprintf(path, "%s%s", iio_path, dir->d_name);
-                printf("testing %s", path);
+                printf("testing %s\n", path);
 
                 // check if that has been already opened
                 // open_sysfs
