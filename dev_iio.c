@@ -90,6 +90,11 @@ dev_iio_t* dev_iio_create(const char* path) {
         free(iio);
         iio = NULL;
         goto dev_iio_create_err;
+    } else {
+        int idx = strlen(iio->name) - 1;
+        if ((iio->name[idx] == '\n') || ((iio->name[idx] == '\t'))) {
+            iio->name[idx] = '\0';
+        }
     }
     // ==========================================================================================================
 

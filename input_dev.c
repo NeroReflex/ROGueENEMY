@@ -60,8 +60,8 @@ static dev_iio_t* iio_matches(const char* sysfs_entry, const iio_filters_t* cons
     }
 
     const char* const iio_name = dev_iio_get_name(dev_iio);
-    if (strcmp(iio_name, filters->name) != 0) {
-        fprintf(stderr, "Error: iio device name does not match, expected %s got %s.\n", iio_name, filters->name);
+    if (abs(strcmp(iio_name, filters->name)) != 0) {
+        fprintf(stderr, "Error: iio device name does not match, expected %s got %s.\n", filters->name, iio_name);
         dev_iio_destroy(dev_iio);
         return NULL;
     }
