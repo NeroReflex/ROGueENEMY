@@ -45,19 +45,18 @@ int cycle_mode() {
     unsigned long new_mode = (global_platform->mode + 1) % global_platform->modes_count;
     sprintf(new_mode_str, "%lu\n", new_mode);
 
-    FILE* mode_file = fopen(platform_input_path, "r");
+    FILE* mode_file = fopen(platform_input_path, "w");
     if (mode_file == NULL) {
         fprintf(stderr, "Unable to open the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
         return -1;
     }
 
     size_t len = strlen(new_mode_str);
-    /*const int write_bytes =*/ fwrite((void*)&new_mode_str[0], 1, len, mode_file);
-    /*if (write_bytes < len) {
+    const int write_bytes = fwrite((void*)&new_mode_str[0], 1, len, mode_file);
+    if (write_bytes < len) {
         fprintf(stderr, "Error writing new mode: expected to write %d bytes, %d written.\n", (int)len, (int)write_bytes);
         return -2;
     }
-    */
 
     global_platform->mode = new_mode;
 
