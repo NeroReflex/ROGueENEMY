@@ -402,17 +402,20 @@ void *output_dev_thread_func(void *ptr) {
 		void *raw_ev;
 		const int pop_res = queue_pop_timeout(out_dev->queue, &raw_ev, 1000);
 		if (pop_res == 0) {
-			message_t *const msg = (message_t *)raw_ev;
+			message_t *const msg = (message_t*)raw_ev;
 
 			for (uint32_t i = 0; i < msg->ev_count; ++i) {
-				gettimeofday(&now, NULL);
-
-				/*const*/ struct input_event ev = {
+				struct input_event ev = {
 					.code = msg->ev[i].code,
 					.type = msg->ev[i].type,
 					.value = msg->ev[i].value,
-					.time = now,
+					.time = msg->ev[i].time,
 				};
+
+				if ((msg->flags & INPUT_FILTER_FLAGS_PRESERVE_TIME) == 0) {
+					gettimeofday(&now, NULL);
+					ev.time = now;
+				}
 
 				/*
 				if ((ev.type == EV_KEY) && (ev.code == KEY_PROG1)) { // To be wired to F16

@@ -19,11 +19,11 @@
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
 
-int input_filter_identity(struct input_event* events, size_t* size, uint32_t* count) {
-    return INPUT_FILTER_RESULT_OK;
+uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count) {
+    return INPUT_FILTER_FLAGS_NONE;
 }
 
-int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count) {
+uint32_t input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count) {
     static int F15_status = 0;
 
     if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN)) {
@@ -35,36 +35,36 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
                 // Do nothing effectively discarding the input
             }
 
-            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
         } else if (events[0].value == -13565784) {
-            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
         } else if ((*count == 2) && (events[0].value == 458860) && (events[1].type == EV_KEY) && (events[1].code == KEY_F17)) {
             if (events[1].value < 2) {
                 *count = 1;
                 events[0].type = EV_KEY;
                 events[0].code = BTN_GEAR_DOWN;
                 events[0].value = events[1].value;
-                return INPUT_FILTER_RESULT_OK;
+                return INPUT_FILTER_FLAGS_NONE;
             }
 
-            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
         } else if ((*count == 2) && (events[0].value == 458861) && (events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
             if (events[1].value < 2) {
                 *count = 1;
                 events[0].type = EV_KEY;
                 events[0].code = BTN_GEAR_UP;
                 events[0].value = events[1].value;
-                return INPUT_FILTER_RESULT_OK;
+                return INPUT_FILTER_FLAGS_NONE;
             }
 
-            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
         } else if ((*count == 2) && (events[0].value == -13565786) && (events[1].type == EV_KEY) && (events[1].code == KEY_F16)) {
             *count = 1;
             events[0].type = EV_KEY;
             events[0].code = BTN_MODE;
             events[0].value = events[1].value;
 
-            return INPUT_FILTER_RESULT_OK;
+            return INPUT_FILTER_FLAGS_NONE;
         } else if ((*count == 2) && (events[0].value == -13565787) && (events[1].type == EV_KEY) && (events[1].code == KEY_F15)) {
             if (events[1].value == 0) {
                 if (F15_status > 0) {
@@ -84,7 +84,7 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
                 }
             }
 
-            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
         } else if ((*count == 2) && (*size >= 3) && (events[0].value == -13565896) && (events[1].type == EV_KEY) && (events[1].code == KEY_PROG1)) {
             *count = 3;
 
@@ -111,11 +111,11 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
             events[4].code = BTN_SOUTH;
             events[4].value = 0;
 */
-            return INPUT_FILTER_RESULT_OK;
+            return INPUT_FILTER_FLAGS_NONE;
         }
     }
 
-    return INPUT_FILTER_RESULT_OK;
+    return INPUT_FILTER_FLAGS_NONE;
 }
 
 static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters_t* const filters) {
@@ -314,7 +314,8 @@ static void* input_read_thread_func(void* ptr) {
                 // clear out flags
                 msg->flags = 0x00000000U;
 
-                if (ctx->input_filter_fn(msg->ev, &msg->ev_size, &msg->ev_count) != INPUT_FILTER_RESULT_DO_NOT_EMIT) {
+                const uint32_t input_filter_res = ctx->input_filter_fn(msg->ev, &msg->ev_size, &msg->ev_count);
+                if (((input_filter_res & INPUT_FILTER_FLAGS_DO_NOT_EMIT) == 0) && (msg->ev_count > 0)) {
                     if (queue_push(ctx->queue, (void*)msg) != 0) {
                         fprintf(stderr, "Error pushing event.\n");
 
