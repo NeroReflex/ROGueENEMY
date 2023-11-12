@@ -52,11 +52,14 @@ int cycle_mode() {
     }
 
     size_t len = strlen(new_mode_str);
-    const int write_bytes = fwrite((void*)&new_mode_str[0], 1, len, mode_file);
-    if (write_bytes < len) {
+    /*const int write_bytes =*/ fwrite((void*)&new_mode_str[0], 1, len, mode_file);
+    /*if (write_bytes < len) {
         fprintf(stderr, "Error writing new mode: expected to write %d bytes, %d written.\n", (int)len, (int)write_bytes);
         return -2;
     }
+    */
+
+    global_platform->mode = new_mode;
 
     fclose(mode_file);
 

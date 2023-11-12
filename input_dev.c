@@ -306,7 +306,6 @@ static void input_iio(
                 }
 
                 sprintf(path, "%s%s", iio_path, dir->d_name);
-                printf("testing %s\n", path);
 
                 // check if that has been already opened
                 // open_sysfs
@@ -333,7 +332,7 @@ static void input_iio(
                     open_sysfs[open_sysfs_idx] = malloc(sizeof(path));
                     memcpy(open_sysfs[open_sysfs_idx], path, 512);    
 
-                    printf("Opened device %s\n    name: %s\n \n",
+                    printf("Opened iio %s\n    name: %s\n",
                         path,
                         dev_iio_get_name(ctx->iio_dev)
                     );
