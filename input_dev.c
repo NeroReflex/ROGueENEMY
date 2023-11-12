@@ -115,11 +115,13 @@ static void* iio_read_thread_func(void* ptr) {
 
         rc = dev_iio_read(ctx->iio_dev, msg->ev, msg->ev_size, &msg->ev_count);
         if (rc == 0) {
-            fprintf(stderr, "Error: reading %s: %d\n", dev_iio_get_name(ctx->iio_dev), rc);
-            break;
+            // OK: good read. go on....
         } else if (rc == -ENOMEM) {
             fprintf(stderr, "Error: out-of-memory will skip the current frame.\n");
             continue;
+        } else {
+            fprintf(stderr, "Error: reading %s: %d\n", dev_iio_get_name(ctx->iio_dev), rc);
+            break;
         }
 
         // clear out flags
