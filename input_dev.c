@@ -69,7 +69,7 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
             if ((events[1].value == 0) && (F15_status == 1)) {
                 printf("Exiting gyro mode.\n");
                 F15_status = 0;
-            } else if (events[1].value == 1) {
+            } else if ((events[1].value == 1) && (F15_status == 0)) {
                 printf("Entering gyro mode.\n");
                 F15_status = 1;
             }
