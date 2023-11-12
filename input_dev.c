@@ -88,22 +88,18 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
             events[1].type = SYN_REPORT;
             events[1].code = EV_SYN;
             events[1].value = 0;
-            events[1].time = events[0].time;
 
             events[2].type = EV_KEY;
             events[2].code = BTN_SOUTH;
             events[2].value = 1;
-            events[2].time = time;
 
             events[3].type = SYN_REPORT;
             events[3].code = EV_SYN;
             events[3].value = 0;
-            events[3].time = time;
 
             events[4].type = EV_KEY;
             events[4].code = BTN_SOUTH;
             events[4].value = 0;
-            events[4].time = time;
 
             return INPUT_FILTER_RESULT_OK;
         }

@@ -24,6 +24,12 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 	dev.id.product = OUTPUT_DEV_PRODUCT_ID;
 	dev.id.version = OUTPUT_DEV_VERSION;
 	
+#if defined(UI_SET_PHYS_STR)
+	ioctl(fd, UI_SET_PHYS_STR, PHYS_STR);
+#else
+	#warning Controller and gyroscope won't be recognized as a single device
+#endif
+
 	switch (type) {
 		case output_dev_imu: {
 			ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_ACCELEROMETER);

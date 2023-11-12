@@ -3,7 +3,7 @@
 #include "queue.h"
 #include "message.h"
 
-#define INCLUDE_INPUT_DEBUG
+#undef INCLUDE_INPUT_DEBUG
 #undef IGNORE_INPUT_SCAN
 
 #define INPUT_DEV_CTRL_FLAG_EXIT 0x00000001U
