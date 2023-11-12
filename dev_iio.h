@@ -13,29 +13,21 @@ typedef struct dev_iio {
     char* name;
     uint32_t flags;
 
-    char* accel_scale_x_fd;
-    char* accel_scale_y_fd;
-    char* accel_scale_z_fd;
-
-    int accel_x;
-    int accel_y;
-    int accel_z;
+    FILE* accel_x_fd;
+    FILE* accel_y_fd;
+    FILE* accel_z_fd;
 
     double accel_scale_x;
     double accel_scale_y;
     double accel_scale_z;
 
-    char* anglvel_scale_x_fd;
-    char* anglvel_scale_y_fd;
-    char* anglvel_scale_z_fd;
-
     double outer_accel_scale_x;
     double outer_accel_scale_y;
     double outer_accel_scale_z;
 
-    int anglvel_x;
-    int anglvel_y;
-    int anglvel_z;
+    FILE* anglvel_x_fd;
+    FILE* anglvel_y_fd;
+    FILE* anglvel_z_fd;
 
     double anglvel_scale_x;
     double anglvel_scale_y;

@@ -18,6 +18,17 @@ static output_dev_t out_gamepadd_dev = {
   .queue = &gamepad_ev,
 };
 
+static iio_filters_t in_iio_filters = {
+  .name = "bmi323",
+};
+
+static input_dev_t in_iio_dev = {
+  .dev_type = input_dev_type_iio,
+  .crtl_flags = 0x00000000U,
+  .iio_filters = &in_iio_filters,
+  .queue = &imu_ev,
+};
+
 static uinput_filters_t in_asus_kb_1_filters = {
   .name = "Asus Keyboard",
 };
@@ -112,7 +123,7 @@ int main(int argc, char ** argv) {
   int ret = 0;
 
   pthread_t imu_thread, gamepad_thread;
-  pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread;
+  pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread, iio_thread;
 
   const int imu_thread_creation = pthread_create(&imu_thread, NULL, output_dev_thread_func, (void*)(&out_imu_dev));
   if (imu_thread_creation != 0) {
@@ -162,6 +173,17 @@ int main(int argc, char ** argv) {
     goto asus_kb_3_thread_err;
   }
 
+  const int iio_thread_creation = pthread_create(&iio_thread, NULL, input_dev_thread_func, (void*)(&in_iio_dev));
+  if (iio_thread_creation != 0) {
+    fprintf(stderr, "Error creating iio input thread: %d\n", asus_kb_3_thread_creation);
+    ret = -1;
+    request_termination();
+    goto iio_thread_err;
+  }
+
+  pthread_join(iio_thread, NULL);
+
+iio_thread_err:
   pthread_join(asus_kb_3_thread, NULL);
 
 asus_kb_3_thread_err:

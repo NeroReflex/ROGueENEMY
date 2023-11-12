@@ -128,6 +128,8 @@ static void* iio_read_thread_func(void* ptr) {
             msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
         }
 
+        usleep(100);
+
         // either way.... fill a new buffer on the next cycle
         msg = NULL;
     } while (rc == 1 || rc == 0 || rc == -EAGAIN);
