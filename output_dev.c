@@ -142,6 +142,7 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 		case output_dev_gamepad: {
 			//ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_BUTTONPAD);
 			ioctl(fd, UI_SET_EVBIT, EV_ABS);
+			ioctl(fd, UI_SET_EVBIT, EV_REL);
 			ioctl(fd, UI_SET_EVBIT, EV_KEY);
 			ioctl(fd, UI_SET_EVBIT, EV_MSC);
 			ioctl(fd, UI_SET_EVBIT, EV_SYN);
@@ -179,6 +180,15 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_DOWN);
 		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_LEFT);
 		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_RIGHT);
+
+			// mouse buttons
+			ioctl(fd, UI_SET_KEYBIT, BTN_LEFT);
+			ioctl(fd, UI_SET_KEYBIT, BTN_MIDDLE);
+			ioctl(fd, UI_SET_KEYBIT, BTN_RIGHT);
+			ioctl(fd, UI_SET_RELBIT, REL_X);
+			ioctl(fd, UI_SET_RELBIT, REL_Y);
+			ioctl(fd, UI_SET_RELBIT, REL_WHEEL);
+			ioctl(fd, UI_SET_RELBIT, REL_WHEEL_HI_RES);
 
 			ioctl(fd, UI_SET_KEYBIT, KEY_F12);
 			//ioctl(fd, UI_SET_KEYBIT, KEY_F15);
