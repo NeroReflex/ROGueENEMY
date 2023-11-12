@@ -37,6 +37,33 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
         return INPUT_FILTER_RESULT_DO_NOT_EMIT;
     } else if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == -13565784)) {
         return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+    } else if ((*count == 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == 458860)) {
+        if ((events[1].type == EV_KEY) && (events[1].code == KEY_F17)) {
+            if (events[1].value < 2) {
+                *count = 1;
+                events[0].type = EV_KEY;
+                events[0].code = BTN_GEAR_DOWN;
+                events[0].value = events[1].value;
+            }
+        }
+    } else if ((*count == 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == 458861)) {
+        if ((events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
+            if (events[1].value < 2) {
+                *count = 1;
+                events[0].type = EV_KEY;
+                events[0].code = BTN_GEAR_UP;
+                events[0].value = events[1].value;
+            }
+        }
+    } else if ((*count == 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == -13565786)) {
+        if ((events[1].type == EV_KEY) && (events[1].code == KEY_F16)) {
+            if (events[1].value < 2) {
+                *count = 1;
+                events[0].type = EV_KEY;
+                events[0].code = BTN_MODE;
+                events[0].value = events[1].value;
+            }
+        }
     }
 
     return INPUT_FILTER_RESULT_OK;

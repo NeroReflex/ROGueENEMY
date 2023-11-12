@@ -410,15 +410,11 @@ void *output_dev_thread_func(void *ptr) {
 					.time = now,
 				};
 
-				if ((ev.type == EV_KEY) && (ev.code == KEY_F16)) {
-					ev.code = BTN_MODE;
-				} else if ((ev.type == EV_KEY) && (ev.code == KEY_PROG1)) { // To be wired to F16
+				/*
+				if ((ev.type == EV_KEY) && (ev.code == KEY_PROG1)) { // To be wired to F16
 					ev.code = KEY_F12;
-				} else if ((ev.type == EV_KEY) && (ev.code == KEY_F18)) { // To be wired to F16
-					ev.code = BTN_GEAR_UP;
-				} else if ((ev.type == EV_KEY) && (ev.code == KEY_F17)) { // To be wired to F16
-					ev.code = BTN_GEAR_DOWN;
 				}
+				*/
 
 #if defined(INCLUDE_OUTPUT_DEBUG)
 				printf(
