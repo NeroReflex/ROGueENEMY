@@ -75,6 +75,18 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
             }
 
             return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+        } else if ((*count == 2) && (events[0].value == -13565896) && (events[1].type == EV_KEY) && (events[1].code == KEY_PROG1)) {
+            *count = 2;
+            
+            events[0].type = EV_KEY;
+            events[0].code = BTN_MODE;
+            events[0].value = events[1].value;
+
+            events[1].type = EV_KEY;
+            events[1].code = BTN_SOUTH;
+            events[1].value = events[1].value;
+
+            return INPUT_FILTER_RESULT_OK;
         }
     }
 
