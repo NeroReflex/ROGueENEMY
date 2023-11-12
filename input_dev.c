@@ -271,12 +271,14 @@ static void input_iio(
                 }
 
                 sprintf(path, "%s%s", input_path, dir->d_name);
+                printf("testing %s", path);
 
                 // check if that has been already opened
                 // open_sysfs
                 int skip = 0;
                 for (int o = 0; o < (sizeof(open_sysfs) / sizeof(const char*)); ++o) {
                     if ((open_sysfs[o] != NULL) && (strcmp(open_sysfs[o], path) == 0)) {
+                        fprintf(stderr, "already opened iio device %s: skip.", path);
                         skip = 1;
                         break;
                     }
@@ -298,12 +300,14 @@ static void input_iio(
 
                     // TODO: populate ctx->iio_path
 
-                    printf("Opened device %s\n    name: %s\n    rumble: no EV_FF\n",
+                    printf("Opened device %s\n    name: %s\n \n",
                         path,
                         dev_iio_get_name(ctx->iio_dev)
                     );
                     
                     break;
+                } else {
+                    fprintf(stderr, "iio Device does not match :(");
                 }
             }
             closedir(d);
