@@ -75,16 +75,35 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
             }
 
             return INPUT_FILTER_RESULT_DO_NOT_EMIT;
-        } else if ((*count == 2) && (events[0].value == -13565896) && (events[1].type == EV_KEY) && (events[1].code == KEY_PROG1)) {
+        } else if ((*count == 2) && (*size >= 5) && (events[0].value == -13565896) && (events[1].type == EV_KEY) && (events[1].code == KEY_PROG1)) {
             *count = 2;
-            
+
+            int32_t val = events[1].value;
+            struct timeval time = events[1].time;
+
             events[0].type = EV_KEY;
             events[0].code = BTN_MODE;
-            events[0].value = events[1].value;
+            events[0].value = val;
 
-            events[1].type = EV_KEY;
-            events[1].code = BTN_SOUTH;
-            events[1].value = events[1].value;
+            events[1].type = SYN_REPORT;
+            events[1].code = EV_SYN;
+            events[1].value = 0;
+            events[1].time = events[0].time;
+
+            events[2].type = EV_KEY;
+            events[2].code = BTN_SOUTH;
+            events[2].value = 1;
+            events[2].time = time;
+
+            events[3].type = SYN_REPORT;
+            events[3].code = EV_SYN;
+            events[3].value = 0;
+            events[3].time = time;
+
+            events[4].type = EV_KEY;
+            events[4].code = BTN_SOUTH;
+            events[4].value = 0;
+            events[4].time = time;
 
             return INPUT_FILTER_RESULT_OK;
         }
