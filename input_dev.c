@@ -284,6 +284,9 @@ static void* input_read_thread_func(void* ptr) {
                         // flag the memory to be safe to reuse
                         msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
                     }
+                } else {
+                    // flag the memory to be safe to reuse
+                    msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
                 }
 
                 // either way.... fill a new buffer on the next cycle
