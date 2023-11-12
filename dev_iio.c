@@ -41,6 +41,7 @@ static char* read_file(const char* base_path, const char *file) {
             goto read_file_err;
         }
     } else {
+        fprintf(stderr, "File %s does not exists.\n", fdir);
         free(fdir);
         goto read_file_err;
     }
@@ -85,6 +86,7 @@ dev_iio_t* dev_iio_create(const char* path) {
     // ============================================= DEVICE NAME ================================================
     iio->name = read_file(iio->path, "/name");
     if (iio->name == NULL) {
+        fprintf(stderr, "Unable to read iio device name.\n");
         free(iio);
         iio = NULL;
         goto dev_iio_create_err;
@@ -99,6 +101,7 @@ dev_iio_t* dev_iio_create(const char* path) {
             free((void*)anglvel_scale);
         } else {
             // TODO: what about if those are plit in in_anglvel_{x,y,z}_scale?
+            fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", iio->path, "/in_accel_scale");
 
             free(iio);
             iio = NULL;
@@ -115,6 +118,7 @@ dev_iio_t* dev_iio_create(const char* path) {
             free((void*)accel_scale);
         } else {
             // TODO: what about if those are plit in in_accel_{x,y,z}_scale?
+            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
 
             free(iio);
             iio = NULL;
