@@ -66,12 +66,22 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
 
             return INPUT_FILTER_RESULT_OK;
         } else if ((*count == 2) && (events[0].value == -13565787) && (events[1].type == EV_KEY) && (events[1].code == KEY_F15)) {
-            if ((events[1].value == 0) && (F15_status == 1)) {
-                printf("Exiting gyro mode.\n");
-                F15_status = 0;
-            } else if ((events[1].value == 1) && (F15_status == 0)) {
-                printf("Entering gyro mode.\n");
-                F15_status = 1;
+            if (events[1].value == 0) {
+                if (F15_status > 0) {
+                    --F15_status;
+                }
+
+                if (F15_status == 0) {
+                    printf("Exiting gyro mode.\n");
+                }
+            } else if (events[1].value == 1) {
+                if (F15_status <= 2) {
+                    ++F15_status;
+                }
+
+                if (F15_status == 1) {
+                    printf("Entering gyro mode.\n");
+                }
             }
 
             return INPUT_FILTER_RESULT_DO_NOT_EMIT;
