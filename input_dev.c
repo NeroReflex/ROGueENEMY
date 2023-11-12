@@ -24,45 +24,57 @@ int input_filter_identity(struct input_event* events, size_t* size, uint32_t* co
 }
 
 int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count) {
-    if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == -13565784)) {
-        if ((events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
+    static int F15_status = 0;
+
+    if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN)) {
+        if ((events[0].value == -13565784) && (events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
             if (events[1].value == 1) {
                 printf("Detected mode switch command, switching mode...\n");
                 cycle_mode();
             } else {
                 // Do nothing effectively discarding the input
             }
-        }
 
-        return INPUT_FILTER_RESULT_DO_NOT_EMIT;
-    } else if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == -13565784)) {
-        return INPUT_FILTER_RESULT_DO_NOT_EMIT;
-    } else if ((*count == 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == 458860)) {
-        if ((events[1].type == EV_KEY) && (events[1].code == KEY_F17)) {
+            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+        } else if (events[0].value == -13565784) {
+            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+        } else if ((*count == 2) && (events[0].value == 458860) && (events[1].type == EV_KEY) && (events[1].code == KEY_F17)) {
             if (events[1].value < 2) {
                 *count = 1;
                 events[0].type = EV_KEY;
                 events[0].code = BTN_GEAR_DOWN;
                 events[0].value = events[1].value;
+                return INPUT_FILTER_RESULT_OK;
             }
-        }
-    } else if ((*count == 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == 458861)) {
-        if ((events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
+
+            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+        } else if ((*count == 2) && (events[0].value == 458861) && (events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
             if (events[1].value < 2) {
                 *count = 1;
                 events[0].type = EV_KEY;
                 events[0].code = BTN_GEAR_UP;
                 events[0].value = events[1].value;
+                return INPUT_FILTER_RESULT_OK;
             }
-        }
-    } else if ((*count == 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == -13565786)) {
-        if ((events[1].type == EV_KEY) && (events[1].code == KEY_F16)) {
-            if (events[1].value < 2) {
-                *count = 1;
-                events[0].type = EV_KEY;
-                events[0].code = BTN_MODE;
-                events[0].value = events[1].value;
+
+            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+        } else if ((*count == 2) && (events[0].value == -13565786) && (events[1].type == EV_KEY) && (events[1].code == KEY_F16)) {
+            *count = 1;
+            events[0].type = EV_KEY;
+            events[0].code = BTN_MODE;
+            events[0].value = events[1].value;
+
+            return INPUT_FILTER_RESULT_OK;
+        } else if ((*count == 2) && (events[0].value == -13565787) && (events[1].type == EV_KEY) && (events[1].code == KEY_F15)) {
+            if ((events[1].value == 0) && (F15_status == 1)) {
+                printf("Exiting gyro mode.\n");
+                F15_status = 0;
+            } else if (events[1].value == 1) {
+                printf("Entering gyro mode.\n");
+                F15_status = 1;
             }
+
+            return INPUT_FILTER_RESULT_DO_NOT_EMIT;
         }
     }
 
