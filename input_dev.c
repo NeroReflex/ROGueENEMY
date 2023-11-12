@@ -24,7 +24,7 @@ int input_filter_identity(struct input_event* events, size_t* size, uint32_t* co
 }
 
 int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count) {
-    if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == 0xff3100a7)) {
+    if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == -13565784)) {
         if ((events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
             if (events[1].value == 1) {
                 printf("Detected mode switch command, switching mode...\n");
@@ -35,7 +35,7 @@ int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* cou
         }
 
         return INPUT_FILTER_RESULT_DO_NOT_EMIT;
-    } else if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == 0xff3100a8)) {
+    } else if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == -13565784)) {
         return INPUT_FILTER_RESULT_DO_NOT_EMIT;
     }
 
