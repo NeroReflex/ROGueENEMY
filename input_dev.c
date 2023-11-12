@@ -2,6 +2,7 @@
 #include "message.h"
 #include "queue.h"
 #include "dev_iio.h"
+#include "platform.h"
 
 #include <libevdev-1.0/libevdev/libevdev.h>
 #include <linux/input-event-codes.h>
@@ -17,6 +18,29 @@
 
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
+
+int input_filter_identity(struct input_event* events, size_t* size, uint32_t* count) {
+    return INPUT_FILTER_RESULT_OK;
+}
+
+int input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count) {
+    if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == 0xff3100a7)) {
+        if ((events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
+            if (events[1].value == 1) {
+                printf("Detected mode switch command, switching mode...\n");
+                cycle_mode();
+            } else {
+                // Do nothing effectively discarding the input
+            }
+        }
+
+        return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+    } else if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN) && (events[0].value == 0xff3100a8)) {
+        return INPUT_FILTER_RESULT_DO_NOT_EMIT;
+    }
+
+    return INPUT_FILTER_RESULT_OK;
+}
 
 static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters_t* const filters) {
     struct libevdev *dev = NULL;
@@ -88,6 +112,7 @@ struct input_ctx {
     dev_iio_t *iio_dev;
     queue_t* queue;
     message_t messages[MAX_MESSAGES_IN_FLIGHT];
+    input_filter_t input_filter_fn;
 };
 
 static void* iio_read_thread_func(void* ptr) {
@@ -176,7 +201,9 @@ static void* input_read_thread_func(void* ptr) {
             
             if (read_ev.type == EV_MSC) {
                 if (read_ev.code == MSC_SCAN) {
+#if defined(IGNORE_INPUT_SCAN)
                     continue;
+#endif // IGNORE_INPUT_SCAN
                 } else if (read_ev.code == MSC_TIMESTAMP) {
                     // the output device will handle that
                     //printf("MSC_TIMESTAMP found. Ignoring...\n");
@@ -211,11 +238,13 @@ static void* input_read_thread_func(void* ptr) {
                 // clear out flags
                 msg->flags = 0x00000000U;
 
-                if (queue_push(ctx->queue, (void*)msg) != 0) {
-                    fprintf(stderr, "Error pushing event.\n");
+                if (ctx->input_filter_fn(msg->ev, &msg->ev_size, &msg->ev_count) != INPUT_FILTER_RESULT_DO_NOT_EMIT) {
+                    if (queue_push(ctx->queue, (void*)msg) != 0) {
+                        fprintf(stderr, "Error pushing event.\n");
 
-                    // flag the memory to be safe to reuse
-                    msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
+                        // flag the memory to be safe to reuse
+                        msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
+                    }
                 }
 
                 // either way.... fill a new buffer on the next cycle
@@ -456,6 +485,7 @@ void *input_dev_thread_func(void *ptr) {
     struct input_ctx ctx = {
         .dev = NULL,
         .queue = in_dev->queue,
+        .input_filter_fn = in_dev->input_filter_fn,
     };
 
     for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {

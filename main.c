@@ -2,6 +2,7 @@
 
 #include "input_dev.h"
 #include "output_dev.h"
+#include "platform.h"
 
 queue_t imu_ev;
 queue_t gamepad_ev;
@@ -27,6 +28,7 @@ static input_dev_t in_iio_dev = {
   .crtl_flags = 0x00000000U,
   .iio_filters = &in_iio_filters,
   .queue = &imu_ev,
+  .input_filter_fn = input_filter_identity,
 };
 
 static uinput_filters_t in_asus_kb_1_filters = {
@@ -38,6 +40,7 @@ static input_dev_t in_asus_kb_1_dev = {
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_1_filters,
   .queue = &gamepad_ev,
+  .input_filter_fn = input_filter_asus_kb,
 };
 
 static uinput_filters_t in_asus_kb_2_filters = {
@@ -49,6 +52,7 @@ static input_dev_t in_asus_kb_2_dev = {
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_2_filters,
   .queue = &gamepad_ev,
+  .input_filter_fn = input_filter_asus_kb,
 };
 
 static uinput_filters_t in_asus_kb_3_filters = {
@@ -60,6 +64,7 @@ static input_dev_t in_asus_kb_3_dev = {
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_3_filters,
   .queue = &gamepad_ev,
+  .input_filter_fn = input_filter_asus_kb,
 };
 
 static uinput_filters_t in_xbox_filters = {
@@ -71,6 +76,7 @@ static input_dev_t in_xbox_dev = {
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_xbox_filters,
   .queue = &gamepad_ev,
+  .input_filter_fn = input_filter_identity,
 };
 
 void request_termination() {
@@ -92,6 +98,8 @@ void sig_handler(int signo)
 }
 
 int main(int argc, char ** argv) {
+  init_global_mode();
+  
   queue_init(&gamepad_ev, 32);
   queue_init(&imu_ev, 32);
 

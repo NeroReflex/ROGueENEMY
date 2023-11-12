@@ -1,0 +1,42 @@
+Event: time 1699802685.428854, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff3100a5
+Event: time 1699802685.428854, type 1 (EV_KEY), code 185 (KEY_F15), value 1
+Event: time 1699802685.428854, -------------- SYN_REPORT ------------
+Event: time 1699802685.688724, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.688724, -------------- SYN_REPORT ------------
+Event: time 1699802685.725398, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.725398, -------------- SYN_REPORT ------------
+Event: time 1699802685.762568, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.762568, -------------- SYN_REPORT ------------
+Event: time 1699802685.798773, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.798773, -------------- SYN_REPORT ------------
+Event: time 1699802685.835437, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.835437, -------------- SYN_REPORT ------------
+Event: time 1699802685.872117, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.872117, -------------- SYN_REPORT ------------
+Event: time 1699802685.908746, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.908746, -------------- SYN_REPORT ------------
+Event: time 1699802685.945713, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.945713, -------------- SYN_REPORT ------------
+Event: time 1699802685.982089, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802685.982089, -------------- SYN_REPORT ------------
+Event: time 1699802686.018753, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.018753, -------------- SYN_REPORT ------------
+Event: time 1699802686.055456, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.055456, -------------- SYN_REPORT ------------
+Event: time 1699802686.092080, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.092080, -------------- SYN_REPORT ------------
+Event: time 1699802686.128741, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.128741, -------------- SYN_REPORT ------------
+Event: time 1699802686.165429, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.165429, -------------- SYN_REPORT ------------
+Event: time 1699802686.202093, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.202093, -------------- SYN_REPORT ------------
+Event: time 1699802686.238744, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.238744, -------------- SYN_REPORT ------------
+Event: time 1699802686.275419, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.275419, -------------- SYN_REPORT ------------
+Event: time 1699802686.312108, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1699802686.312108, -------------- SYN_REPORT ------------
+Event: time 1699802686.316777, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff3100a5
+Event: time 1699802686.316777, type 1 (EV_KEY), code 185 (KEY_F15), value 0
+Event: time 1699802686.316777, -------------- SYN_REPORT ------------

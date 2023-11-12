@@ -1,0 +1,18 @@
+Event: time 1699802385.002438, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff3100a7
+Event: time 1699802385.002438, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802385.002438, -------------- SYN_REPORT ------------
+Event: time 1699802385.003374, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff3100a7
+Event: time 1699802385.003374, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802385.003374, -------------- SYN_REPORT ------------
+
+
+
+************************** RELEASE ****************************
+
+
+Event: time 1699802387.554591, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff3100a8
+Event: time 1699802387.554591, type 1 (EV_KEY), code 188 (KEY_F18), value 1
+Event: time 1699802387.554591, -------------- SYN_REPORT ------------
+Event: time 1699802387.555300, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff3100a8
+Event: time 1699802387.555300, type 1 (EV_KEY), code 188 (KEY_F18), value 0
+Event: time 1699802387.555300, -------------- SYN_REPORT ------------

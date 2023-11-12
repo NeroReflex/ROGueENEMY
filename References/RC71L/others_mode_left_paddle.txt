@@ -1,0 +1,296 @@
+Event: time 1699802000.908792, -------------- SYN_REPORT ------------
+Event: time 1699802000.912796, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802000.912796, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802000.912796, -------------- SYN_REPORT ------------
+Event: time 1699802002.192841, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802002.192841, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802002.192841, -------------- SYN_REPORT ------------
+Event: time 1699802002.462123, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.462123, -------------- SYN_REPORT ------------
+Event: time 1699802002.498880, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.498880, -------------- SYN_REPORT ------------
+Event: time 1699802002.535470, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.535470, -------------- SYN_REPORT ------------
+Event: time 1699802002.572140, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.572140, -------------- SYN_REPORT ------------
+Event: time 1699802002.608817, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.608817, -------------- SYN_REPORT ------------
+Event: time 1699802002.648826, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.648826, -------------- SYN_REPORT ------------
+Event: time 1699802002.685471, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.685471, -------------- SYN_REPORT ------------
+Event: time 1699802002.722164, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.722164, -------------- SYN_REPORT ------------
+Event: time 1699802002.758812, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.758812, -------------- SYN_REPORT ------------
+Event: time 1699802002.795451, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.795451, -------------- SYN_REPORT ------------
+Event: time 1699802002.832150, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.832150, -------------- SYN_REPORT ------------
+Event: time 1699802002.868852, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.868852, -------------- SYN_REPORT ------------
+Event: time 1699802002.905479, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.905479, -------------- SYN_REPORT ------------
+Event: time 1699802002.942136, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.942136, -------------- SYN_REPORT ------------
+Event: time 1699802002.978782, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802002.978782, -------------- SYN_REPORT ------------
+Event: time 1699802003.015478, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.015478, -------------- SYN_REPORT ------------
+Event: time 1699802003.052491, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.052491, -------------- SYN_REPORT ------------
+Event: time 1699802003.092142, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.092142, -------------- SYN_REPORT ------------
+Event: time 1699802003.128803, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.128803, -------------- SYN_REPORT ------------
+Event: time 1699802003.165479, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.165479, -------------- SYN_REPORT ------------
+Event: time 1699802003.202443, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.202443, -------------- SYN_REPORT ------------
+Event: time 1699802003.242144, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.242144, -------------- SYN_REPORT ------------
+Event: time 1699802003.278802, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.278802, -------------- SYN_REPORT ------------
+Event: time 1699802003.315466, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.315466, -------------- SYN_REPORT ------------
+Event: time 1699802003.352147, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.352147, -------------- SYN_REPORT ------------
+Event: time 1699802003.388850, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.388850, -------------- SYN_REPORT ------------
+Event: time 1699802003.425463, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802003.425463, -------------- SYN_REPORT ------------
+Event: time 1699802003.439779, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802003.439779, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802003.439779, -------------- SYN_REPORT ------------
+Event: time 1699802005.080726, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802005.080726, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802005.080726, -------------- SYN_REPORT ------------
+Event: time 1699802005.222702, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802005.222702, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802005.222702, -------------- SYN_REPORT ------------
+Event: time 1699802009.983570, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802009.983570, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802009.983570, -------------- SYN_REPORT ------------
+Event: time 1699802010.215561, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802010.215561, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802010.215561, -------------- SYN_REPORT ------------
+Event: time 1699802010.922570, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802010.922570, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802010.922570, -------------- SYN_REPORT ------------
+Event: time 1699802011.029603, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802011.029603, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802011.029603, -------------- SYN_REPORT ------------
+Event: time 1699802011.339606, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802011.339606, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802011.339606, -------------- SYN_REPORT ------------
+Event: time 1699802011.430577, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802011.430577, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802011.430577, -------------- SYN_REPORT ------------
+Event: time 1699802011.686583, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802011.686583, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802011.686583, -------------- SYN_REPORT ------------
+Event: time 1699802011.771570, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802011.771570, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802011.771570, -------------- SYN_REPORT ------------
+Event: time 1699802012.650546, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802012.650546, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802012.650546, -------------- SYN_REPORT ------------
+Event: time 1699802012.762573, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802012.762573, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802012.762573, -------------- SYN_REPORT ------------
+Event: time 1699802012.951609, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802012.951609, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802012.951609, -------------- SYN_REPORT ------------
+Event: time 1699802013.063567, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802013.063567, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802013.063567, -------------- SYN_REPORT ------------
+Event: time 1699802013.228557, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802013.228557, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802013.228557, -------------- SYN_REPORT ------------
+Event: time 1699802013.334572, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802013.334572, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802013.334572, -------------- SYN_REPORT ------------
+Event: time 1699802013.483576, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802013.483576, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802013.483576, -------------- SYN_REPORT ------------
+Event: time 1699802013.605586, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802013.605586, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802013.605586, -------------- SYN_REPORT ------------
+Event: time 1699802013.740513, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802013.740513, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802013.740513, -------------- SYN_REPORT ------------
+Event: time 1699802013.867522, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802013.867522, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802013.867522, -------------- SYN_REPORT ------------
+Event: time 1699802014.051517, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802014.051517, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802014.051517, -------------- SYN_REPORT ------------
+Event: time 1699802014.122526, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802014.122526, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802014.122526, -------------- SYN_REPORT ------------
+Event: time 1699802014.287549, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802014.287549, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802014.287549, -------------- SYN_REPORT ------------
+Event: time 1699802014.414549, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802014.414549, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802014.414549, -------------- SYN_REPORT ------------
+Event: time 1699802014.569547, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802014.569547, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802014.569547, -------------- SYN_REPORT ------------
+Event: time 1699802014.631514, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802014.631514, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802014.631514, -------------- SYN_REPORT ------------
+Event: time 1699802014.800470, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802014.800470, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802014.800470, -------------- SYN_REPORT ------------
+Event: time 1699802014.876531, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802014.876531, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802014.876531, -------------- SYN_REPORT ------------
+Event: time 1699802015.352530, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802015.352530, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802015.352530, -------------- SYN_REPORT ------------
+Event: time 1699802015.489491, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802015.489491, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802015.489491, -------------- SYN_REPORT ------------
+Event: time 1699802015.629519, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802015.629519, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802015.629519, -------------- SYN_REPORT ------------
+Event: time 1699802015.725503, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802015.725503, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802015.725503, -------------- SYN_REPORT ------------
+Event: time 1699802015.895515, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802015.895515, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802015.895515, -------------- SYN_REPORT ------------
+Event: time 1699802015.976520, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802015.976520, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802015.976520, -------------- SYN_REPORT ------------
+Event: time 1699802017.768481, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802017.768481, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802017.768481, -------------- SYN_REPORT ------------
+Event: time 1699802018.035658, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.035658, -------------- SYN_REPORT ------------
+Event: time 1699802018.072208, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.072208, -------------- SYN_REPORT ------------
+Event: time 1699802018.108800, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.108800, -------------- SYN_REPORT ------------
+Event: time 1699802018.145462, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.145462, -------------- SYN_REPORT ------------
+Event: time 1699802018.182137, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.182137, -------------- SYN_REPORT ------------
+Event: time 1699802018.218819, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.218819, -------------- SYN_REPORT ------------
+Event: time 1699802018.255493, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.255493, -------------- SYN_REPORT ------------
+Event: time 1699802018.292183, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.292183, -------------- SYN_REPORT ------------
+Event: time 1699802018.328803, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.328803, -------------- SYN_REPORT ------------
+Event: time 1699802018.365473, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.365473, -------------- SYN_REPORT ------------
+Event: time 1699802018.402133, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.402133, -------------- SYN_REPORT ------------
+Event: time 1699802018.438892, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.438892, -------------- SYN_REPORT ------------
+Event: time 1699802018.475466, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.475466, -------------- SYN_REPORT ------------
+Event: time 1699802018.512206, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.512206, -------------- SYN_REPORT ------------
+Event: time 1699802018.548813, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.548813, -------------- SYN_REPORT ------------
+Event: time 1699802018.585479, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.585479, -------------- SYN_REPORT ------------
+Event: time 1699802018.622151, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.622151, -------------- SYN_REPORT ------------
+Event: time 1699802018.658786, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.658786, -------------- SYN_REPORT ------------
+Event: time 1699802018.695466, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.695466, -------------- SYN_REPORT ------------
+Event: time 1699802018.732424, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.732424, -------------- SYN_REPORT ------------
+Event: time 1699802018.768849, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.768849, -------------- SYN_REPORT ------------
+Event: time 1699802018.805734, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.805734, -------------- SYN_REPORT ------------
+Event: time 1699802018.842176, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.842176, -------------- SYN_REPORT ------------
+Event: time 1699802018.878810, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.878810, -------------- SYN_REPORT ------------
+Event: time 1699802018.915616, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.915616, -------------- SYN_REPORT ------------
+Event: time 1699802018.952163, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.952163, -------------- SYN_REPORT ------------
+Event: time 1699802018.988815, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802018.988815, -------------- SYN_REPORT ------------
+Event: time 1699802019.025480, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802019.025480, -------------- SYN_REPORT ------------
+Event: time 1699802019.062145, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802019.062145, -------------- SYN_REPORT ------------
+Event: time 1699802019.096416, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802019.096416, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802019.096416, -------------- SYN_REPORT ------------
+Event: time 1699802020.692406, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802020.692406, type 1 (EV_KEY), code 187 (KEY_F17), value 1
+Event: time 1699802020.692406, -------------- SYN_REPORT ------------
+Event: time 1699802020.969124, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802020.969124, -------------- SYN_REPORT ------------
+Event: time 1699802021.005476, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.005476, -------------- SYN_REPORT ------------
+Event: time 1699802021.045464, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.045464, -------------- SYN_REPORT ------------
+Event: time 1699802021.082133, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.082133, -------------- SYN_REPORT ------------
+Event: time 1699802021.118801, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.118801, -------------- SYN_REPORT ------------
+Event: time 1699802021.155463, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.155463, -------------- SYN_REPORT ------------
+Event: time 1699802021.192139, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.192139, -------------- SYN_REPORT ------------
+Event: time 1699802021.228793, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.228793, -------------- SYN_REPORT ------------
+Event: time 1699802021.265494, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.265494, -------------- SYN_REPORT ------------
+Event: time 1699802021.302135, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.302135, -------------- SYN_REPORT ------------
+Event: time 1699802021.338859, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.338859, -------------- SYN_REPORT ------------
+Event: time 1699802021.375480, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.375480, -------------- SYN_REPORT ------------
+Event: time 1699802021.412137, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.412137, -------------- SYN_REPORT ------------
+Event: time 1699802021.448816, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.448816, -------------- SYN_REPORT ------------
+Event: time 1699802021.485462, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.485462, -------------- SYN_REPORT ------------
+Event: time 1699802021.522164, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.522164, -------------- SYN_REPORT ------------
+Event: time 1699802021.558809, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.558809, -------------- SYN_REPORT ------------
+Event: time 1699802021.595471, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.595471, -------------- SYN_REPORT ------------
+Event: time 1699802021.632144, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.632144, -------------- SYN_REPORT ------------
+Event: time 1699802021.668814, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.668814, -------------- SYN_REPORT ------------
+Event: time 1699802021.705539, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.705539, -------------- SYN_REPORT ------------
+Event: time 1699802021.742166, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.742166, -------------- SYN_REPORT ------------
+Event: time 1699802021.778805, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.778805, -------------- SYN_REPORT ------------
+Event: time 1699802021.815483, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.815483, -------------- SYN_REPORT ------------
+Event: time 1699802021.852170, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.852170, -------------- SYN_REPORT ------------
+Event: time 1699802021.888809, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.888809, -------------- SYN_REPORT ------------
+Event: time 1699802021.925977, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.925977, -------------- SYN_REPORT ------------
+Event: time 1699802021.962134, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.962134, -------------- SYN_REPORT ------------
+Event: time 1699802021.998833, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802021.998833, -------------- SYN_REPORT ------------
+Event: time 1699802022.035525, type 1 (EV_KEY), code 187 (KEY_F17), value 2
+Event: time 1699802022.035525, -------------- SYN_REPORT ------------
+Event: time 1699802022.060574, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006c
+Event: time 1699802022.060574, type 1 (EV_KEY), code 187 (KEY_F17), value 0
+Event: time 1699802022.060574, -------------- SYN_REPORT ------------

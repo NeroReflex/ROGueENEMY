@@ -1,0 +1,63 @@
+Event: time 1699802130.551120, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006d
+Event: time 1699802130.551120, type 1 (EV_KEY), code 188 (KEY_F18), value 0
+Event: time 1699802130.551120, -------------- SYN_REPORT ------------
+Event: time 1699802136.758901, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006d
+Event: time 1699802136.758901, type 1 (EV_KEY), code 188 (KEY_F18), value 1
+Event: time 1699802136.758901, -------------- SYN_REPORT ------------
+Event: time 1699802137.022138, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.022138, -------------- SYN_REPORT ------------
+Event: time 1699802137.058799, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.058799, -------------- SYN_REPORT ------------
+Event: time 1699802137.095769, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.095769, -------------- SYN_REPORT ------------
+Event: time 1699802137.132453, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.132453, -------------- SYN_REPORT ------------
+Event: time 1699802137.168793, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.168793, -------------- SYN_REPORT ------------
+Event: time 1699802137.205768, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.205768, -------------- SYN_REPORT ------------
+Event: time 1699802137.242134, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.242134, -------------- SYN_REPORT ------------
+Event: time 1699802137.278820, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.278820, -------------- SYN_REPORT ------------
+Event: time 1699802137.315459, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.315459, -------------- SYN_REPORT ------------
+Event: time 1699802137.352149, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.352149, -------------- SYN_REPORT ------------
+Event: time 1699802137.388821, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.388821, -------------- SYN_REPORT ------------
+Event: time 1699802137.425464, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.425464, -------------- SYN_REPORT ------------
+Event: time 1699802137.462156, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.462156, -------------- SYN_REPORT ------------
+Event: time 1699802137.499122, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.499122, -------------- SYN_REPORT ------------
+Event: time 1699802137.535458, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.535458, -------------- SYN_REPORT ------------
+Event: time 1699802137.572125, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.572125, -------------- SYN_REPORT ------------
+Event: time 1699802137.608799, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.608799, -------------- SYN_REPORT ------------
+Event: time 1699802137.645464, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.645464, -------------- SYN_REPORT ------------
+Event: time 1699802137.682157, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.682157, -------------- SYN_REPORT ------------
+Event: time 1699802137.718800, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.718800, -------------- SYN_REPORT ------------
+Event: time 1699802137.755515, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.755515, -------------- SYN_REPORT ------------
+Event: time 1699802137.792112, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.792112, -------------- SYN_REPORT ------------
+Event: time 1699802137.828788, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.828788, -------------- SYN_REPORT ------------
+Event: time 1699802137.865511, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.865511, -------------- SYN_REPORT ------------
+Event: time 1699802137.902129, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.902129, -------------- SYN_REPORT ------------
+Event: time 1699802137.938782, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.938782, -------------- SYN_REPORT ------------
+Event: time 1699802137.975445, type 1 (EV_KEY), code 188 (KEY_F18), value 2
+Event: time 1699802137.975445, -------------- SYN_REPORT ------------
+Event: time 1699802138.004910, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006d
+Event: time 1699802138.004910, type 1 (EV_KEY), code 188 (KEY_F18), value 0
+Event: time 1699802138.004910, -------------- SYN_REPORT ------------

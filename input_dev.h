@@ -1,8 +1,10 @@
 #pragma once
 
 #include "queue.h"
+#include "message.h"
 
 #define INCLUDE_INPUT_DEBUG
+#undef IGNORE_INPUT_SCAN
 
 #define INPUT_DEV_CTRL_FLAG_EXIT 0x00000001U
 
@@ -28,8 +30,14 @@ typedef struct input_dev {
     volatile uint32_t crtl_flags;
 
     queue_t *queue;
+
+    input_filter_t input_filter_fn;
 } input_dev_t;
 
 void *input_dev_thread_func(void *ptr);
 
 int open_and_hide_input();
+
+int input_filter_identity(struct input_event* events, size_t* size, uint32_t* count);
+
+int input_filter_asus_kb(struct input_event*, size_t*, uint32_t*);

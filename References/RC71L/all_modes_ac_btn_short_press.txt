@@ -1,0 +1,6 @@
+Event: time 1699802451.149044, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff3100a6
+Event: time 1699802451.149044, type 1 (EV_KEY), code 186 (KEY_F16), value 1
+Event: time 1699802451.149044, -------------- SYN_REPORT ------------
+Event: time 1699802451.150020, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff3100a6
+Event: time 1699802451.150020, type 1 (EV_KEY), code 186 (KEY_F16), value 0
+Event: time 1699802451.150020, -------------- SYN_REPORT ------------

@@ -13,3 +13,8 @@ typedef struct message {
 
     volatile uint32_t flags;
 } message_t;
+
+#define INPUT_FILTER_RESULT_OK 0
+#define INPUT_FILTER_RESULT_DO_NOT_EMIT 1
+
+typedef int (*input_filter_t)(struct input_event*, size_t*, uint32_t*);
