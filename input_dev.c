@@ -273,7 +273,7 @@ static void input_iio(
                     continue;
                 }
 
-                sprintf(path, "%s%s", input_path, dir->d_name);
+                sprintf(path, "%s%s", iio_path, dir->d_name);
                 printf("testing %s", path);
 
                 // check if that has been already opened
