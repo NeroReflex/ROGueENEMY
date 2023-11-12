@@ -220,6 +220,7 @@ int dev_iio_read(
             ev->code = ABS_X;
             ev->value = (__s32)(val_in_m2s * iio->outer_accel_scale_x);
         } else {
+            fprintf(stderr, "While reading accel(x): %d\n", tmp_read);
             return tmp_read;
         }
 
@@ -244,6 +245,7 @@ int dev_iio_read(
             ev->code = ABS_Y;
             ev->value = (__s32)(val_in_m2s * iio->outer_accel_scale_y);
         } else {
+            fprintf(stderr, "While reading accel(y): %d\n", tmp_read);
             return tmp_read;
         }
 
@@ -268,6 +270,7 @@ int dev_iio_read(
             ev->code = ABS_Z;
             ev->value = (__s32)(val_in_m2s * iio->outer_accel_scale_z);
         } else {
+            fprintf(stderr, "While reading accel(z): %d\n", tmp_read);
             return tmp_read;
         }
 
@@ -292,6 +295,7 @@ int dev_iio_read(
             ev->code = ABS_RX;
             ev->value = (__s32)(val_in_m2s * iio->outer_anglvel_scale_x);
         } else {
+            fprintf(stderr, "While reading anglvel(x): %d\n", tmp_read);
             return tmp_read;
         }
 
@@ -316,6 +320,7 @@ int dev_iio_read(
             ev->code = ABS_RY;
             ev->value = (__s32)(val_in_m2s * iio->outer_anglvel_scale_y);
         } else {
+            fprintf(stderr, "While reading anglvel(y): %d\n", tmp_read);
             return tmp_read;
         }
 
@@ -340,6 +345,7 @@ int dev_iio_read(
             ev->code = ABS_RZ;
             ev->value = (__s32)(val_in_m2s * iio->outer_anglvel_scale_z);
         } else {
+            fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
             return tmp_read;
         }
 

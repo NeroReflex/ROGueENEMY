@@ -301,8 +301,6 @@ static void input_iio(
                     open_sysfs[open_sysfs_idx] = malloc(sizeof(path));
                     memcpy(open_sysfs[open_sysfs_idx], path, 512);    
 
-                    // TODO: populate ctx->iio_path
-
                     printf("Opened device %s\n    name: %s\n \n",
                         path,
                         dev_iio_get_name(ctx->iio_dev)
@@ -310,7 +308,7 @@ static void input_iio(
                     
                     break;
                 } else {
-                    fprintf(stderr, "iio Device does not match :(\n");
+                    fprintf(stderr, "iio device in %s does not match\n", path);
                 }
             }
             closedir(d);
