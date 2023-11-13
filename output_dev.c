@@ -36,8 +36,30 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 		fprintf(stderr, "Error setting the phys of the virtual controller.\n");
 	}
 
+	ioctl(fd, 18, PHYS_STR);
+
+#if !defined(UI_SET_PHYS_STR)
+	#warning Will not change the PHYS
+#endif
+
+#if !defined(UI_SET_UNIQ_STR)
+	#warning Will not change the UNIQ
+#endif
+
 	switch (type) {
 		case output_dev_imu: {
+#if defined(UI_SET_PHYS_STR)
+	ioctl(fd, UI_SET_PHYS_STR, PHYS_STR);
+#else
+	fprintf(stderr, "UI_SET_PHYS_STR unavailable.\n");
+#endif
+
+#if defined(UI_SET_UNIQ_STR)
+	ioctl(fd, UI_SET_UNIQ_STR, PHYS_STR);
+#else
+	fprintf(stderr, "UI_SET_UNIQ_STR unavailable.\n");
+#endif
+
 			ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_ACCELEROMETER);
 			ioctl(fd, UI_SET_EVBIT, EV_ABS);
 #if defined(INCLUDE_TIMESTAMP)
@@ -149,6 +171,18 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 		}
 
 		case output_dev_gamepad: {
+#if defined(UI_SET_PHYS_STR)
+	ioctl(fd, UI_SET_PHYS_STR, PHYS_STR);
+#else
+	fprintf(stderr, "UI_SET_PHYS_STR unavailable.\n");
+#endif
+
+#if defined(UI_SET_UNIQ_STR)
+	ioctl(fd, UI_SET_UNIQ_STR, PHYS_STR);
+#else
+	fprintf(stderr, "UI_SET_UNIQ_STR unavailable.\n");
+#endif
+
 			//ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_BUTTONPAD);
 			ioctl(fd, UI_SET_EVBIT, EV_ABS);
 			ioctl(fd, UI_SET_EVBIT, EV_KEY);
