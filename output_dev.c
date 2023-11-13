@@ -28,12 +28,12 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 	dev.id.version = OUTPUT_DEV_VERSION;
 #endif
 
-	if (ioctl(fd, /*UI_SET_PHYS_STR*/ 18, PHYS_STR) != 0) {
-		fprintf(stderr, "Controller and gyroscope will NOT be recognized as a single device!\n");
-	}
+	//if (ioctl(fd, /*UI_SET_PHYS_STR*/ 18, PHYS_STR) != 0) {
+	//	fprintf(stderr, "Controller and gyroscope will NOT be recognized as a single device!\n");
+	//}
 
 	if (ioctl(fd, UI_SET_PHYS, PHYS_STR) != 0) {
-		fprintf(stderr, "Error setting phys of the virtual controller.\n");
+		fprintf(stderr, "Error setting the phys of the virtual controller.\n");
 	}
 
 	switch (type) {
