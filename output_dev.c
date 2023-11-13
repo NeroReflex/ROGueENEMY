@@ -449,6 +449,8 @@ void *output_dev_thread_func(void *ptr) {
 				fd = out_dev->imu_fd;
 			} else if ((msg->flags & INPUT_FILTER_FLAGS_MOUSE) != 0) {
 				fd = out_dev->mouse_fd;
+			} else {
+				fd = out_dev->gamepad_fd;
 			}
 
 			for (uint32_t i = 0; i < msg->ev_count; ++i) {
@@ -463,12 +465,6 @@ void *output_dev_thread_func(void *ptr) {
 					gettimeofday(&now, NULL);
 					ev.time = now;
 				}
-
-				/*
-				if ((ev.type == EV_KEY) && (ev.code == KEY_PROG1)) { // To be wired to F16
-					ev.code = KEY_F12;
-				}
-				*/
 
 #if defined(INCLUDE_OUTPUT_DEBUG)
 				printf(

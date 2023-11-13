@@ -2,13 +2,11 @@
 
 #include "queue.h"
 
-/*
 // Emulates a "Generic" controller:
 #define OUTPUT_DEV_NAME             "ROGueENEMY"
 #define OUTPUT_DEV_VENDOR_ID        0x108c
 #define OUTPUT_DEV_PRODUCT_ID       0x0323
 #define OUTPUT_DEV_VERSION          0x0111
-*/
 
 /*
 // Emulates a steam controller
@@ -27,14 +25,14 @@
 #define OUTPUT_DEV_BUS_TYPE         BUS_BLUETOOTH
 */
 
-
+/*
 // Emulates a DualShock controller
 #define OUTPUT_DEV_NAME             "Sony Interactive Entertainment DualSense Wireless Controller"
 #define OUTPUT_DEV_VENDOR_ID        0x054c
 #define OUTPUT_DEV_PRODUCT_ID       0x0ce6
 #define OUTPUT_DEV_VERSION          0x8111
 #define OUTPUT_DEV_BUS_TYPE         BUS_USB
-
+*/
 
 #define PHYS_STR "00:11:22:33:44:55"
 

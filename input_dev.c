@@ -240,9 +240,15 @@ static void* iio_read_thread_func(void* ptr) {
         // clear out flags
         msg->flags = 0x00000000U;
 
-        if (queue_push(ctx->queue, (void*)msg) != 0) {
-            fprintf(stderr, "Error pushing event.\n");
+        const uint32_t input_filter_res = ctx->input_filter_fn(msg->ev, &msg->ev_size, &msg->ev_count);
+        if (((input_filter_res & INPUT_FILTER_FLAGS_DO_NOT_EMIT) == 0) && (msg->ev_count > 0)) {
+            if (queue_push(ctx->queue, (void*)msg) != 0) {
+                fprintf(stderr, "Error pushing iio event.\n");
 
+                // flag the memory to be safe to reuse
+                msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
+            }
+        } else {
             // flag the memory to be safe to reuse
             msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
         }
