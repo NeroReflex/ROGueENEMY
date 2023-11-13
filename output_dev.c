@@ -32,6 +32,10 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 		fprintf(stderr, "Controller and gyroscope will NOT be recognized as a single device!\n");
 	}
 
+	if (ioctl(fd, UI_SET_PHYS, PHYS_STR) != 0) {
+		fprintf(stderr, "Error setting phys of the virtual controller.\n");
+	}
+
 	switch (type) {
 		case output_dev_imu: {
 			ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_ACCELEROMETER);
@@ -186,15 +190,6 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_DOWN);
 		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_LEFT);
 		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_RIGHT);
-
-			//ioctl(fd, UI_SET_KEYBIT, KEY_F12);
-			//ioctl(fd, UI_SET_KEYBIT, KEY_F15);
-			//ioctl(fd, UI_SET_KEYBIT, KEY_F16);
-			//ioctl(fd, UI_SET_KEYBIT, KEY_F17);
-			//ioctl(fd, UI_SET_KEYBIT, KEY_F18);
-
-			//ioctl(fd, UI_SET_KEYBIT, KEY_PROG1);
-			//ioctl(fd, UI_SET_KEYBIT, KEY_PROG2);
 
 			const struct uinput_abs_setup devAbsX = {
 				.code = ABS_X,
