@@ -50,14 +50,14 @@ uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uin
         if (gyro_x != 0) {
             events[w].type = EV_REL;
             events[w].code = REL_Y;
-            events[w].value = (float)gyro_x;
+            events[w].value = (float)gyro_x * -1.0;
             ++w;
         }
 
         if (gyro_y != 0) {
             events[w].type = EV_REL;
             events[w].code = REL_X;
-            events[w].value = (float)gyro_y * -0.40;
+            events[w].value = (float)gyro_y * +1.0;
             ++w;
         }
 
