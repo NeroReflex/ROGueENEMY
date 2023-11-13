@@ -22,9 +22,46 @@ static const char *iio_path = "/sys/bus/iio/devices/";
 static uint32_t gyroscope_mouse_translation;
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count) {
-    if (gyroscope_mouse_translation > 0) {
+    int32_t gyro_x = 0, gyro_y = 0, gyro_z = 0, accel_x = 0, accel_y = 0, accel_z = 0;
 
-        return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_IMU; 
+    if (gyroscope_mouse_translation > 0) {
+        for (uint32_t i = 0; i < *count; ++i) {
+            if (events[i].type != EV_ABS) {
+                continue;
+            }
+
+            if (events[i].code == ABS_X) {
+                accel_x = events[i].value;
+            } else if (events[i].code == ABS_Y) {
+                accel_y = events[i].value;
+            } else if (events[i].code == ABS_Z) {
+                accel_z = events[i].value;
+            } else if (events[i].code == ABS_RX) {
+                gyro_x = events[i].value;
+            } else if (events[i].code == ABS_RY) {
+                gyro_y = events[i].value;
+            } else if (events[i].code == ABS_RZ) {
+                gyro_z = events[i].value;
+            }
+        }
+
+        *count = 0;
+
+        if (gyro_x != 0) {
+            events[*count].type = EV_REL;
+            events[*count].code = REL_X;
+            events[*count].value = gyro_x / 255;
+            *count = *count + 1;
+        }
+
+        if (gyro_z != 0) {
+            events[*count].type = EV_REL;
+            events[*count].code = REL_Y;
+            events[*count].value = gyro_y / 255;
+            *count = *count + 1;
+        }
+
+        return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_MOUSE; 
     }
 
     //return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_IMU;
