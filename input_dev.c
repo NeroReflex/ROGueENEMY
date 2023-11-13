@@ -333,6 +333,19 @@ static void* input_read_thread_func(void* ptr) {
                 msg->flags = 0x00000000U;
 
                 const uint32_t input_filter_res = ctx->input_filter_fn(msg->ev, &msg->ev_size, &msg->ev_count);
+
+                if ((input_filter_res & INPUT_FILTER_FLAGS_IMU) != 0) {
+                    msg->flags |= INPUT_FILTER_FLAGS_IMU;
+                }
+
+                if ((input_filter_res & INPUT_FILTER_FLAGS_MOUSE) != 0) {
+                    msg->flags |= INPUT_FILTER_FLAGS_MOUSE;
+                }
+
+                if ((input_filter_res & INPUT_FILTER_FLAGS_PRESERVE_TIME) != 0) {
+                    msg->flags |= INPUT_FILTER_FLAGS_PRESERVE_TIME;
+                }
+
                 if (((input_filter_res & INPUT_FILTER_FLAGS_DO_NOT_EMIT) == 0) && (msg->ev_count > 0)) {
                     if (queue_push(ctx->queue, (void*)msg) != 0) {
                         fprintf(stderr, "Error pushing event.\n");
