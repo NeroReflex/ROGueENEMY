@@ -4,7 +4,7 @@
 #include <linux/input-event-codes.h>
 #include <unistd.h>
 
-int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type) {
+int create_output_dev(const char* uinput_path, output_dev_type_t type) {
     int fd = open(uinput_path, O_WRONLY | O_NONBLOCK);
 	if(fd < 0) {
         fd = -1;
@@ -13,11 +13,8 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
     }
 	
 	struct uinput_setup dev = {0};
-	if (strlen(name) < UINPUT_MAX_NAME_SIZE) {
-        strcpy(dev.name, name);
-    } else {
-        strncpy(dev.name, name, UINPUT_MAX_NAME_SIZE-1);
-    }
+	strncpy(dev.name, OUTPUT_DEV_NAME, UINPUT_MAX_NAME_SIZE-1);
+
 
 #if defined(OUTPUT_DEV_BUS_TYPE)
 	dev.id.bustype = OUTPUT_DEV_BUS_TYPE;
@@ -39,9 +36,10 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 		case output_dev_imu: {
 			ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_ACCELEROMETER);
 			ioctl(fd, UI_SET_EVBIT, EV_ABS);
-			//ioctl(fd, UI_SET_EVBIT, EV_KEY);
+#if defined(INCLUDE_TIMESTAMP)
 			ioctl(fd, UI_SET_EVBIT, EV_MSC);
 			ioctl(fd, UI_SET_MSCBIT, MSC_TIMESTAMP);
+#endif
 
 			ioctl(fd, UI_SET_ABSBIT, ABS_X);
 			ioctl(fd, UI_SET_ABSBIT, ABS_Y);
@@ -149,11 +147,10 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 		case output_dev_gamepad: {
 			//ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_BUTTONPAD);
 			ioctl(fd, UI_SET_EVBIT, EV_ABS);
-			ioctl(fd, UI_SET_EVBIT, EV_REL);
 			ioctl(fd, UI_SET_EVBIT, EV_KEY);
-			ioctl(fd, UI_SET_EVBIT, EV_MSC);
 			ioctl(fd, UI_SET_EVBIT, EV_SYN);
 #if defined(INCLUDE_TIMESTAMP)
+			ioctl(fd, UI_SET_EVBIT, EV_MSC);
 			ioctl(fd, UI_SET_MSCBIT, MSC_TIMESTAMP);
 #endif
 
@@ -181,6 +178,8 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			ioctl(fd, UI_SET_KEYBIT, BTN_MODE);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBL);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBR);
+			ioctl(fd, UI_SET_KEYBIT, BTN_THUMB);
+			ioctl(fd, UI_SET_KEYBIT, BTN_THUMB2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_GEAR_DOWN);
 			ioctl(fd, UI_SET_KEYBIT, BTN_GEAR_UP);
 			ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_UP);
@@ -188,16 +187,7 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_LEFT);
 		    ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_RIGHT);
 
-			// mouse buttons
-			ioctl(fd, UI_SET_KEYBIT, BTN_LEFT);
-			ioctl(fd, UI_SET_KEYBIT, BTN_MIDDLE);
-			ioctl(fd, UI_SET_KEYBIT, BTN_RIGHT);
-			ioctl(fd, UI_SET_RELBIT, REL_X);
-			ioctl(fd, UI_SET_RELBIT, REL_Y);
-			ioctl(fd, UI_SET_RELBIT, REL_WHEEL);
-			ioctl(fd, UI_SET_RELBIT, REL_WHEEL_HI_RES);
-
-			ioctl(fd, UI_SET_KEYBIT, KEY_F12);
+			//ioctl(fd, UI_SET_KEYBIT, KEY_F12);
 			//ioctl(fd, UI_SET_KEYBIT, KEY_F15);
 			//ioctl(fd, UI_SET_KEYBIT, KEY_F16);
 			//ioctl(fd, UI_SET_KEYBIT, KEY_F17);
@@ -392,6 +382,41 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
 			break;
 		}
 
+		case output_dev_mouse: {
+			ioctl(fd, UI_SET_EVBIT, EV_REL);
+			ioctl(fd, UI_SET_EVBIT, EV_KEY);
+			ioctl(fd, UI_SET_EVBIT, EV_MSC);
+			ioctl(fd, UI_SET_EVBIT, EV_SYN);
+#if defined(INCLUDE_TIMESTAMP)
+			ioctl(fd, UI_SET_MSCBIT, MSC_TIMESTAMP);
+#endif
+
+			ioctl(fd, UI_SET_KEYBIT, BTN_LEFT);
+			ioctl(fd, UI_SET_KEYBIT, BTN_MIDDLE);
+			ioctl(fd, UI_SET_KEYBIT, BTN_RIGHT);
+			//ioctl(fd, UI_SET_KEYBIT, BTN_SIDE);
+			//ioctl(fd, UI_SET_KEYBIT, BTN_EXTRA);
+
+			ioctl(fd, UI_SET_RELBIT, REL_X);
+			ioctl(fd, UI_SET_RELBIT, REL_Y);
+			ioctl(fd, UI_SET_RELBIT, REL_WHEEL);
+			ioctl(fd, UI_SET_RELBIT, REL_WHEEL_HI_RES);
+
+			if(ioctl(fd, UI_DEV_SETUP, &dev) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			if(ioctl(fd, UI_DEV_CREATE) < 0) {
+				fd = -1;
+				close(fd);
+				goto create_output_dev_err;
+			}
+
+			break;
+		}
+
 		default:
 			// error
 			close(fd);
@@ -407,8 +432,6 @@ void *output_dev_thread_func(void *ptr) {
     output_dev_t *out_dev = (output_dev_t*)ptr;
 	struct timeval now = {0};
 
-	const int fd = out_dev->fd;
-
 #if defined(INCLUDE_TIMESTAMP)
 	gettimeofday(&now, NULL);
 	__time_t secAtInit = now.tv_sec;
@@ -420,6 +443,13 @@ void *output_dev_thread_func(void *ptr) {
 		const int pop_res = queue_pop_timeout(out_dev->queue, &raw_ev, 1000);
 		if (pop_res == 0) {
 			message_t *const msg = (message_t*)raw_ev;
+
+			int fd = out_dev->gamepad_fd;
+			if ((msg->flags & INPUT_FILTER_FLAGS_IMU) != 0) {
+				fd = out_dev->imu_fd;
+			} else if ((msg->flags & INPUT_FILTER_FLAGS_MOUSE) != 0) {
+				fd = out_dev->mouse_fd;
+			}
 
 			for (uint32_t i = 0; i < msg->ev_count; ++i) {
 				struct input_event ev = {
@@ -504,9 +534,6 @@ void *output_dev_thread_func(void *ptr) {
             break;
         }
     }
-
-	ioctl(fd, UI_DEV_DESTROY);
-	close(fd);
 
     return NULL;
 }

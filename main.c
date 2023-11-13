@@ -4,17 +4,12 @@
 #include "output_dev.h"
 #include "platform.h"
 
-queue_t imu_ev;
 queue_t gamepad_ev;
 
-static output_dev_t out_imu_dev = {
-  .fd = -1,
-  .crtl_flags = 0x00000000U,
-  .queue = &imu_ev,
-};
 
 static output_dev_t out_gamepadd_dev = {
-  .fd = -1,
+  .gamepad_fd = -1,
+  .imu_fd = -1,
   .crtl_flags = 0x00000000U,
   .queue = &gamepad_ev,
 };
@@ -27,8 +22,8 @@ static input_dev_t in_iio_dev = {
   .dev_type = input_dev_type_iio,
   .crtl_flags = 0x00000000U,
   .iio_filters = &in_iio_filters,
-  .queue = &imu_ev,
-  .input_filter_fn = input_filter_identity,
+  .queue = &gamepad_ev,
+  .input_filter_fn = input_filter_imu_identity,
 };
 
 static uinput_filters_t in_asus_kb_1_filters = {
@@ -80,7 +75,6 @@ static input_dev_t in_xbox_dev = {
 };
 
 void request_termination() {
-  out_imu_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
   out_gamepadd_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
 
   in_xbox_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
@@ -101,24 +95,31 @@ int main(int argc, char ** argv) {
   init_global_mode();
   
   queue_init(&gamepad_ev, 32);
-  queue_init(&imu_ev, 32);
 
-  out_imu_dev.fd = create_output_dev("/dev/uinput", OUTPUT_DEV_NAME /*" - IMU"*/, output_dev_imu);
-  if (out_imu_dev.fd < 0) {
-    // TODO: free(imu_dev.events_list);
-    // TODO: free(gamepadd_dev.events_list);
+  int imu_fd = create_output_dev("/dev/uinput", output_dev_imu);
+  if (imu_fd < 0) {
     fprintf(stderr, "Unable to create IMU virtual device\n");
     return EXIT_FAILURE;
   }
 
-  out_gamepadd_dev.fd = create_output_dev("/dev/uinput", OUTPUT_DEV_NAME  /*" - GamePad"*/, output_dev_gamepad);
-  if (out_gamepadd_dev.fd < 0) {
-    close(out_imu_dev.fd);
-    // TODO: free(imu_dev.events_list);
-    // TODO: free(gamepadd_dev.events_list);
+  int gamepad_fd = create_output_dev("/dev/uinput", output_dev_gamepad);
+  if (gamepad_fd < 0) {
+    close(imu_fd);
     fprintf(stderr, "Unable to create gamepad virtual device\n");
     return EXIT_FAILURE;
   }
+
+  int mouse_fd = create_output_dev("/dev/uinput", output_dev_mouse);
+  if (mouse_fd < 0) {
+    close(gamepad_fd);
+    close(imu_fd);
+    fprintf(stderr, "Unable to create mouse virtual device\n");
+    return EXIT_FAILURE;
+  }
+
+  out_gamepadd_dev.gamepad_fd = gamepad_fd;
+  out_gamepadd_dev.imu_fd = imu_fd;
+  out_gamepadd_dev.mouse_fd = mouse_fd;
 
 /*
   __sighandler_t sigint_hndl = signal(SIGINT, sig_handler); 
@@ -130,16 +131,8 @@ int main(int argc, char ** argv) {
 
   int ret = 0;
 
-  pthread_t imu_thread, gamepad_thread;
+  pthread_t gamepad_thread;
   pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread, iio_thread;
-
-  const int imu_thread_creation = pthread_create(&imu_thread, NULL, output_dev_thread_func, (void*)(&out_imu_dev));
-  if (imu_thread_creation != 0) {
-    fprintf(stderr, "Error creating IMU output thread: %d\n", imu_thread_creation);
-    ret = -1;
-    request_termination();
-    goto imu_thread_err;
-  }
   
   const int gamepad_thread_creation = pthread_create(&gamepad_thread, NULL, output_dev_thread_func, (void*)(&out_gamepadd_dev));
   if (gamepad_thread_creation != 0) {
@@ -207,14 +200,8 @@ xbox_drv_thread_err:
   pthread_join(gamepad_thread, NULL);
 
 gamepad_thread_err:
-  pthread_join(imu_thread, NULL); 
-
-imu_thread_err:
-  if (!(out_gamepadd_dev.fd < 0))
-    close(out_gamepadd_dev.fd);
-  
-  if (!(out_imu_dev.fd < 0))
-    close(out_imu_dev.fd);
+  ioctl(gamepad_fd, UI_DEV_DESTROY);
+  close(gamepad_fd);
   
   // TODO: free(imu_dev.events_list);
   // TODO: free(gamepadd_dev.events_list);

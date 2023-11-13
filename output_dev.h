@@ -52,16 +52,19 @@
 typedef enum output_dev_type {
     output_dev_gamepad,
     output_dev_imu,
+    output_dev_mouse,
 } output_dev_type_t;
 
 typedef struct output_dev {
-    int fd;
+    int gamepad_fd;
+    int imu_fd;
+    int mouse_fd;
 
     volatile uint32_t crtl_flags;
 
     queue_t *queue;
 } output_dev_t;
 
-int create_output_dev(const char* uinput_path, const char* name, output_dev_type_t type);
+int create_output_dev(const char* uinput_path, output_dev_type_t type);
 
 void *output_dev_thread_func(void *ptr);

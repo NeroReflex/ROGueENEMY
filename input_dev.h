@@ -38,6 +38,8 @@ void *input_dev_thread_func(void *ptr);
 
 int open_and_hide_input();
 
+uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count);
+
 uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count);
 
 uint32_t input_filter_asus_kb(struct input_event*, size_t*, uint32_t*);

@@ -17,5 +17,7 @@ typedef struct message {
 #define INPUT_FILTER_FLAGS_NONE             0x00000000U
 #define INPUT_FILTER_FLAGS_DO_NOT_EMIT      0x00000001U
 #define INPUT_FILTER_FLAGS_PRESERVE_TIME    0x00000002U
+#define INPUT_FILTER_FLAGS_IMU              0x00000004U
+#define INPUT_FILTER_FLAGS_MOUSE            0x00000008U
 
 typedef uint32_t (*input_filter_t)(struct input_event*, size_t*, uint32_t*);

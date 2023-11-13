@@ -19,12 +19,24 @@
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
 
+uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count) {
+    return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_IMU;
+}
+
 uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count) {
     return INPUT_FILTER_FLAGS_NONE;
 }
 
 uint32_t input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count) {
     static int F15_status = 0;
+
+    if (events[0].type == EV_REL) {
+        return INPUT_FILTER_FLAGS_MOUSE;
+    } else if (events[0].type == EV_KEY) {
+        if ((events[0].code == BTN_MIDDLE) || (events[0].code == BTN_LEFT) || (events[0].code == BTN_RIGHT)) {
+            return INPUT_FILTER_FLAGS_MOUSE;
+        }
+    }
 
     if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN)) {
         if ((events[0].value == -13565784) && (events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
