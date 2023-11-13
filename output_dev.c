@@ -19,10 +19,17 @@ int create_output_dev(const char* uinput_path, const char* name, output_dev_type
         strncpy(dev.name, name, UINPUT_MAX_NAME_SIZE-1);
     }
 
+#if defined(OUTPUT_DEV_BUS_TYPE)
+	dev.id.bustype = OUTPUT_DEV_BUS_TYPE;
+#else
 	dev.id.bustype = BUS_VIRTUAL;
+#endif
 	dev.id.vendor = OUTPUT_DEV_VENDOR_ID;
 	dev.id.product = OUTPUT_DEV_PRODUCT_ID;
+
+#if defined(OUTPUT_DEV_VERSION)
 	dev.id.version = OUTPUT_DEV_VERSION;
+#endif
 
 	if (ioctl(fd, /*UI_SET_PHYS_STR*/ 18, PHYS_STR) != 0) {
 		fprintf(stderr, "Controller and gyroscope will NOT be recognized as a single device!\n");
