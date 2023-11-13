@@ -36,8 +36,6 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 		fprintf(stderr, "Error setting the phys of the virtual controller.\n");
 	}
 
-	ioctl(fd, 18, PHYS_STR);
-
 #if !defined(UI_SET_PHYS_STR)
 	#warning Will not change the PHYS
 #endif
