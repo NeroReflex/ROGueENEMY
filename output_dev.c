@@ -512,15 +512,6 @@ void *output_dev_thread_func(void *ptr) {
 						sizeof(ev)
 					);
 				}
-
-				if (fd == out_dev->mouse_fd) {
-					printf(
-						"type: %s, code: %s, value: %d\n",
-						libevdev_event_type_get_name(ev.type),
-						libevdev_event_code_get_name(ev.type, ev.code),
-						(int)ev.value	
-					);
-				}
 			}
 
 #if defined(INCLUDE_TIMESTAMP)
