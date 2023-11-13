@@ -47,15 +47,15 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 	switch (type) {
 		case output_dev_imu: {
 #if defined(UI_SET_PHYS_STR)
-	ioctl(fd, UI_SET_PHYS_STR, PHYS_STR);
+			ioctl(fd, UI_SET_PHYS_STR(18), PHYS_STR);
 #else
-	fprintf(stderr, "UI_SET_PHYS_STR unavailable.\n");
+			fprintf(stderr, "UI_SET_PHYS_STR unavailable.\n");
 #endif
 
 #if defined(UI_SET_UNIQ_STR)
-	ioctl(fd, UI_SET_UNIQ_STR, PHYS_STR);
+			ioctl(fd, UI_SET_UNIQ_STR(18), PHYS_STR);
 #else
-	fprintf(stderr, "UI_SET_UNIQ_STR unavailable.\n");
+			fprintf(stderr, "UI_SET_UNIQ_STR unavailable.\n");
 #endif
 
 			ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_ACCELEROMETER);
@@ -170,15 +170,15 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 
 		case output_dev_gamepad: {
 #if defined(UI_SET_PHYS_STR)
-	ioctl(fd, UI_SET_PHYS_STR, PHYS_STR);
+			ioctl(fd, UI_SET_PHYS_STR(18), PHYS_STR);
 #else
-	fprintf(stderr, "UI_SET_PHYS_STR unavailable.\n");
+			fprintf(stderr, "UI_SET_PHYS_STR unavailable.\n");
 #endif
 
 #if defined(UI_SET_UNIQ_STR)
-	ioctl(fd, UI_SET_UNIQ_STR, PHYS_STR);
+			ioctl(fd, UI_SET_UNIQ_STR(18), PHYS_STR);
 #else
-	fprintf(stderr, "UI_SET_UNIQ_STR unavailable.\n");
+			fprintf(stderr, "UI_SET_UNIQ_STR unavailable.\n");
 #endif
 
 			//ioctl(fd, UI_SET_PROPBIT, INPUT_PROP_BUTTONPAD);
