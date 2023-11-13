@@ -69,3 +69,15 @@ int cycle_mode() {
 
     return 0;
 }
+
+int gamepad_mode() {
+    return global_platform != NULL ? global_platform->mode == 0 : 0;
+}
+
+int mouse_mode() {
+    return global_platform != NULL ? global_platform->mode == 1 : 0;
+}
+
+int macro_mode() {
+    return global_platform != NULL ? global_platform->mode == 2 : 0;
+}

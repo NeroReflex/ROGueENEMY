@@ -16,3 +16,9 @@ extern rc71l_platform_t* global_platform;
 void init_global_mode();
 
 int cycle_mode();
+
+int mouse_mode();
+
+int gamepad_mode();
+
+int macro_mode();

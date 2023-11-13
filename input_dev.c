@@ -19,8 +19,16 @@
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
 
+static uint32_t gyroscope_mouse_translation;
+
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count) {
-    return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_IMU;
+    if (gyroscope_mouse_translation > 0) {
+
+        return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_IMU; 
+    }
+
+    //return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_IMU;
+    return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
 }
 
 uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count) {
@@ -34,6 +42,8 @@ uint32_t input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t
         return INPUT_FILTER_FLAGS_MOUSE;
     } else if (events[0].type == EV_KEY) {
         if ((events[0].code == BTN_MIDDLE) || (events[0].code == BTN_LEFT) || (events[0].code == BTN_RIGHT)) {
+            return INPUT_FILTER_FLAGS_MOUSE;
+        } else if ((events[1].code == BTN_MIDDLE) || (events[1].code == BTN_LEFT) || (events[1].code == BTN_RIGHT)) {
             return INPUT_FILTER_FLAGS_MOUSE;
         }
     }
@@ -51,22 +61,38 @@ uint32_t input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t
         } else if (events[0].value == -13565784) {
             return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
         } else if ((*count == 2) && (events[0].value == 458860) && (events[1].type == EV_KEY) && (events[1].code == KEY_F17)) {
-            if (events[1].value < 2) {
-                *count = 1;
-                events[0].type = EV_KEY;
-                events[0].code = BTN_GEAR_DOWN;
-                events[0].value = events[1].value;
-                return INPUT_FILTER_FLAGS_NONE;
+            if (mouse_mode()) {
+                if (events[1].value < 2) {
+                    *count = 1;
+                    events[0].type = EV_KEY;
+                    events[0].code = BTN_GEAR_DOWN;
+                    events[0].value = events[1].value;
+                    return INPUT_FILTER_FLAGS_NONE;
+                }
+            } else if (gamepad_mode()) {
+                if (events[1].value == 0) {
+                    --gyroscope_mouse_translation;
+                } else if (events[1].value == 1) {
+                    ++gyroscope_mouse_translation;
+                }
             }
 
             return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
         } else if ((*count == 2) && (events[0].value == 458861) && (events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
-            if (events[1].value < 2) {
-                *count = 1;
-                events[0].type = EV_KEY;
-                events[0].code = BTN_GEAR_UP;
-                events[0].value = events[1].value;
-                return INPUT_FILTER_FLAGS_NONE;
+            if (mouse_mode()) {
+                if (events[1].value < 2) {
+                    *count = 1;
+                    events[0].type = EV_KEY;
+                    events[0].code = BTN_GEAR_UP;
+                    events[0].value = events[1].value;
+                    return INPUT_FILTER_FLAGS_NONE;
+                }
+            } else if (gamepad_mode()) {
+                if (events[1].value == 0) {
+                    --gyroscope_mouse_translation;
+                } else if (events[1].value == 1) {
+                    ++gyroscope_mouse_translation;
+                }
             }
 
             return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
