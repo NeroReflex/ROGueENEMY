@@ -182,8 +182,6 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 			ioctl(fd, UI_SET_KEYBIT, BTN_MODE);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBL);
 			ioctl(fd, UI_SET_KEYBIT, BTN_THUMBR);
-			ioctl(fd, UI_SET_KEYBIT, BTN_THUMB);
-			ioctl(fd, UI_SET_KEYBIT, BTN_THUMB2);
 			ioctl(fd, UI_SET_KEYBIT, BTN_GEAR_DOWN);
 			ioctl(fd, UI_SET_KEYBIT, BTN_GEAR_UP);
 			ioctl(fd, UI_SET_KEYBIT, BTN_DPAD_UP);
