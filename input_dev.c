@@ -19,7 +19,7 @@
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
 
-static uint32_t gyroscope_mouse_translation;
+static uint32_t gyroscope_mouse_translation = 0;
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count) {
     int32_t gyro_x = 0, gyro_y = 0, gyro_z = 0, accel_x = 0, accel_y = 0, accel_z = 0;
@@ -45,21 +45,23 @@ uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uin
             }
         }
 
-        *count = 0;
+        uint32_t w = 0;
 
         if (gyro_x != 0) {
-            events[*count].type = EV_REL;
-            events[*count].code = REL_X;
-            events[*count].value = gyro_x / 255;
-            *count = *count + 1;
+            events[w].type = EV_REL;
+            events[w].code = REL_X;
+            events[w].value = gyro_x / 255;
+            ++w;
         }
 
         if (gyro_z != 0) {
-            events[*count].type = EV_REL;
-            events[*count].code = REL_Y;
-            events[*count].value = gyro_y / 255;
-            *count = *count + 1;
+            events[w].type = EV_REL;
+            events[w].code = REL_Y;
+            events[w].value = gyro_y / 255;
+            ++w;
         }
+
+        *count = w;
 
         return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_MOUSE; 
     }
