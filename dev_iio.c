@@ -105,7 +105,7 @@ dev_iio_t* dev_iio_create(const char* path) {
             iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
         } else {
-            // TODO: what about if those are plit in in_anglvel_{x,y,z}_scale?
+            // TODO: what about if those are split in in_anglvel_{x,y,z}_scale?
             fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", iio->path, "/in_accel_scale");
 
             free(iio);
