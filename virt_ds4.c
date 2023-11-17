@@ -556,6 +556,10 @@ void *virt_ds4_thread_func(void *ptr) {
             const int res = send_data(fd, logic, counter);
             if (res >= 0) {
                 ++counter;
+
+                printf("PS4 send HID report: %d", res);
+            } else {
+                fprintf(stderr, "Error sending HID report: %d", res);
             }
         }
         
