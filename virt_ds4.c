@@ -340,7 +340,9 @@ static int event(int fd)
 	if (ret == 0) {
 		fprintf(stderr, "Read HUP on uhid-cdev\n");
 		return -EFAULT;
-	} else if (ret < 0) {
+	} else if (ret == -1) {
+        return 0;
+    } else if (ret < 0) {
 		fprintf(stderr, "Cannot read uhid-cdev: %d\n", (int)ret);
 		return -errno;
 	} else if (ret != sizeof(ev)) {
