@@ -662,10 +662,13 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
 		if (msg->data.event.ev[i].type == EV_KEY) {
 			if (msg->data.event.ev[i].code == BTN_SOUTH) {
+				printf("BTN_SOUTH\n");
 				gs->cross = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_NORTH) {
+				printf("BTN_NORTH\n");
 				gs->circle = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_EAST) {
+				printf("BTN_SOUTH\n");
 				gs->square = msg->data.event.ev[i].value;
 			} /*else if (msg->data.event.ev[i].code == BTN_) {
 				gs->square = msg->data.event.ev[i].value;

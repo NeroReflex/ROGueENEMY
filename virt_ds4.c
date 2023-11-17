@@ -447,7 +447,7 @@ static uint8_t get_buttons_byte_by_gs(const gamepad_status_t *const gs) {
     uint8_t res = 0;
 
     if (gs->triangle) {
-        printf("TRIANGLE!!!");
+        printf("________TRIANGLE________\n");
     }
 
     res |= gs->triangle ? 0x80 : 0x00;
@@ -462,7 +462,7 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     gamepad_status_t gs = {};
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
     if (gs_copy_res != 0) {
-        fprintf(stderr, "Unable to copy the gamepad status: %d", gs_copy_res);
+        fprintf(stderr, "Unable to copy the gamepad status: %d\n", gs_copy_res);
         return gs_copy_res;
     }
 
@@ -562,6 +562,8 @@ void *virt_ds4_thread_func(void *ptr) {
             } else {
                 fprintf(stderr, "Error sending HID report: %d", res);
             }
+        } else {
+            printf("PS4 output not enabled");
         }
         
     }
