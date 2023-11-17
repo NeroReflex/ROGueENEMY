@@ -463,6 +463,8 @@ static uint8_t get_buttons_byte_by_gs(const gamepad_status_t *const gs) {
 }
 
 static int send_data(int fd, logic_t *const logic, uint8_t counter) {
+    static uint16_t timestamp = 188;
+
     gamepad_status_t gs = {};
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
     if (gs_copy_res != 0) {
@@ -503,8 +505,7 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     buf[7] = (counter % (uint8_t)64) << ((uint8_t)2);
     buf[8] = gs.l2_trigger;
     buf[9] = gs.r2_trigger;
-    buf[10] = 0;
-    buf[11] = 0;
+    memcpy(&buf[10], &timestamp, sizeof(timestamp));
     buf[12] = 0x20; // [12] battery level
     memcpy(&buf[13], &gs.gyro_x, sizeof(int16_t));
     memcpy(&buf[15], &gs.gyro_y, sizeof(int16_t));
@@ -533,6 +534,8 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     };
 
     memcpy(&l.u.output.data[0], &buf[0], l.u.output.size);
+
+    ++timestamp;
 
     return uhid_write(fd, &l);
 }
