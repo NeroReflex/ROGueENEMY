@@ -7,18 +7,12 @@ typedef struct rc71l_platform {
     unsigned int modes_count;
 } rc71l_platform_t;
 
-#ifdef PLATFORM_FILE
-rc71l_platform_t* global_platform = NULL;
-#else
-extern rc71l_platform_t* global_platform;
-#endif
+int init_platform(rc71l_platform_t *const platform);
 
-void init_global_mode();
+int cycle_mode(rc71l_platform_t *const platform);
 
-int cycle_mode();
+int is_mouse_mode(rc71l_platform_t *const platform);
 
-int mouse_mode();
+int is_gamepad_mode(rc71l_platform_t *const platform);
 
-int gamepad_mode();
-
-int macro_mode();
+int is_macro_mode(rc71l_platform_t *const platform);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rogue_enemy.h"
+#include "imu_message.h"
 
 #define DEV_IIO_HAS_ACCEL   0x00000001U
 #define DEV_IIO_HAS_ANGLVEL 0x00000002U
@@ -60,4 +60,9 @@ int dev_iio_read(
     struct input_event *const buf,
     size_t buf_sz,
     uint32_t *const buf_out
+);
+
+int dev_iio_read_imu(
+    const dev_iio_t *const iio,
+    imu_message_t *const out
 );

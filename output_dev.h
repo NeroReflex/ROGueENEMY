@@ -1,6 +1,7 @@
 #pragma once
 
 #include "queue.h"
+#include "logic.h"
 
 // Emulates a "Generic" controller:
 #define OUTPUT_DEV_NAME             "ROGueENEMY"
@@ -60,7 +61,7 @@ typedef struct output_dev {
 
     volatile uint32_t crtl_flags;
 
-    queue_t *queue;
+    logic_t *logic;
 } output_dev_t;
 
 int create_output_dev(const char* uinput_path, output_dev_type_t type);

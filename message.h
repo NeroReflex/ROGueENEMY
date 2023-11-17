@@ -1,8 +1,11 @@
 #pragma once
 
-#include "rogue_enemy.h"
+#include "imu_message.h"
 
-#define MESSAGE_FLAGS_HANDLE_DONE 0x00000001U
+#define MESSAGE_FLAGS_HANDLE_DONE         0x00000001U
+#define EV_MESSAGE_FLAGS_PRESERVE_TIME    0x00000002U
+#define EV_MESSAGE_FLAGS_IMU              0x00000004U
+#define EV_MESSAGE_FLAGS_MOUSE            0x00000008U
 
 typedef struct ev_message {
     struct input_event* ev;
@@ -15,20 +18,13 @@ typedef struct ev_message {
 
 } ev_message_t;
 
-typedef struct imu_message {
-    int32_t gyro_x;
-    int32_t gyro_y;
-    int32_t gyro_z;
-
-    int32_t accel_x;
-    int32_t accel_y;
-    int32_t accel_z;
-} imu_message_t;
-
 typedef enum message_type {
     MSG_TYPE_EV = 0,
     MSG_TYPE_IMU,
 } message_type_t;
+
+#define INPUT_FILTER_FLAGS_NONE             0x00000000U
+#define INPUT_FILTER_FLAGS_DO_NOT_EMIT      0x00000001U
 
 typedef struct message {
     message_type_t type;
@@ -40,9 +36,3 @@ typedef struct message {
 
     volatile uint32_t flags;
 } message_t;
-
-#define INPUT_FILTER_FLAGS_NONE             0x00000000U
-#define INPUT_FILTER_FLAGS_DO_NOT_EMIT      0x00000001U
-#define EV_MESSAGE_FLAGS_PRESERVE_TIME    0x00000002U
-#define EV_MESSAGE_FLAGS_IMU              0x00000004U
-#define EV_MESSAGE_FLAGS_MOUSE            0x00000008U

@@ -1,8 +1,12 @@
 #include "output_dev.h"
+#include "logic.h"
 #include "queue.h"
 #include "message.h"
 #include <linux/input-event-codes.h>
+#include <stdio.h>
 #include <unistd.h>
+
+#include "virt_ds4.h"
 
 int create_output_dev(const char* uinput_path, output_dev_type_t type) {
     int fd = open(uinput_path, O_WRONLY | O_NONBLOCK);
@@ -452,7 +456,12 @@ create_output_dev_err:
     return fd;
 }
 
-static void handle_ev(output_dev_t *const out_dev, const message_t *const msg) {
+static void emit_ev(output_dev_t *const out_dev, const message_t *const msg) {
+	// if events are flagged as do not emit... Do NOT emit!
+	if (msg->flags & INPUT_FILTER_FLAGS_DO_NOT_EMIT) {
+		return;
+	}
+
 	int fd = out_dev->gamepad_fd;
 	if ((msg->flags & EV_MESSAGE_FLAGS_IMU) != 0) {
 		fd = out_dev->imu_fd;
@@ -525,14 +534,157 @@ static void handle_ev(output_dev_t *const out_dev, const message_t *const msg) {
 	}
 }
 
-static void handle_msg(output_dev_t *const out_dev, const message_t *const msg) {
+static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
+	static int F15_status = 0;
+	static int gyroscope_mouse_translation = 0;
+
+    if (msg->data.event.ev[0].type == EV_REL) {
+        msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_MOUSE;
+    } else if ((msg->data.event.ev[0].type == EV_KEY) || (msg->data.event.ev[1].type == EV_KEY)) {
+        if ((msg->data.event.ev[0].code == BTN_MIDDLE) || (msg->data.event.ev[0].code == BTN_LEFT) || (msg->data.event.ev[0].code == BTN_RIGHT)) {
+            msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
+        } else if ((msg->data.event.ev[1].code == BTN_MIDDLE) || (msg->data.event.ev[1].code == BTN_LEFT) || (msg->data.event.ev[1].code == BTN_RIGHT)) {
+            msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
+        }
+    } else if ((msg->data.event.ev_count >= 2) && (msg->data.event.ev[0].type == EV_MSC) && (msg->data.event.ev[0].code == MSC_SCAN)) {
+        if ((msg->data.event.ev[0].value == -13565784) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F18)) {
+            if (msg->data.event.ev[1].value == 1) {
+                printf("Detected mode switch command, switching mode...\n");
+                cycle_mode(&out_dev->logic->platform);
+            } else {
+                // Do nothing effectively discarding the input
+            }
+
+            msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
+        } else if (msg->data.event.ev[0].value == -13565784) {
+            msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
+        } else if ((msg->data.event.ev_count == 2) && (msg->data.event.ev[0].value == 458860) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F17)) {
+            if (is_rc71l_ready(out_dev->logic)) {
+				if (is_mouse_mode(&out_dev->logic->platform)) {
+					if (msg->data.event.ev[1].value < 2) {
+						msg->data.event.ev_count = 1;
+						msg->data.event.ev[0].type = EV_KEY;
+						msg->data.event.ev[0].code = BTN_GEAR_DOWN;
+						msg->data.event.ev[0].value = msg->data.event.ev[1].value;
+						return;
+					}
+				} else if (is_gamepad_mode(&out_dev->logic->platform)) {
+					if (msg->data.event.ev[1].value == 0) {
+						--gyroscope_mouse_translation;
+					} else if (msg->data.event.ev[1].value == 1) {
+						++gyroscope_mouse_translation;
+					}
+				}
+
+				msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
+			}
+        } else if ((msg->data.event.ev_count == 2) && (msg->data.event.ev[0].value == 458861) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F18)) {
+            if (is_rc71l_ready(out_dev->logic)) {
+				if (is_mouse_mode(&out_dev->logic->platform)) {
+					if (msg->data.event.ev[1].value < 2) {
+						msg->data.event.ev_count = 1;
+						msg->data.event.ev[0].type = EV_KEY;
+						msg->data.event.ev[0].code = BTN_GEAR_UP;
+						msg->data.event.ev[0].value = msg->data.event.ev[1].value;
+					}
+				} else if (is_gamepad_mode(&out_dev->logic->platform)) {
+					if (msg->data.event.ev[1].value == 0) {
+						--gyroscope_mouse_translation;
+					} else if (msg->data.event.ev[1].value == 1) {
+						++gyroscope_mouse_translation;
+					}
+
+					msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
+				}
+			}
+        } else if ((msg->data.event.ev_count == 2) && (msg->data.event.ev[0].value == -13565786) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F16)) {
+            msg->data.event.ev_count = 1;
+            msg->data.event.ev[0].type = EV_KEY;
+            msg->data.event.ev[0].code = BTN_MODE;
+            msg->data.event.ev[0].value = msg->data.event.ev[1].value;
+        } else if ((msg->data.event.ev_count == 2) && (msg->data.event.ev[0].value == -13565787) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F15)) {
+            if (msg->data.event.ev[1].value == 0) {
+                if (F15_status > 0) {
+                    --F15_status;
+                }
+
+                if (F15_status == 0) {
+                    printf("Exiting gyro mode.\n");
+                }
+            } else if (msg->data.event.ev[1].value == 1) {
+                if (F15_status <= 2) {
+                    ++F15_status;
+                }
+
+                if (F15_status == 1) {
+                    printf("Entering gyro mode.\n");
+                }
+            }
+
+            msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
+        } else if (
+			(msg->data.event.ev_count == 2) &&
+			(msg->data.event.ev_size >= 3) &&
+			(msg->data.event.ev[0].value == -13565896) &&
+			(msg->data.event.ev[1].type == EV_KEY) &&
+			(msg->data.event.ev[1].code == KEY_PROG1)
+		) {
+            msg->data.event.ev_count = 3;
+
+            const int32_t val = msg->data.event.ev[1].value;
+            //struct timeval time = msg->data.event.ev[1].time;
+
+            msg->data.event.ev[0].type = EV_KEY;
+            msg->data.event.ev[0].code = BTN_MODE;
+            msg->data.event.ev[0].value = val;
+
+            msg->data.event.ev[1].type = SYN_REPORT;
+            msg->data.event.ev[1].code = EV_SYN;
+            msg->data.event.ev[1].value = 0;
+
+            msg->data.event.ev[2].type = EV_KEY;
+            msg->data.event.ev[2].code = BTN_SOUTH;
+            msg->data.event.ev[2].value = val;
+/*
+            events[3].type = SYN_REPORT;
+            events[3].code = EV_SYN;
+            events[3].value = 0;
+
+            events[4].type = EV_KEY;
+            events[4].code = BTN_SOUTH;
+            events[4].value = 0;
+*/
+        }
+    }
+}
+
+static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 	if (msg->type == MSG_TYPE_EV) {
-		handle_ev(out_dev, msg);
+		decode_ev(out_dev, msg);
+
+		if ((out_dev->logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) != 0) {
+			emit_ev(out_dev, msg);
+		}
+	} else if (msg->type == MSG_TYPE_IMU) {
+		const int upd_beg_res = logic_begin_status_update(out_dev->logic);
+		if (upd_beg_res == 0) {
+			out_dev->logic->gamepad.accel_x = msg->data.imu.accel_x_raw;
+			out_dev->logic->gamepad.accel_y = msg->data.imu.accel_y_raw;
+			out_dev->logic->gamepad.accel_z = msg->data.imu.accel_z_raw;
+			out_dev->logic->gamepad.gyro_x = msg->data.imu.gyro_x_raw;
+			out_dev->logic->gamepad.gyro_y = msg->data.imu.gyro_y_raw;
+			out_dev->logic->gamepad.gyro_z = msg->data.imu.gyro_z_raw;
+
+			logic_end_status_update(out_dev->logic);
+		} else {
+			fprintf(stderr, "Unable to begin the gamepad status update: %d\n", upd_beg_res);
+		}
 	}
 }
 
 void *output_dev_thread_func(void *ptr) {
-    output_dev_t *out_dev = (output_dev_t*)ptr;
+	output_dev_t *const out_dev = (output_dev_t*)ptr;
+
 	struct timeval now = {0};
 
 #if defined(INCLUDE_TIMESTAMP)
@@ -543,7 +695,7 @@ void *output_dev_thread_func(void *ptr) {
 
     for (;;) {
 		void *raw_ev;
-		const int pop_res = queue_pop_timeout(out_dev->queue, &raw_ev, 1000);
+		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1000);
 		if (pop_res == 0) {
 			message_t *const msg = (message_t*)raw_ev;
 			handle_msg(out_dev, msg);

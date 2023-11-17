@@ -3,7 +3,8 @@
 #include "rogue_enemy.h"
 
 typedef struct queue {
-    sem_t empty, full, mutex;
+    sem_t empty, full;
+    pthread_mutex_t mutex;
 
     ssize_t front;
     ssize_t rear;

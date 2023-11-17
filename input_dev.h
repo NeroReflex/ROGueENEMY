@@ -2,6 +2,7 @@
 
 #include "queue.h"
 #include "message.h"
+#include "logic.h"
 
 #undef INCLUDE_INPUT_DEBUG
 #undef IGNORE_INPUT_SCAN
@@ -31,9 +32,9 @@ typedef struct input_dev {
 
     volatile uint32_t crtl_flags;
 
-    queue_t *queue;
-
     ev_input_filter_t ev_input_filter_fn;
+
+    logic_t *logic;
 
 } input_dev_t;
 

@@ -5,49 +5,43 @@
 
 static const char* const platform_input_path = "/sys/devices/platform/asus-mcu.0/input/mode";
 
-static rc71l_platform_t static_platform;
-
-void init_global_mode() {
-    global_platform = NULL;
-
-    if (access(platform_input_path, F_OK) == 0) {
-        FILE* mode_file = fopen(platform_input_path, "r");
-        if (mode_file == NULL) {
-            fprintf(stderr, "Unable to open the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
-            return;
-        }
-
-        char mode_str[12];
-        unsigned long read_bytes = fread((void*)&mode_str[0], 1, sizeof(mode_str), mode_file);
-        if (read_bytes < 1) {
-            fprintf(stderr, "Unable to read the MCU platform mode file %s: no bytes.\n", platform_input_path);
-            fclose(mode_file);
-        }
-
-        static_platform.mode = strtoul(&mode_str[0], NULL, 10);
-
-        fclose(mode_file);
-
-        global_platform = &static_platform;
-        printf("Asus MCU platform found: current mode %lu\n", global_platform->mode);
-        global_platform->modes_count = 3;
-    } else {
+int init_platform(rc71l_platform_t *const platform) {
+    if (access(platform_input_path, F_OK) != 0) {
         fprintf(stderr, "Unable to find the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
+        return -ENOENT;
     }
+
+    FILE* mode_file = fopen(platform_input_path, "r");
+    if (mode_file == NULL) {
+        fprintf(stderr, "Unable to open the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
+        return -EINVAL;
+    }
+
+    char mode_str[12];
+    unsigned long read_bytes = fread((void*)&mode_str[0], 1, sizeof(mode_str), mode_file);
+    if (read_bytes < 1) {
+        fprintf(stderr, "Unable to read the MCU platform mode file %s: no bytes.\n", platform_input_path);
+        fclose(mode_file);
+    }
+
+    platform->mode = strtoul(&mode_str[0], NULL, 10);
+
+    fclose(mode_file);
+
+    printf("Asus MCU platform found: current mode %lu\n", platform->mode);
+    platform->modes_count = 3;
+
+    return 0;
 }
 
-int cycle_mode() {
-    if (global_platform == NULL) {
-        fprintf(stderr, "Asus MCU not registered: aborting.\n");
-    }
-
+int cycle_mode(rc71l_platform_t *const platform) {
     char new_mode_str[] = { 
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00
     };
     
-    unsigned long new_mode = (global_platform->mode + 1) % global_platform->modes_count;
+    unsigned long new_mode = (platform->mode + 1) % platform->modes_count;
     sprintf(new_mode_str, "%lu\n", new_mode);
 
     FILE* mode_file = fopen(platform_input_path, "w");
@@ -63,21 +57,21 @@ int cycle_mode() {
         return -2;
     }
 
-    global_platform->mode = new_mode;
+    platform->mode = new_mode;
 
     fclose(mode_file);
 
     return 0;
 }
 
-int gamepad_mode() {
-    return global_platform != NULL ? global_platform->mode == 0 : 0;
+int is_gamepad_mode(rc71l_platform_t *const platform) {
+    return platform != NULL ? platform->mode == 0 : 0;
 }
 
-int mouse_mode() {
-    return global_platform != NULL ? global_platform->mode == 1 : 0;
+int is_mouse_mode(rc71l_platform_t *const platform) {
+    return platform != NULL ? platform->mode == 1 : 0;
 }
 
-int macro_mode() {
-    return global_platform != NULL ? global_platform->mode == 2 : 0;
+int is_macro_mode(rc71l_platform_t *const platform) {
+    return platform != NULL ? platform->mode == 2 : 0;
 }

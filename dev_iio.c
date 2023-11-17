@@ -354,3 +354,87 @@ int dev_iio_read(
 
     return 0;
 }
+
+int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
+    char tmp[128];
+
+    if (iio->accel_x_fd != NULL) {
+        rewind(iio->accel_x_fd);
+        memset((void*)&tmp[0], 0, sizeof(tmp));
+        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_x_fd);
+        if (tmp_read >= 0) {
+            out->accel_x_raw = strtol(&tmp[0], NULL, 10);
+            out->accel_x_in_m2s = (double)out->accel_x_raw * iio->accel_scale_x;
+        } else {
+            fprintf(stderr, "While reading accel(x): %d\n", tmp_read);
+            return tmp_read;
+        }
+    }
+
+    if (iio->accel_y_fd != NULL) {
+        rewind(iio->accel_y_fd);
+        memset((void*)&tmp[0], 0, sizeof(tmp));
+        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_y_fd);
+        if (tmp_read >= 0) {
+            out->accel_y_raw = strtol(&tmp[0], NULL, 10);
+            out->accel_y_in_m2s = (double)out->accel_y_raw * iio->accel_scale_y;
+        } else {
+            fprintf(stderr, "While reading accel(y): %d\n", tmp_read);
+            return tmp_read;
+        }
+    }
+
+    if (iio->accel_z_fd != NULL) {
+        rewind(iio->accel_z_fd);
+        memset((void*)&tmp[0], 0, sizeof(tmp));
+        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_z_fd);
+        if (tmp_read >= 0) {
+            out->accel_z_raw = strtol(&tmp[0], NULL, 10);
+            out->accel_z_in_m2s = (double)out->accel_z_raw * iio->accel_scale_z;
+        } else {
+            fprintf(stderr, "While reading accel(z): %d\n", tmp_read);
+            return tmp_read;
+        }
+    }
+
+    if (iio->anglvel_x_fd != NULL) {
+        rewind(iio->anglvel_x_fd);
+        memset((void*)&tmp[0], 0, sizeof(tmp));
+        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_x_fd);
+        if (tmp_read >= 0) {
+            out->gyro_x_raw = strtol(&tmp[0], NULL, 10);
+            out->gyro_x_in_rad_s = (double)out->gyro_x_raw * iio->anglvel_scale_x;
+        } else {
+            fprintf(stderr, "While reading anglvel(x): %d\n", tmp_read);
+            return tmp_read;
+        }
+    }
+
+    if (iio->anglvel_y_fd != NULL) {
+        rewind(iio->anglvel_y_fd);
+        memset((void*)&tmp[0], 0, sizeof(tmp));
+        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_y_fd);
+        if (tmp_read >= 0) {
+            out->gyro_y_raw = strtol(&tmp[0], NULL, 10);
+            out->gyro_y_in_rad_s = (double)out->gyro_y_raw *iio->anglvel_scale_y;
+        } else {
+            fprintf(stderr, "While reading anglvel(y): %d\n", tmp_read);
+            return tmp_read;
+        }
+    }
+
+    if (iio->anglvel_z_fd != NULL) {
+        rewind(iio->anglvel_z_fd);
+        memset((void*)&tmp[0], 0, sizeof(tmp));
+        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_z_fd);
+        if (tmp_read >= 0) {
+            out->gyro_z_raw = strtol(&tmp[0], NULL, 10);
+            out->gyro_z_in_rad_s = (double)out->gyro_z_raw *iio->anglvel_scale_z;
+        } else {
+            fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
+            return tmp_read;
+        }
+    }
+
+    return 0;
+}

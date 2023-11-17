@@ -1,0 +1,71 @@
+#pragma once
+
+#include "platform.h"
+#include "queue.h"
+
+typedef enum dpad_status {
+    DPAD_N        = 0,
+    DPAD_NE       = 1,
+    DPAD_E        = 2,
+    DPAD_SE       = 3,
+    DPAD_S        = 4,
+    DPAD_SW       = 5,
+    DPAD_W        = 6,
+    DPAD_NW       = 7,
+    DPAD_RELEASED = 0x08,
+} dpad_status_t;
+
+typedef struct gamepad_status {
+
+    uint8_t joystick_positions[2][2]; // [0 left | 1 right][x axis | y axis]
+
+    dpad_status_t dpad;
+
+    uint8_t l2_trigger;
+    uint8_t r2_trigger;
+
+    uint8_t triangle;
+    uint8_t circle;
+    uint8_t cross;
+    uint8_t square;
+
+    int16_t gyro_x; // follows right-hand-rules
+    int16_t gyro_y; // follows right-hand-rules
+    int16_t gyro_z; // follows right-hand-rules
+
+    int16_t accel_x; // positive: right
+    int16_t accel_y; // positive: up
+    int16_t accel_z; // positive: towards player
+
+
+    //uint8_t 
+
+} gamepad_status_t;
+
+#define LOGIC_FLAGS_VIRT_DS4_ENABLE   0x00000001U
+#define LOGIC_FLAGS_PLATFORM_ENABLE   0x00000002U
+
+typedef struct logic {
+
+    rc71l_platform_t platform;
+
+    pthread_mutex_t gamepad_mutex;
+    gamepad_status_t gamepad;
+
+    queue_t input_queue;
+
+    pthread_t virt_ds4_thread;
+
+    volatile uint32_t flags;
+
+} logic_t;
+
+int logic_create(logic_t *const logic);
+
+int is_rc71l_ready(const logic_t *const logic);
+
+int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out);
+
+int logic_begin_status_update(logic_t *const logic);
+
+void logic_end_status_update(logic_t *const logic);

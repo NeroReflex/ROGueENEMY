@@ -4,6 +4,7 @@
 #include "dev_iio.h"
 #include "platform.h"
 
+#include <stdlib.h>
 #include <libevdev-1.0/libevdev/libevdev.h>
 #include <linux/input-event-codes.h>
 #include <linux/input.h>
@@ -18,8 +19,6 @@
 
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
-
-static uint32_t gyroscope_mouse_translation = 0;
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
     int32_t gyro_x = 0, gyro_y = 0, gyro_z = 0, accel_x = 0, accel_y = 0, accel_z = 0;
@@ -74,126 +73,7 @@ uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_
 }
 
 uint32_t input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
-    static int F15_status = 0;
-
-    if (events[0].type == EV_REL) {
-        *flags |= EV_MESSAGE_FLAGS_MOUSE;
-
-        return 0;
-    } else if ((events[0].type == EV_KEY) || (events[1].type == EV_KEY)) {
-        if ((events[0].code == BTN_MIDDLE) || (events[0].code == BTN_LEFT) || (events[0].code == BTN_RIGHT)) {
-            *flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
-        } else if ((events[1].code == BTN_MIDDLE) || (events[1].code == BTN_LEFT) || (events[1].code == BTN_RIGHT)) {
-            *flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
-        }
-
-        return 0;
-    }
-
-    if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN)) {
-        if ((events[0].value == -13565784) && (events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
-            if (events[1].value == 1) {
-                printf("Detected mode switch command, switching mode...\n");
-                cycle_mode();
-            } else {
-                // Do nothing effectively discarding the input
-            }
-
-            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
-        } else if (events[0].value == -13565784) {
-            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
-        } else if ((*count == 2) && (events[0].value == 458860) && (events[1].type == EV_KEY) && (events[1].code == KEY_F17)) {
-            if (mouse_mode()) {
-                if (events[1].value < 2) {
-                    *count = 1;
-                    events[0].type = EV_KEY;
-                    events[0].code = BTN_GEAR_DOWN;
-                    events[0].value = events[1].value;
-                    return INPUT_FILTER_FLAGS_NONE;
-                }
-            } else if (gamepad_mode()) {
-                if (events[1].value == 0) {
-                    --gyroscope_mouse_translation;
-                } else if (events[1].value == 1) {
-                    ++gyroscope_mouse_translation;
-                }
-            }
-
-            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
-        } else if ((*count == 2) && (events[0].value == 458861) && (events[1].type == EV_KEY) && (events[1].code == KEY_F18)) {
-            if (mouse_mode()) {
-                if (events[1].value < 2) {
-                    *count = 1;
-                    events[0].type = EV_KEY;
-                    events[0].code = BTN_GEAR_UP;
-                    events[0].value = events[1].value;
-                    return INPUT_FILTER_FLAGS_NONE;
-                }
-            } else if (gamepad_mode()) {
-                if (events[1].value == 0) {
-                    --gyroscope_mouse_translation;
-                } else if (events[1].value == 1) {
-                    ++gyroscope_mouse_translation;
-                }
-            }
-
-            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
-        } else if ((*count == 2) && (events[0].value == -13565786) && (events[1].type == EV_KEY) && (events[1].code == KEY_F16)) {
-            *count = 1;
-            events[0].type = EV_KEY;
-            events[0].code = BTN_MODE;
-            events[0].value = events[1].value;
-
-            return INPUT_FILTER_FLAGS_NONE;
-        } else if ((*count == 2) && (events[0].value == -13565787) && (events[1].type == EV_KEY) && (events[1].code == KEY_F15)) {
-            if (events[1].value == 0) {
-                if (F15_status > 0) {
-                    --F15_status;
-                }
-
-                if (F15_status == 0) {
-                    printf("Exiting gyro mode.\n");
-                }
-            } else if (events[1].value == 1) {
-                if (F15_status <= 2) {
-                    ++F15_status;
-                }
-
-                if (F15_status == 1) {
-                    printf("Entering gyro mode.\n");
-                }
-            }
-
-            return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
-        } else if ((*count == 2) && (*size >= 3) && (events[0].value == -13565896) && (events[1].type == EV_KEY) && (events[1].code == KEY_PROG1)) {
-            *count = 3;
-
-            int32_t val = events[1].value;
-            struct timeval time = events[1].time;
-
-            events[0].type = EV_KEY;
-            events[0].code = BTN_MODE;
-            events[0].value = val;
-
-            events[1].type = SYN_REPORT;
-            events[1].code = EV_SYN;
-            events[1].value = 0;
-
-            events[2].type = EV_KEY;
-            events[2].code = BTN_SOUTH;
-            events[2].value = val;
-/*
-            events[3].type = SYN_REPORT;
-            events[3].code = EV_SYN;
-            events[3].value = 0;
-
-            events[4].type = EV_KEY;
-            events[4].code = BTN_SOUTH;
-            events[4].value = 0;
-*/
-            return INPUT_FILTER_FLAGS_NONE;
-        }
-    }
+    
 
     return INPUT_FILTER_FLAGS_NONE;
 }
@@ -294,8 +174,7 @@ static void* iio_read_thread_func(void* ptr) {
             continue;
         }
 
-        /*
-        rc = dev_iio_read(ctx->iio_dev, msg->ev, msg->ev_size, &msg->ev_count);
+        rc = dev_iio_read_imu(ctx->iio_dev, &msg->data.imu);
         if (rc == 0) {
             // OK: good read. go on....
         } else if (rc == -ENOMEM) {
@@ -309,21 +188,14 @@ static void* iio_read_thread_func(void* ptr) {
         // clear out flags
         msg->flags = 0x00000000U;
 
-        const uint32_t input_filter_res = ctx->input_filter_fn(msg->ev, &msg->ev_size, &msg->ev_count);
-        
-        if (((input_filter_res & INPUT_FILTER_FLAGS_DO_NOT_EMIT) == 0) && (msg->ev_count > 0)) {
-            if (queue_push(ctx->queue, (void*)msg) != 0) {
-                fprintf(stderr, "Error pushing iio event.\n");
+        if (queue_push(ctx->queue, (void*)msg) != 0) {
+            fprintf(stderr, "Error pushing iio event.\n");
 
-                // flag the memory to be safe to reuse
-                msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
-            }
-        } else {
             // flag the memory to be safe to reuse
             msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
         }
-        */
 
+        // TODO: configure equal as sampling rate
         usleep(100);
 
         // either way.... fill a new buffer on the next cycle
@@ -376,19 +248,39 @@ static void* input_read_thread_func(void* ptr) {
             }
 
             if ((!has_syn) || ((has_syn) && (!is_syn))) {
-                if ((msg->data.event.ev_count+1) == msg->data.event.ev_size) {
-                    // TODO: perform a memove
-                    fprintf(stderr, "MEMMOVE NEEDED\n");
-                } else {
 #if defined(INCLUDE_INPUT_DEBUG)
-                    printf(
-                        "Input: %s %s %d\n",
-                        libevdev_event_type_get_name(read_ev.type),
-                        libevdev_event_code_get_name(read_ev.type, read_ev.code),
-                        read_ev.value
-                    );
+                printf(
+                    "Input: %s %s %d\n",
+                    libevdev_event_type_get_name(read_ev.type),
+                    libevdev_event_code_get_name(read_ev.type, read_ev.code),
+                    read_ev.value
+                );
 #endif
 
+                if ((msg->data.event.ev_count+1) == msg->data.event.ev_size) {
+                    // TODO: perform a memove
+                    printf("maximum number of events reached, buffer enlarged.\n");
+                    
+                    const size_t new_size = msg->data.event.ev_size * 2;
+                    struct input_event* new_buf = malloc(sizeof(struct input_event) * new_size);
+                    if (new_buf != NULL) {
+                        void* old_buf = (void*)msg->data.event.ev;
+                        
+                        // copy events already in the buffer
+                        memcpy((void*)new_buf, (const void*)old_buf, sizeof(struct input_event) * msg->data.event.ev_size);
+                        
+                        // copy the new event
+                        memcpy((void*)(&new_buf[msg->data.event.ev_count]), (const void*)&read_ev, sizeof(struct input_event));
+                        ++msg->data.event.ev_count;
+
+                        msg->data.event.ev = new_buf;
+                        msg->data.event.ev_size = new_size;
+
+                        free(old_buf);
+                    } else {
+                        fprintf(stderr, "Unable to allocate data for incoming events.");
+                    }
+                } else {
                     // just copy the input event
                     msg->data.event.ev[msg->data.event.ev_count] = read_ev;
                     ++msg->data.event.ev_count;
@@ -396,9 +288,9 @@ static void* input_read_thread_func(void* ptr) {
             }
 
             if ((!has_syn) || ((has_syn) && (is_syn))) {
-                /*
+#if defined(INCLUDE_INPUT_DEBUG)
                 printf("Sync ---------------------------------------\n");
-                */
+#endif
 
                 // clear out flags
                 msg->flags = 0x00000000U;
@@ -421,8 +313,6 @@ static void* input_read_thread_func(void* ptr) {
                 // either way.... fill a new buffer on the next cycle
                 msg = NULL;
             }
-
-            
         }
     } while (rc == 1 || rc == 0 || rc == -EAGAIN);
 
@@ -655,11 +545,9 @@ void *input_dev_thread_func(void *ptr) {
 
     struct input_ctx ctx = {
         .dev = NULL,
-        .queue = in_dev->queue,
+        .queue = &in_dev->logic->input_queue,
         .input_filter_fn = in_dev->ev_input_filter_fn,
     };
-
-    
 
     if (in_dev->dev_type == input_dev_type_uinput) {
         // prepare space and empty messages
