@@ -4,7 +4,7 @@
 #include <fcntl.h>
 #include <poll.h>
 
-static const char* path = "/dev/dualshock4";
+static const char* path = "/dev/uhid";
 
 static unsigned char rdesc[] = {
 	0x05, 0x01,         /*  Usage Page (Desktop),               */
