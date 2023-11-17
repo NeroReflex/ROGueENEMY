@@ -658,9 +658,34 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
     }
 }
 
+static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) {
+	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
+		if (msg->data.event.ev[i].type == EV_KEY) {
+			if (msg->data.event.ev[i].code == BTN_SOUTH) {
+				gs->cross = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_NORTH) {
+				gs->circle = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_EAST) {
+				gs->square = msg->data.event.ev[i].value;
+			} /*else if (msg->data.event.ev[i].code == BTN_) {
+				gs->square = msg->data.event.ev[i].value;
+			} */
+		}
+	}
+}
+
 static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 	if (msg->type == MSG_TYPE_EV) {
 		decode_ev(out_dev, msg);
+
+		const int upd_beg_res = logic_begin_status_update(out_dev->logic);
+		if (upd_beg_res == 0) {
+			update_gs_from_ev(&out_dev->logic->gamepad, msg);
+
+			logic_end_status_update(out_dev->logic);
+		} else {
+			fprintf(stderr, "[ev] Unable to begin the gamepad status update: %d\n", upd_beg_res);
+		}
 
 		if ((out_dev->logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) != 0) {
 			emit_ev(out_dev, msg);
@@ -677,7 +702,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 
 			logic_end_status_update(out_dev->logic);
 		} else {
-			fprintf(stderr, "Unable to begin the gamepad status update: %d\n", upd_beg_res);
+			fprintf(stderr, "[imu] Unable to begin the gamepad status update: %d\n", upd_beg_res);
 		}
 	}
 }
