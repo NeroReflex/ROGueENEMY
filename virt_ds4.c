@@ -448,6 +448,10 @@ static uint8_t get_buttons_byte_by_gs(const gamepad_status_t *const gs) {
 
     if (gs->triangle) {
         printf("________TRIANGLE________\n");
+    } else if (gs->circle) {
+        printf("________CIRCLE________\n");
+    } else if (gs->cross) {
+        printf("________CROSS________\n");
     }
 
     res |= gs->triangle ? 0x80 : 0x00;
