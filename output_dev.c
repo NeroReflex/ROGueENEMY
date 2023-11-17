@@ -690,7 +690,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 			fprintf(stderr, "[ev] Unable to begin the gamepad status update: %d\n", upd_beg_res);
 		}
 
-		if ((out_dev->logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) != 0) {
+		if ((out_dev->logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) == 0) {
 			emit_ev(out_dev, msg);
 		}
 	} else if (msg->type == MSG_TYPE_IMU) {
