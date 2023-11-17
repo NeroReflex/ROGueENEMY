@@ -519,7 +519,7 @@ static void input_iio(
 
         pthread_mutex_unlock(&input_acquire_mutex);
 
-        // TODO: if device was not open "continue"
+        // if device was not open "continue"
         if (ctx->iio_dev == NULL) {
             usleep(250000);
             continue;

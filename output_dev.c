@@ -15,7 +15,6 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 	struct uinput_setup dev = {0};
 	strncpy(dev.name, OUTPUT_DEV_NAME, UINPUT_MAX_NAME_SIZE-1);
 
-
 #if defined(OUTPUT_DEV_BUS_TYPE)
 	dev.id.bustype = OUTPUT_DEV_BUS_TYPE;
 #else
@@ -453,9 +452,7 @@ create_output_dev_err:
     return fd;
 }
 
-static void handle_ev(output_dev_t *out_dev, const message_t* msg) {
-	struct timeval now = {0};
-
+static void handle_ev(output_dev_t *const out_dev, const message_t *const msg) {
 	int fd = out_dev->gamepad_fd;
 	if ((msg->flags & EV_MESSAGE_FLAGS_IMU) != 0) {
 		fd = out_dev->imu_fd;
@@ -474,8 +471,7 @@ static void handle_ev(output_dev_t *out_dev, const message_t* msg) {
 		};
 
 		if ((msg->data.event.ev_flags & EV_MESSAGE_FLAGS_PRESERVE_TIME) == 0) {
-			gettimeofday(&now, NULL);
-			ev.time = now;
+			gettimeofday(&ev.time, NULL);
 		}
 
 #if defined(INCLUDE_OUTPUT_DEBUG)
@@ -515,6 +511,7 @@ static void handle_ev(output_dev_t *out_dev, const message_t* msg) {
 	}
 #endif
 
+	struct timeval now = {0};
 	gettimeofday(&now, NULL);
 	const struct input_event syn_ev = {
 		.code = SYN_REPORT,
@@ -528,8 +525,10 @@ static void handle_ev(output_dev_t *out_dev, const message_t* msg) {
 	}
 }
 
-static void handle_msg(output_dev_t *out_dev, const message_t* msg) {
-
+static void handle_msg(output_dev_t *const out_dev, const message_t *const msg) {
+	if (msg->type == MSG_TYPE_EV) {
+		handle_ev(out_dev, msg);
+	}
 }
 
 void *output_dev_thread_func(void *ptr) {
