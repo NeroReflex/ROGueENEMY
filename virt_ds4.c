@@ -434,10 +434,7 @@ static int event(int fd)
 
             uhid_write(fd, &firmware_info_response);
         }
-        
 
-
-        
 		break;
 	default:
 		fprintf(stderr, "Invalid event from uhid-dev: %u\n", ev.type);
@@ -525,9 +522,7 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     };
     memcpy(l.u.output.data, buf, sizeof(buf));
 
-    const int res = write(fd, (const void*)&l, sizeof(l));
-
-    return res < 0 ? res : 0;
+    return uhid_write(fd, &l);
 }
 
 void *virt_ds4_thread_func(void *ptr) {
