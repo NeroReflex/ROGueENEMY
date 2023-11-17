@@ -446,10 +446,14 @@ static int event(int fd)
 static uint8_t get_buttons_byte_by_gs(const gamepad_status_t *const gs) {
     uint8_t res = 0;
 
-    res |= gs->triangle ? (uint8_t)0b10000000 : (uint8_t)0b000000000;
-    res |= gs->circle ? (uint8_t)0b01000000 : (uint8_t)0b000000000;
-    res |= gs->cross ? (uint8_t)0b00100000 : (uint8_t)0b000000000;
-    res |= gs->square ? (uint8_t)0b00010000 : (uint8_t)0b000000000;
+    if (gs->triangle) {
+        printf("TRIANGLE!!!");
+    }
+
+    res |= gs->triangle ? 0x80 : 0x00;
+    res |= gs->circle ? 0x40 : 0x00;
+    res |= gs->cross ? 0x20 : 0x00;
+    res |= gs->square ? 0x01 : 0x00;
 
     return res;
 }
@@ -490,7 +494,7 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     buf[2] = gs.joystick_positions[0][1]; // L stick, Y axis
     buf[3] = gs.joystick_positions[1][0]; // R stick, X axis
     buf[4] = gs.joystick_positions[1][1]; // R stick, Y axis
-    buf[5] = get_buttons_byte_by_gs(&gs) | (uint8_t)(gs.dpad);
+    buf[5] = (get_buttons_byte_by_gs(&gs) /*<< (uint8_t)4*/) | ((uint8_t)gs.dpad);
     //buf[06] = get_buttons_byte_by_gs(&gs) | (uint8_t)(gs.dpad);
     buf[7] = (counter % (uint8_t)64) << ((uint8_t)2);
     buf[8] = gs.l2_trigger;
@@ -498,16 +502,19 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     buf[10] = 0;
     buf[11] = 0;
     buf[12] = 0x20; // [12] battery level
-    buf[13] = gs.gyro_x;
-    buf[14] = gs.gyro_y;
-    buf[15] = gs.gyro_z;
-    buf[16] = gs.accel_x;
-    buf[17] = gs.accel_y;
-    buf[18] = gs.accel_z;
+    memcpy(&buf[13], &gs.gyro_x, sizeof(int16_t));
+    memcpy(&buf[15], &gs.gyro_y, sizeof(int16_t));
+    memcpy(&buf[17], &gs.gyro_z, sizeof(int16_t));
+    memcpy(&buf[19], &gs.accel_x, sizeof(int16_t));
+    memcpy(&buf[21], &gs.accel_y, sizeof(int16_t));
+    memcpy(&buf[23], &gs.accel_z, sizeof(int16_t));
 
     buf[30] = 0x1b; // no headset attached
 
     buf[62] = 0x80; // IDK... it seems constant...
+    buf[57] = 0x80; // IDK... it seems constant...
+    buf[53] = 0x80; // IDK... it seems constant...
+    buf[48] = 0x80; // IDK... it seems constant...
     buf[35] = 0x80; // IDK... it seems constant...
     buf[44] = 0x80; // IDK... it seems constant...
 
@@ -520,7 +527,8 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
             }
         }
     };
-    memcpy(l.u.output.data, buf, sizeof(buf));
+
+    memcpy(&l.u.output.data[0], &buf[0], l.u.output.size);
 
     return uhid_write(fd, &l);
 }
