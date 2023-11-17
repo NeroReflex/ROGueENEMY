@@ -8,6 +8,8 @@
 
 #define INPUT_DEV_CTRL_FLAG_EXIT 0x00000001U
 
+typedef uint32_t (*ev_input_filter_t)(struct input_event*, size_t*, uint32_t*, uint32_t*);
+
 typedef enum input_dev_type {
     input_dev_type_uinput,
     input_dev_type_iio,
@@ -31,15 +33,16 @@ typedef struct input_dev {
 
     queue_t *queue;
 
-    input_filter_t input_filter_fn;
+    ev_input_filter_t ev_input_filter_fn;
+
 } input_dev_t;
 
 void *input_dev_thread_func(void *ptr);
 
 int open_and_hide_input();
 
-uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count);
+uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags);
 
-uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count);
+uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags);
 
-uint32_t input_filter_asus_kb(struct input_event*, size_t*, uint32_t*);
+uint32_t input_filter_asus_kb(struct input_event*, size_t*, uint32_t*, uint32_t* flags);

@@ -453,6 +453,85 @@ create_output_dev_err:
     return fd;
 }
 
+static void handle_ev(output_dev_t *out_dev, const message_t* msg) {
+	struct timeval now = {0};
+
+	int fd = out_dev->gamepad_fd;
+	if ((msg->flags & EV_MESSAGE_FLAGS_IMU) != 0) {
+		fd = out_dev->imu_fd;
+	} else if ((msg->flags & EV_MESSAGE_FLAGS_MOUSE) != 0) {
+		fd = out_dev->mouse_fd;
+	} else {
+		fd = out_dev->gamepad_fd;
+	}
+
+	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
+		struct input_event ev = {
+			.code = msg->data.event.ev[i].code,
+			.type = msg->data.event.ev[i].type,
+			.value = msg->data.event.ev[i].value,
+			.time = msg->data.event.ev[i].time,
+		};
+
+		if ((msg->data.event.ev_flags & EV_MESSAGE_FLAGS_PRESERVE_TIME) == 0) {
+			gettimeofday(&now, NULL);
+			ev.time = now;
+		}
+
+#if defined(INCLUDE_OUTPUT_DEBUG)
+		printf(
+			"Output: Received event %s (%s): %d\n",
+			libevdev_event_type_get_name(ev.type),
+			libevdev_event_code_get_name(ev.type, ev.code),
+			ev.value
+		);
+#endif
+
+		const ssize_t written = write(fd, (void*)&ev, sizeof(ev));
+		if (written != sizeof(ev)) {
+			fprintf(
+				stderr,
+				"Error writing event %s %s %d: written %ld bytes out of %ld\n",
+				libevdev_event_type_get_name(ev.type),
+				libevdev_event_code_get_name(ev.type, ev.code),
+				ev.value,
+				written,
+				sizeof(ev)
+			);
+		}
+	}
+
+#if defined(INCLUDE_TIMESTAMP)
+	gettimeofday(&now, NULL);
+	const struct input_event timestamp_ev = {
+		.code = MSC_TIMESTAMP,
+		.type = EV_MSC,
+		.value = (now.tv_sec - secAtInit)*1000000 + (now.tv_usec - usecAtInit),
+		.time = now,
+	};
+	const ssize_t timestamp_written = write(fd, (void*)&timestamp_ev, sizeof(timestamp_ev));
+	if (timestamp_written != sizeof(timestamp_ev)) {
+		fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", timestamp_written, sizeof(timestamp_ev));
+	}
+#endif
+
+	gettimeofday(&now, NULL);
+	const struct input_event syn_ev = {
+		.code = SYN_REPORT,
+		.type = EV_SYN,
+		.value = 0,
+		.time = now,
+	};
+	const ssize_t sync_written = write(fd, (void*)&syn_ev, sizeof(syn_ev));
+	if (sync_written != sizeof(syn_ev)) {
+		fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", sync_written, sizeof(syn_ev));
+	}
+}
+
+static void handle_msg(output_dev_t *out_dev, const message_t* msg) {
+
+}
+
 void *output_dev_thread_func(void *ptr) {
     output_dev_t *out_dev = (output_dev_t*)ptr;
 	struct timeval now = {0};
@@ -468,77 +547,7 @@ void *output_dev_thread_func(void *ptr) {
 		const int pop_res = queue_pop_timeout(out_dev->queue, &raw_ev, 1000);
 		if (pop_res == 0) {
 			message_t *const msg = (message_t*)raw_ev;
-
-			int fd = out_dev->gamepad_fd;
-			if ((msg->flags & INPUT_FILTER_FLAGS_IMU) != 0) {
-				fd = out_dev->imu_fd;
-			} else if ((msg->flags & INPUT_FILTER_FLAGS_MOUSE) != 0) {
-				fd = out_dev->mouse_fd;
-			} else {
-				fd = out_dev->gamepad_fd;
-			}
-
-			for (uint32_t i = 0; i < msg->ev_count; ++i) {
-				struct input_event ev = {
-					.code = msg->ev[i].code,
-					.type = msg->ev[i].type,
-					.value = msg->ev[i].value,
-					.time = msg->ev[i].time,
-				};
-
-				if ((msg->flags & INPUT_FILTER_FLAGS_PRESERVE_TIME) == 0) {
-					gettimeofday(&now, NULL);
-					ev.time = now;
-				}
-
-#if defined(INCLUDE_OUTPUT_DEBUG)
-				printf(
-					"Output: Received event %s (%s): %d\n",
-					libevdev_event_type_get_name(ev.type),
-					libevdev_event_code_get_name(ev.type, ev.code),
-					ev.value
-				);
-#endif
-
-				const ssize_t written = write(fd, (void*)&ev, sizeof(ev));
-				if (written != sizeof(ev)) {
-					fprintf(
-						stderr,
-						"Error writing event %s %s %d: written %ld bytes out of %ld\n",
-						libevdev_event_type_get_name(ev.type),
-						libevdev_event_code_get_name(ev.type, ev.code),
-						ev.value,
-						written,
-						sizeof(ev)
-					);
-				}
-			}
-
-#if defined(INCLUDE_TIMESTAMP)
-			gettimeofday(&now, NULL);
-			const struct input_event timestamp_ev = {
-				.code = MSC_TIMESTAMP,
-				.type = EV_MSC,
-				.value = (now.tv_sec - secAtInit)*1000000 + (now.tv_usec - usecAtInit),
-				.time = now,
-			};
-			const ssize_t timestamp_written = write(fd, (void*)&timestamp_ev, sizeof(timestamp_ev));
-			if (timestamp_written != sizeof(timestamp_ev)) {
-				fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", timestamp_written, sizeof(timestamp_ev));
-			}
-#endif
-
-			gettimeofday(&now, NULL);
-			const struct input_event syn_ev = {
-				.code = SYN_REPORT,
-				.type = EV_SYN,
-				.value = 0,
-				.time = now,
-			};
-			const ssize_t sync_written = write(fd, (void*)&syn_ev, sizeof(syn_ev));
-			if (sync_written != sizeof(syn_ev)) {
-				fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", sync_written, sizeof(syn_ev));
-			}
+			handle_msg(out_dev, msg);
 
 			// from now on it's forbidden to use this memory
 			msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;

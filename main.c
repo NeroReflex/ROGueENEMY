@@ -22,7 +22,7 @@ static input_dev_t in_iio_dev = {
   .crtl_flags = 0x00000000U,
   .iio_filters = &in_iio_filters,
   .queue = &global_ev_queue,
-  .input_filter_fn = input_filter_imu_identity,
+  //.input_filter_fn = input_filter_imu_identity,
 };
 
 static uinput_filters_t in_asus_kb_1_filters = {
@@ -34,7 +34,7 @@ static input_dev_t in_asus_kb_1_dev = {
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_1_filters,
   .queue = &global_ev_queue,
-  .input_filter_fn = input_filter_asus_kb,
+  .ev_input_filter_fn = input_filter_asus_kb,
 };
 
 static uinput_filters_t in_asus_kb_2_filters = {
@@ -46,7 +46,7 @@ static input_dev_t in_asus_kb_2_dev = {
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_2_filters,
   .queue = &global_ev_queue,
-  .input_filter_fn = input_filter_asus_kb,
+  .ev_input_filter_fn = input_filter_asus_kb,
 };
 
 static uinput_filters_t in_asus_kb_3_filters = {
@@ -58,7 +58,7 @@ static input_dev_t in_asus_kb_3_dev = {
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_3_filters,
   .queue = &global_ev_queue,
-  .input_filter_fn = input_filter_asus_kb,
+  .ev_input_filter_fn = input_filter_asus_kb,
 };
 
 static uinput_filters_t in_xbox_filters = {
@@ -70,7 +70,7 @@ static input_dev_t in_xbox_dev = {
   .crtl_flags = 0x00000000U,
   .ev_filters = &in_xbox_filters,
   .queue = &global_ev_queue,
-  .input_filter_fn = input_filter_identity,
+  .ev_input_filter_fn = input_filter_identity,
 };
 
 void request_termination() {

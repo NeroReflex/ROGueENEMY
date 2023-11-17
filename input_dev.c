@@ -21,9 +21,9 @@ static const char *iio_path = "/sys/bus/iio/devices/";
 
 static uint32_t gyroscope_mouse_translation = 0;
 
-uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count) {
+uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
     int32_t gyro_x = 0, gyro_y = 0, gyro_z = 0, accel_x = 0, accel_y = 0, accel_z = 0;
-
+/*
     if (gyroscope_mouse_translation > 0) {
         for (uint32_t i = 0; i < *count; ++i) {
             if (events[i].type != EV_ABS) {
@@ -63,28 +63,31 @@ uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uin
 
         *count = w;
 
-        return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_MOUSE; 
+        flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_MOUSE; 
     }
-
-    //return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_IMU;
+*/
     return INPUT_FILTER_FLAGS_DO_NOT_EMIT;
 }
 
-uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count) {
+uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
     return INPUT_FILTER_FLAGS_NONE;
 }
 
-uint32_t input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count) {
+uint32_t input_filter_asus_kb(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
     static int F15_status = 0;
 
     if (events[0].type == EV_REL) {
-        return INPUT_FILTER_FLAGS_MOUSE;
+        *flags |= EV_MESSAGE_FLAGS_MOUSE;
+
+        return 0;
     } else if ((events[0].type == EV_KEY) || (events[1].type == EV_KEY)) {
         if ((events[0].code == BTN_MIDDLE) || (events[0].code == BTN_LEFT) || (events[0].code == BTN_RIGHT)) {
-            return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_MOUSE;
+            *flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
         } else if ((events[1].code == BTN_MIDDLE) || (events[1].code == BTN_LEFT) || (events[1].code == BTN_RIGHT)) {
-            return INPUT_FILTER_FLAGS_PRESERVE_TIME | INPUT_FILTER_FLAGS_MOUSE;
+            *flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
         }
+
+        return 0;
     }
 
     if ((*count >= 2) && (events[0].type == EV_MSC) && (events[0].code == MSC_SCAN)) {
@@ -265,7 +268,7 @@ struct input_ctx {
     dev_iio_t *iio_dev;
     queue_t* queue;
     message_t messages[MAX_MESSAGES_IN_FLIGHT];
-    input_filter_t input_filter_fn;
+    ev_input_filter_t input_filter_fn;
 };
 
 static void* iio_read_thread_func(void* ptr) {
@@ -280,7 +283,7 @@ static void* iio_read_thread_func(void* ptr) {
             for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
                 if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
                     msg = &ctx->messages[h];
-                    msg->ev_count = 0;
+                    //TODO: msg->ev_count = 0;
                     break;
                 }
             }
@@ -291,6 +294,7 @@ static void* iio_read_thread_func(void* ptr) {
             continue;
         }
 
+        /*
         rc = dev_iio_read(ctx->iio_dev, msg->ev, msg->ev_size, &msg->ev_count);
         if (rc == 0) {
             // OK: good read. go on....
@@ -307,18 +311,6 @@ static void* iio_read_thread_func(void* ptr) {
 
         const uint32_t input_filter_res = ctx->input_filter_fn(msg->ev, &msg->ev_size, &msg->ev_count);
         
-        if ((input_filter_res & INPUT_FILTER_FLAGS_IMU) != 0) {
-            msg->flags |= INPUT_FILTER_FLAGS_IMU;
-        }
-
-        if ((input_filter_res & INPUT_FILTER_FLAGS_MOUSE) != 0) {
-            msg->flags |= INPUT_FILTER_FLAGS_MOUSE;
-        }
-
-        if ((input_filter_res & INPUT_FILTER_FLAGS_PRESERVE_TIME) != 0) {
-            msg->flags |= INPUT_FILTER_FLAGS_PRESERVE_TIME;
-        }
-        
         if (((input_filter_res & INPUT_FILTER_FLAGS_DO_NOT_EMIT) == 0) && (msg->ev_count > 0)) {
             if (queue_push(ctx->queue, (void*)msg) != 0) {
                 fprintf(stderr, "Error pushing iio event.\n");
@@ -330,6 +322,7 @@ static void* iio_read_thread_func(void* ptr) {
             // flag the memory to be safe to reuse
             msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
         }
+        */
 
         usleep(100);
 
@@ -355,7 +348,7 @@ static void* input_read_thread_func(void* ptr) {
             for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
                 if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
                     msg = &ctx->messages[h];
-                    msg->ev_count = 0;
+                    msg->data.event.ev_count = 0;
                     break;
                 }
             }
@@ -383,7 +376,7 @@ static void* input_read_thread_func(void* ptr) {
             }
 
             if ((!has_syn) || ((has_syn) && (!is_syn))) {
-                if ((msg->ev_count+1) == msg->ev_size) {
+                if ((msg->data.event.ev_count+1) == msg->data.event.ev_size) {
                     // TODO: perform a memove
                     fprintf(stderr, "MEMMOVE NEEDED\n");
                 } else {
@@ -397,8 +390,8 @@ static void* input_read_thread_func(void* ptr) {
 #endif
 
                     // just copy the input event
-                    msg->ev[msg->ev_count] = read_ev;
-                    ++msg->ev_count;
+                    msg->data.event.ev[msg->data.event.ev_count] = read_ev;
+                    ++msg->data.event.ev_count;
                 }
             }
 
@@ -409,22 +402,11 @@ static void* input_read_thread_func(void* ptr) {
 
                 // clear out flags
                 msg->flags = 0x00000000U;
+                msg->data.event.ev_flags = 0x00000000U;
 
-                const uint32_t input_filter_res = ctx->input_filter_fn(msg->ev, &msg->ev_size, &msg->ev_count);
+                const uint32_t input_filter_res = ctx->input_filter_fn(msg->data.event.ev, &msg->data.event.ev_size, &msg->data.event.ev_count, &msg->data.event.ev_flags);
 
-                if ((input_filter_res & INPUT_FILTER_FLAGS_IMU) != 0) {
-                    msg->flags |= INPUT_FILTER_FLAGS_IMU;
-                }
-
-                if ((input_filter_res & INPUT_FILTER_FLAGS_MOUSE) != 0) {
-                    msg->flags |= INPUT_FILTER_FLAGS_MOUSE;
-                }
-
-                if ((input_filter_res & INPUT_FILTER_FLAGS_PRESERVE_TIME) != 0) {
-                    msg->flags |= INPUT_FILTER_FLAGS_PRESERVE_TIME;
-                }
-
-                if (((input_filter_res & INPUT_FILTER_FLAGS_DO_NOT_EMIT) == 0) && (msg->ev_count > 0)) {
+                if (((input_filter_res & INPUT_FILTER_FLAGS_DO_NOT_EMIT) == 0) && (msg->data.event.ev_count > 0)) {
                     if (queue_push(ctx->queue, (void*)msg) != 0) {
                         fprintf(stderr, "Error pushing event.\n");
 
@@ -674,18 +656,28 @@ void *input_dev_thread_func(void *ptr) {
     struct input_ctx ctx = {
         .dev = NULL,
         .queue = in_dev->queue,
-        .input_filter_fn = in_dev->input_filter_fn,
+        .input_filter_fn = in_dev->ev_input_filter_fn,
     };
 
-    for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
-        ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
-        ctx.messages[h].ev_size = DEFAULT_EVENTS_IN_REPORT;
-        ctx.messages[h].ev = malloc(sizeof(struct input_event) * ctx.messages[h].ev_size);
-    }
+    
 
     if (in_dev->dev_type == input_dev_type_uinput) {
+        // prepare space and empty messages
+        for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
+            ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
+            ctx.messages[h].type = MSG_TYPE_EV;
+            ctx.messages[h].data.event.ev_size = DEFAULT_EVENTS_IN_REPORT;
+            ctx.messages[h].data.event.ev = malloc(sizeof(struct input_event) * ctx.messages[h].data.event.ev_size);
+        }
+
         input_udev(in_dev, &ctx);
     } else if (in_dev->dev_type == input_dev_type_iio) {
+        // prepare space and empty messages
+        for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
+            ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
+            ctx.messages[h].type = MSG_TYPE_IMU;
+        }
+
         input_iio(in_dev, &ctx);
     }
     
