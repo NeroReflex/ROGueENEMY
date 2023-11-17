@@ -510,7 +510,21 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
 
     buf[30] = 0x1b; // no headset attached
 
-    return 0;
+    
+    struct uhid_event l = {
+        .type = UHID_OUTPUT,
+        .u = {
+            .output = {
+                .size = sizeof(buf),
+                .rtype = 0x01,
+            }
+        }
+    };
+    memcpy(l.u.output.data, buf, sizeof(buf));
+
+    const int res = write(fd, (const void*)&l, sizeof(l));
+
+    return res < 0 ? res : 0;
 }
 
 void *virt_ds4_thread_func(void *ptr) {
