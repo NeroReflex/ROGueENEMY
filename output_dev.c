@@ -669,16 +669,28 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 				gs->cross = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_WEST) {
 				gs->triangle = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_SELECT) {
+				gs->share = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_START) {
+				gs->option = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_TR) {
+				//TODO: gs->option = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_TL) {
+				//TODO: gs->option = msg->data.event.ev[i].value;
 			}
 		} else if (msg->data.event.ev[i].type == EV_ABS) {
 			if (msg->data.event.ev[i].code == ABS_X) {
-				gs->joystick_positions[0][0] = ((uint64_t)((int64_t)msg->data.event.ev[i].value + (int64_t)32767) / (uint64_t)257);
+				gs->joystick_positions[0][0] = (int64_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_Y) {
-				gs->joystick_positions[0][1] = ((uint64_t)((int64_t)msg->data.event.ev[i].value + (int64_t)32767) / (uint64_t)257);
+				gs->joystick_positions[0][1] = (int64_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_RX) {
-				gs->joystick_positions[1][0] = ((uint64_t)((int64_t)msg->data.event.ev[i].value + (int64_t)32767) / (uint64_t)257);
+				gs->joystick_positions[1][0] = (int64_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_RY) {
-				gs->joystick_positions[1][1] = ((uint64_t)((int64_t)msg->data.event.ev[i].value + (int64_t)32767) / (uint64_t)257);
+				gs->joystick_positions[1][1] = (int64_t)msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == ABS_Z) {
+				gs->l2_trigger = (int64_t)msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == ABS_RZ) {
+				gs->r2_trigger = (int64_t)msg->data.event.ev[i].value;
 			}
 		}
 	}

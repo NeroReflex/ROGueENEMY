@@ -13,6 +13,11 @@ int logic_create(logic_t *const logic) {
     logic->gamepad.circle = 0;
     logic->gamepad.cross = 0;
     logic->gamepad.square = 0;
+    logic->gamepad.r3 = 0;
+    logic->gamepad.r3 = 0;
+    logic->gamepad.option = 0;
+    logic->gamepad.share = 0;
+    logic->gamepad.center = 0;
     logic->gamepad.gyro_x = 0;
     logic->gamepad.gyro_y = 0;
     logic->gamepad.gyro_z = 0;

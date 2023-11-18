@@ -17,7 +17,7 @@ typedef enum dpad_status {
 
 typedef struct gamepad_status {
 
-    uint8_t joystick_positions[2][2]; // [0 left | 1 right][x axis | y axis]
+    int32_t joystick_positions[2][2]; // [0 left | 1 right][x axis | y axis]
 
     dpad_status_t dpad;
 
@@ -28,6 +28,16 @@ typedef struct gamepad_status {
     uint8_t circle;
     uint8_t cross;
     uint8_t square;
+
+    uint8_t l1;
+    uint8_t r1;
+
+    uint8_t r3;
+    uint8_t l3;
+
+    uint8_t option;
+    uint8_t share;
+    uint8_t center;
 
     int16_t gyro_x; // follows right-hand-rules
     int16_t gyro_y; // follows right-hand-rules
