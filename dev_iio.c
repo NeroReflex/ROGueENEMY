@@ -131,9 +131,9 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->outer_temp_scale = 0.0;
 
     double mm[3][3] = {
-        {1.0, 0.0, 0.0},
-        {0.0, 1.0, 0.0},
-        {0.0, 0.0, -1.0}
+        {0.0f, 0.0f, -1.0f},
+        {0.0f, 1.0f, 0.0f},
+        {1.0f, 0.0f, 0.0f}
     };
     memcpy(iio->mount_matrix, mm, sizeof(mm));
 
