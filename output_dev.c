@@ -739,6 +739,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 	} else if (msg->type == MSG_TYPE_IMU) {
 		const int upd_beg_res = logic_begin_status_update(out_dev->logic);
 		if (upd_beg_res == 0) {
+			out_dev->logic->gamepad.last_motion_time = msg->data.imu.read_time;
 			out_dev->logic->gamepad.accel_x = msg->data.imu.accel_x_raw;
 			out_dev->logic->gamepad.accel_y = msg->data.imu.accel_y_raw;
 			out_dev->logic->gamepad.accel_z = msg->data.imu.accel_z_raw;

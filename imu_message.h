@@ -3,6 +3,8 @@
 #include "rogue_enemy.h"
 
 typedef struct imu_message {
+    struct timeval read_time;
+
     double gyro_x_in_rad_s;
     long gyro_x_raw;
     
@@ -20,4 +22,7 @@ typedef struct imu_message {
 
     double accel_z_in_m2s;
     int16_t accel_z_raw;
+
+    int16_t temp_raw;
+    double temp_in_k;
 } imu_message_t;

@@ -58,6 +58,7 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->accel_x_fd = NULL;
     iio->accel_y_fd = NULL;
     iio->accel_z_fd = NULL;
+    iio->temp_fd = NULL;
 
     iio->accel_scale_x = 0.0f;
     iio->accel_scale_y = 0.0f;
@@ -65,6 +66,7 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->anglvel_scale_x = 0.0f;
     iio->anglvel_scale_y = 0.0f;
     iio->anglvel_scale_z = 0.0f;
+    iio->temp_scale = 0.0f;
 
     iio->outer_accel_scale_x = ACCEL_SCALE;
     iio->outer_accel_scale_y = ACCEL_SCALE;
@@ -72,6 +74,7 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->outer_anglvel_scale_x = GYRO_SCALE;
     iio->outer_anglvel_scale_y = GYRO_SCALE;
     iio->outer_anglvel_scale_z = GYRO_SCALE;
+    iio->outer_temp_scale = 0.0;
 
     const long path_len = strlen(path) + 1;
     iio->path = malloc(path_len);
@@ -132,6 +135,22 @@ dev_iio_t* dev_iio_create(const char* path) {
     }
     // ==========================================================================================================
 
+    // ============================================= temp_scale =================================================
+    {
+        char* const accel_scale = read_file(iio->path, "/in_temp_scale");
+        if (accel_scale != NULL) {
+            iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = strtod(accel_scale, NULL);
+            free((void*)accel_scale);
+        } else {
+            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
+
+            free(iio);
+            iio = NULL;
+            goto dev_iio_create_err;
+        }
+    }
+    // ==========================================================================================================
+
     const size_t tmp_sz = path_len + 128 + 1;
     char* const tmp = malloc(tmp_sz);
 
@@ -165,6 +184,11 @@ dev_iio_t* dev_iio_create(const char* path) {
     strcat(tmp, "/in_anglvel_z_raw");
     iio->anglvel_z_fd = fopen(tmp, "r");
 
+    memset(tmp, 0, tmp_sz);
+    strcat(tmp, iio->path);
+    strcat(tmp, "/in_temp_raw");
+    iio->temp_fd = fopen(tmp, "r");
+
     free(tmp);
 
 dev_iio_create_err:
@@ -178,6 +202,7 @@ void dev_iio_destroy(dev_iio_t* iio) {
     fclose(iio->anglvel_x_fd);
     fclose(iio->anglvel_y_fd);
     fclose(iio->anglvel_z_fd);
+    fclose(iio->temp_fd);
     free(iio->name);
     free(iio->path);
     free(iio);
@@ -356,6 +381,8 @@ int dev_iio_read(
 }
 
 int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
+    gettimeofday(&out->read_time, NULL);
+
     char tmp[128];
 
     if (iio->accel_x_fd != NULL) {
@@ -430,6 +457,19 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_z_raw = strtol(&tmp[0], NULL, 10);
             out->gyro_z_in_rad_s = (double)out->gyro_z_raw *iio->anglvel_scale_z;
+        } else {
+            fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
+            return tmp_read;
+        }
+    }
+
+    if (iio->temp_fd != NULL) {
+        rewind(iio->temp_fd);
+        memset((void*)&tmp[0], 0, sizeof(tmp));
+        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->temp_fd);
+        if (tmp_read >= 0) {
+            out->temp_raw = strtol(&tmp[0], NULL, 10);
+            out->temp_in_k = (double)out->temp_raw *iio->anglvel_scale_z;
         } else {
             fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
             return tmp_read;

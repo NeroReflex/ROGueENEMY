@@ -1,5 +1,6 @@
 #include "virt_ds4.h"
 
+#include <bits/types/time_t.h>
 #include <linux/uhid.h>
 #include <fcntl.h>
 #include <poll.h>
@@ -514,7 +515,8 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
 }
 
 static int send_data(int fd, logic_t *const logic, uint8_t counter) {
-    static uint16_t timestamp = 188;
+    struct timeval first_read_time;
+    static int first_read_time_arrived = 0;
 
     gamepad_status_t gs = {};
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
@@ -522,6 +524,13 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
         fprintf(stderr, "Unable to copy the gamepad status: %d\n", gs_copy_res);
         return gs_copy_res;
     }
+
+    // Calculate the time difference in microseconds
+    int64_t timeDiffMicroseconds = ((int64_t)gs.last_motion_time.tv_sec - (int64_t)first_read_time.tv_sec) * (int64_t)1000000 + ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec);
+
+    // Calculate the time difference in multiples of 0.33 microseconds
+    int64_t timeDiffInMultiples = ((double)timeDiffMicroseconds + (double)0.33 - (double)1.0) / (double)0.33;
+    uint16_t timestamp = timeDiffInMultiples;
 
     /*
     Example data:
@@ -557,7 +566,7 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     buf[8] = gs.l2_trigger;
     buf[9] = gs.r2_trigger;
     memcpy(&buf[10], &timestamp, sizeof(timestamp));
-    buf[12] = 0x20; // [12] battery level
+    buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
     memcpy(&buf[13], &gs.gyro_x, sizeof(int16_t));
     memcpy(&buf[15], &gs.gyro_y, sizeof(int16_t));
     memcpy(&buf[17], &gs.gyro_z, sizeof(int16_t));

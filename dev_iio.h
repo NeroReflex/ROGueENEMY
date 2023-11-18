@@ -37,6 +37,11 @@ typedef struct dev_iio {
     double outer_anglvel_scale_y;
     double outer_anglvel_scale_z;
 
+    FILE* temp_fd;
+
+    double temp_scale;
+    
+    double outer_temp_scale;
 } dev_iio_t;
 
 dev_iio_t* dev_iio_create(const char* path);
