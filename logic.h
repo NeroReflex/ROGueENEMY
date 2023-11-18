@@ -3,23 +3,11 @@
 #include "platform.h"
 #include "queue.h"
 
-typedef enum dpad_status {
-    DPAD_N        = 0,
-    DPAD_NE       = 1,
-    DPAD_E        = 2,
-    DPAD_SE       = 3,
-    DPAD_S        = 4,
-    DPAD_SW       = 5,
-    DPAD_W        = 6,
-    DPAD_NW       = 7,
-    DPAD_RELEASED = 0x08,
-} dpad_status_t;
-
 typedef struct gamepad_status {
 
     int32_t joystick_positions[2][2]; // [0 left | 1 right][x axis | y axis]
 
-    dpad_status_t dpad;
+    uint8_t dpad; // 0x00 x - | 0x01 x -> | 0x02 x <- | 0x00 y - | 0x10 y ^ | 0x10 y . | 
 
     uint8_t l2_trigger;
     uint8_t r2_trigger;

@@ -479,6 +479,40 @@ static uint8_t get_buttons_byte3_by_gs(const gamepad_status_t *const gs) {
     return res;
 }
 
+typedef enum ds4_dpad_status {
+    DPAD_N        = 0,
+    DPAD_NE       = 1,
+    DPAD_E        = 2,
+    DPAD_SE       = 3,
+    DPAD_S        = 4,
+    DPAD_SW       = 5,
+    DPAD_W        = 6,
+    DPAD_NW       = 7,
+    DPAD_RELEASED = 0x08,
+} ds4_dpad_status_t;
+
+static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
+    if (dpad == 0x01) {
+        return DPAD_E;
+    } else if (dpad == 0x02) {
+        return DPAD_W;
+    } else if (dpad == 0x10) {
+        return DPAD_N;
+    } else if (dpad == 0x20) {
+        return DPAD_S;
+    } else if (dpad == 0x11) {
+        return DPAD_NE;
+    } else if (dpad == 0x12) {
+        return DPAD_NW;
+    } else if (dpad == 0x21) {
+        return DPAD_SE;
+    } else if (dpad == 0x22) {
+        return DPAD_SW;
+    }
+
+    return DPAD_RELEASED;
+}
+
 static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     static uint16_t timestamp = 188;
 
@@ -517,7 +551,7 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     buf[2] = ((uint64_t)((int64_t)gs.joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
     buf[3] = ((uint64_t)((int64_t)gs.joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
     buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
-    buf[5] = get_buttons_byte_by_gs(&gs) | (uint8_t)gs.dpad;
+    buf[5] = get_buttons_byte_by_gs(&gs) | (uint8_t)ds4_dpad_from_gamepad(gs.dpad);
     buf[6] = get_buttons_byte2_by_gs(&gs);
     buf[7] = ((counter % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
     buf[8] = gs.l2_trigger;

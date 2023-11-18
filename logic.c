@@ -6,7 +6,7 @@ int logic_create(logic_t *const logic) {
     logic->flags = 0x00000000U;
 
     memset(logic->gamepad.joystick_positions, 0, sizeof(logic->gamepad.joystick_positions));
-    logic->gamepad.dpad = DPAD_RELEASED;
+    logic->gamepad.dpad = 0x00;
     logic->gamepad.l2_trigger = 0;
     logic->gamepad.r2_trigger = 0;
     logic->gamepad.triangle = 0;

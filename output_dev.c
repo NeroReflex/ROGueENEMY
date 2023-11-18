@@ -670,9 +670,9 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 			} else if (msg->data.event.ev[i].code == BTN_WEST) {
 				gs->triangle = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_SELECT) {
-				gs->share = msg->data.event.ev[i].value;
-			} else if (msg->data.event.ev[i].code == BTN_START) {
 				gs->option = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_START) {
+				gs->share = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_TR) {
 				gs->r1 = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_TL) {
@@ -684,17 +684,35 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 			}
 		} else if (msg->data.event.ev[i].type == EV_ABS) {
 			if (msg->data.event.ev[i].code == ABS_X) {
-				gs->joystick_positions[0][0] = (int64_t)msg->data.event.ev[i].value;
+				gs->joystick_positions[0][0] = (int32_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_Y) {
-				gs->joystick_positions[0][1] = (int64_t)msg->data.event.ev[i].value;
+				gs->joystick_positions[0][1] = (int32_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_RX) {
-				gs->joystick_positions[1][0] = (int64_t)msg->data.event.ev[i].value;
+				gs->joystick_positions[1][0] = (int32_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_RY) {
-				gs->joystick_positions[1][1] = (int64_t)msg->data.event.ev[i].value;
+				gs->joystick_positions[1][1] = (int32_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_Z) {
-				gs->l2_trigger = (int64_t)msg->data.event.ev[i].value;
+				gs->l2_trigger = (int32_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_RZ) {
-				gs->r2_trigger = (int64_t)msg->data.event.ev[i].value;
+				gs->r2_trigger = (int32_t)msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == ABS_HAT0X) {
+				const int v = msg->data.event.ev[i].value;
+				if (v == 0) {
+					gs->dpad &= 0xF0;
+				} else if (v == 1) {
+					gs->dpad &= 0xF1;
+				} else if (v == -1) {
+					gs->dpad &= 0xF2;
+				}
+			} else if (msg->data.event.ev[i].code == ABS_HAT0Y) {
+				const int v = msg->data.event.ev[i].value;
+				if (v == 0) {
+					gs->dpad &= 0x0F;
+				} else if (v == 1) {
+					gs->dpad &= 0x2F;
+				} else if (v == -1) {
+					gs->dpad &= 0x1F;
+				}
 			}
 		}
 	}
