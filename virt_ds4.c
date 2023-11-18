@@ -555,6 +555,13 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
+    const int16_t g_x = gs.gyro_x / 2;
+    const int16_t g_y = gs.gyro_y / 2;
+    const int16_t g_z = gs.gyro_z / 2;
+    const int16_t a_x = gs.accel_x / 2;
+    const int16_t a_y = gs.accel_y / 2;
+    const int16_t a_z = gs.accel_z / 2;
+
     buf[0] = 0x01;  // [00] report ID (0x01)
     buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
     buf[2] = ((uint64_t)((int64_t)gs.joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
@@ -567,12 +574,12 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     buf[9] = gs.r2_trigger;
     memcpy(&buf[10], &timestamp, sizeof(timestamp));
     buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
-    memcpy(&buf[13], &gs.gyro_x, sizeof(int16_t));
-    memcpy(&buf[15], &gs.gyro_y, sizeof(int16_t));
-    memcpy(&buf[17], &gs.gyro_z, sizeof(int16_t));
-    memcpy(&buf[19], &gs.accel_x, sizeof(int16_t));
-    memcpy(&buf[21], &gs.accel_y, sizeof(int16_t));
-    memcpy(&buf[23], &gs.accel_z, sizeof(int16_t));
+    memcpy(&buf[13], &g_x, sizeof(int16_t));
+    memcpy(&buf[15], &g_y, sizeof(int16_t));
+    memcpy(&buf[17], &g_z, sizeof(int16_t));
+    memcpy(&buf[19], &a_x, sizeof(int16_t));
+    memcpy(&buf[21], &a_y, sizeof(int16_t));
+    memcpy(&buf[23], &a_z, sizeof(int16_t));
 
     buf[30] = 0x1b; // no headset attached
 
