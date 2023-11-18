@@ -28,10 +28,13 @@ static char* read_file(const char* base_path, const char *file) {
             char* res = malloc(len);
             if (res != NULL) {
                 fread(res, 1, len, fp);
+                
                 fclose(fp);
 
                 return res;
             } else {
+                fclose(fp);
+
                 fprintf(stderr, "Cannot allocate %ld bytes for %s content.\n", len, fdir);
                 goto read_file_err;
             }
@@ -48,6 +51,53 @@ static char* read_file(const char* base_path, const char *file) {
 
 read_file_err:
     return NULL;
+}
+
+int write_file(const char* base_path, const char *file, const void* buf, size_t buf_sz) {
+    char* fdir = NULL;
+
+    int res = 0;
+
+    const size_t len = strlen(base_path) + strlen(file) + 1;
+    fdir = malloc(len);
+    if (fdir == NULL) {
+        fprintf(stderr, "Cannot allocate %ld bytes for device path, device skipped.\n", len);
+        goto write_file_err;
+    }
+    strcpy(fdir, base_path);
+    strcat(fdir, file);
+
+    if (access(fdir, F_OK) == 0) {
+        FILE* fp = fopen(fdir, "w");
+        if (fp != NULL) {
+            free(fdir);
+            fdir = NULL;
+
+            res = fwrite(buf, 1, buf_sz, fp);
+            if (res >= buf_sz) {
+                fclose(fp);
+
+                return res;
+            } else {
+                fclose(fp);
+
+                fprintf(stderr, "Cannot allocate %ld bytes for %s content.\n", len, fdir);
+                
+                goto write_file_err;
+            }
+        } else {
+            fprintf(stderr, "Cannot open file %s.\n", fdir);
+            free(fdir);
+            goto write_file_err;
+        }
+    } else {
+        fprintf(stderr, "File %s does not exists.\n", fdir);
+        free(fdir);
+        goto write_file_err;
+    }
+
+write_file_err:
+    return res;
 }
 
 dev_iio_t* dev_iio_create(const char* path) {
@@ -114,10 +164,17 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     // ========================================== in_anglvel_scale ==============================================
     {
+        const char* preferred_scale = LSB_PER_RAD_S_2000_DEG_S_STR;
         char* const anglvel_scale = read_file(iio->path, "/in_anglvel_scale");
         if (anglvel_scale != NULL) {
             iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
+
+            if (write_file(iio->path, "/in_anglvel_scale", preferred_scale, strlen(preferred_scale+1)) >= 0) {
+                iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = LSB_PER_RAD_S_2000_DEG_S;
+            } else {
+                fprintf(stderr, "Unable to set preferred in_anglvel_scale for device %s.\n", iio->name);
+            }
         } else {
             // TODO: what about if those are split in in_anglvel_{x,y,z}_scale?
             fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", iio->path, "/in_accel_scale");

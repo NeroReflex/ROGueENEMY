@@ -25,3 +25,6 @@
 #include <pthread.h>
 
 #include <libevdev-1.0/libevdev/libevdev.h>
+
+#define LSB_PER_RAD_S_2000_DEG_S ((double)0.001064724)
+#define LSB_PER_RAD_S_2000_DEG_S_STR "0.001064724"
