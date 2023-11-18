@@ -525,12 +525,18 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
         return gs_copy_res;
     }
 
+    if (first_read_time_arrived == 0) {
+        first_read_time = gs.last_motion_time;
+        first_read_time_arrived = 1;
+    }
+
     // Calculate the time difference in microseconds
-    int64_t timeDiffMicroseconds = ((int64_t)gs.last_motion_time.tv_sec - (int64_t)first_read_time.tv_sec) * (int64_t)1000000 + ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec);
+    const int64_t timeDiffMicroseconds = (((int64_t)gs.last_motion_time.tv_sec - (int64_t)first_read_time.tv_sec) * (int64_t)1000000) +
+                                    ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec) * (int64_t)100;
 
     // Calculate the time difference in multiples of 0.33 microseconds
-    int64_t timeDiffInMultiples = ((double)timeDiffMicroseconds + (double)0.33 - (double)1.0) / (double)0.33;
-    uint16_t timestamp = timeDiffInMultiples;
+    const int64_t timeDiffInMultiples = (timeDiffMicroseconds / (int64_t)33 - (int64_t)100) / (int64_t)33;
+    uint16_t timestamp = timeDiffInMultiples / (int64_t)100;
 
     /*
     Example data:
