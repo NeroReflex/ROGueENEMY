@@ -661,18 +661,24 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) {
 	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
 		if (msg->data.event.ev[i].type == EV_KEY) {
-			if (msg->data.event.ev[i].code == BTN_SOUTH) {
-				printf("BTN_SOUTH\n");
-				gs->cross = msg->data.event.ev[i].value;
-			} else if (msg->data.event.ev[i].code == BTN_NORTH) {
-				printf("BTN_NORTH\n");
+			if (msg->data.event.ev[i].code == BTN_EAST) {
 				gs->circle = msg->data.event.ev[i].value;
-			} else if (msg->data.event.ev[i].code == BTN_EAST) {
-				printf("BTN_SOUTH\n");
+			} else if (msg->data.event.ev[i].code == BTN_NORTH) {
 				gs->square = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_SOUTH) {
+				gs->cross = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_WEST) {
-				printf("BTN_WEST\n");
-				gs->square = msg->data.event.ev[i].value;
+				gs->triangle = msg->data.event.ev[i].value;
+			}
+		} else if (msg->data.event.ev[i].type == EV_ABS) {
+			if (msg->data.event.ev[i].code == ABS_X) {
+				gs->joystick_positions[0][0] = ((uint64_t)((int64_t)msg->data.event.ev[i].value + (int64_t)32767) >> (uint64_t)8);
+			} else if (msg->data.event.ev[i].code == ABS_Y) {
+				gs->joystick_positions[0][1] = ((uint64_t)((int64_t)msg->data.event.ev[i].value + (int64_t)32767) >> (uint64_t)8);
+			} else if (msg->data.event.ev[i].code == ABS_RX) {
+				gs->joystick_positions[1][0] = ((uint64_t)((int64_t)msg->data.event.ev[i].value + (int64_t)32767) >> (uint64_t)8);
+			} else if (msg->data.event.ev[i].code == ABS_RY) {
+				gs->joystick_positions[1][1] = ((uint64_t)((int64_t)msg->data.event.ev[i].value + (int64_t)32767) >> (uint64_t)8);
 			}
 		}
 	}

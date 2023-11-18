@@ -446,14 +446,6 @@ static int event(int fd)
 static uint8_t get_buttons_byte_by_gs(const gamepad_status_t *const gs) {
     uint8_t res = 0;
 
-    if (gs->triangle) {
-        printf("________TRIANGLE________\n");
-    } else if (gs->circle) {
-        printf("________CIRCLE________\n");
-    } else if (gs->cross) {
-        printf("________CROSS________\n");
-    }
-
     res |= gs->triangle ? 0x80 : 0x00;
     res |= gs->circle ? 0x40 : 0x00;
     res |= gs->cross ? 0x20 : 0x00;
@@ -561,6 +553,8 @@ void *virt_ds4_thread_func(void *ptr) {
     for (;;) {
         if ((logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) != 0) {
             event(fd);
+
+            usleep(128);
 
             const int res = send_data(fd, logic, counter);
             if (res >= 0) {
