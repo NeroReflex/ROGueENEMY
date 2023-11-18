@@ -676,7 +676,7 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 			} else if (msg->data.event.ev[i].code == BTN_TR) {
 				gs->r1 = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_TL) {
-				gs->r1 = msg->data.event.ev[i].value;
+				gs->l1 = msg->data.event.ev[i].value;
 			}
 		} else if (msg->data.event.ev[i].type == EV_ABS) {
 			if (msg->data.event.ev[i].code == ABS_X) {
