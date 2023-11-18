@@ -561,12 +561,12 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
-    const int16_t g_x = gs.gyro_x / 2;
-    const int16_t g_y = gs.gyro_y / 2;
-    const int16_t g_z = gs.gyro_z / 2;
-    const int16_t a_x = gs.accel_x / 2;
-    const int16_t a_y = gs.accel_y / 2;
-    const int16_t a_z = gs.accel_z / 2;
+    const int16_t g_x = gs.gyro[0] / (double)2.0;
+    const int16_t g_y = gs.gyro[1] / (double)2.0;
+    const int16_t g_z = gs.gyro[2] / (double)2.0;
+    const int16_t a_x = gs.accel[0] / (double)2.0;
+    const int16_t a_y = gs.accel[1] / (double)2.0;
+    const int16_t a_z = gs.accel[2] / (double)2.0;
 
     buf[0] = 0x01;  // [00] report ID (0x01)
     buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis

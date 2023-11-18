@@ -52,6 +52,10 @@ read_file_err:
 
 dev_iio_t* dev_iio_create(const char* path) {
     dev_iio_t *iio = malloc(sizeof(dev_iio_t));
+    if (iio == NULL) {
+        return NULL;
+    }
+    
     iio->anglvel_x_fd = NULL;
     iio->anglvel_y_fd = NULL;
     iio->anglvel_z_fd = NULL;
@@ -75,6 +79,13 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->outer_anglvel_scale_y = GYRO_SCALE;
     iio->outer_anglvel_scale_z = GYRO_SCALE;
     iio->outer_temp_scale = 0.0;
+
+    double mm[3][3] = {
+        {1.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0},
+        {0.0, 0.0, -1.0}
+    };
+    memcpy(iio->mount_matrix, mm, sizeof(mm));
 
     const long path_len = strlen(path) + 1;
     iio->path = malloc(path_len);
@@ -380,10 +391,22 @@ int dev_iio_read(
     return 0;
 }
 
+static void multiplyMatrixVector(const double matrix[3][3], const double vector[3], double result[3]) {
+    result[0] = matrix[0][0] * vector[0] + matrix[0][1] * vector[1] + matrix[0][2] * vector[2];
+    result[1] = matrix[1][0] * vector[0] + matrix[1][1] * vector[1] + matrix[1][2] * vector[2];
+    result[2] = matrix[2][0] * vector[0] + matrix[2][1] * vector[1] + matrix[2][2] * vector[2];
+}
+
 int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
     gettimeofday(&out->read_time, NULL);
 
     char tmp[128];
+
+    double gyro_in[3];
+    double accel_in[3];
+
+    double gyro_out[3];
+    double accel_out[3];
 
     if (iio->accel_x_fd != NULL) {
         rewind(iio->accel_x_fd);
@@ -391,7 +414,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_x_fd);
         if (tmp_read >= 0) {
             out->accel_x_raw = strtol(&tmp[0], NULL, 10);
-            out->accel_x_in_m2s = (double)out->accel_x_raw * iio->accel_scale_x;
+            accel_out[0] = (double)out->accel_x_raw * iio->accel_scale_x;
         } else {
             fprintf(stderr, "While reading accel(x): %d\n", tmp_read);
             return tmp_read;
@@ -404,7 +427,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_y_fd);
         if (tmp_read >= 0) {
             out->accel_y_raw = strtol(&tmp[0], NULL, 10);
-            out->accel_y_in_m2s = (double)out->accel_y_raw * iio->accel_scale_y;
+            accel_out[1] = (double)out->accel_y_raw * iio->accel_scale_y;
         } else {
             fprintf(stderr, "While reading accel(y): %d\n", tmp_read);
             return tmp_read;
@@ -417,7 +440,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_z_fd);
         if (tmp_read >= 0) {
             out->accel_z_raw = strtol(&tmp[0], NULL, 10);
-            out->accel_z_in_m2s = (double)out->accel_z_raw * iio->accel_scale_z;
+            accel_out[2] = (double)out->accel_z_raw * iio->accel_scale_z;
         } else {
             fprintf(stderr, "While reading accel(z): %d\n", tmp_read);
             return tmp_read;
@@ -430,7 +453,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_x_fd);
         if (tmp_read >= 0) {
             out->gyro_x_raw = strtol(&tmp[0], NULL, 10);
-            out->gyro_x_in_rad_s = (double)out->gyro_x_raw * iio->anglvel_scale_x;
+            gyro_in[0] = (double)out->gyro_x_raw * iio->anglvel_scale_x;
         } else {
             fprintf(stderr, "While reading anglvel(x): %d\n", tmp_read);
             return tmp_read;
@@ -443,7 +466,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_y_fd);
         if (tmp_read >= 0) {
             out->gyro_y_raw = strtol(&tmp[0], NULL, 10);
-            out->gyro_y_in_rad_s = (double)out->gyro_y_raw *iio->anglvel_scale_y;
+            gyro_in[1] = (double)out->gyro_y_raw *iio->anglvel_scale_y;
         } else {
             fprintf(stderr, "While reading anglvel(y): %d\n", tmp_read);
             return tmp_read;
@@ -456,7 +479,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_z_fd);
         if (tmp_read >= 0) {
             out->gyro_z_raw = strtol(&tmp[0], NULL, 10);
-            out->gyro_z_in_rad_s = (double)out->gyro_z_raw *iio->anglvel_scale_z;
+            gyro_in[2] = (double)out->gyro_z_raw *iio->anglvel_scale_z;
         } else {
             fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
             return tmp_read;
@@ -475,6 +498,12 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
             return tmp_read;
         }
     }
+
+    multiplyMatrixVector(iio->mount_matrix, gyro_in, gyro_out);
+    multiplyMatrixVector(iio->mount_matrix, accel_in, accel_out);
+
+    memcpy(out->accel_m2s, accel_out, sizeof(double) * 3);
+    memcpy(out->gyro_rad_s, gyro_out, sizeof(double) * 3);
 
     return 0;
 }

@@ -29,16 +29,8 @@ typedef struct gamepad_status {
 
     struct timeval last_motion_time;
 
-    int16_t gyro_x; // follows right-hand-rules
-    int16_t gyro_y; // follows right-hand-rules
-    int16_t gyro_z; // follows right-hand-rules
-
-    int16_t accel_x; // positive: right
-    int16_t accel_y; // positive: up
-    int16_t accel_z; // positive: towards player
-
-
-    //uint8_t 
+    double gyro[3]; // | x, y, z| right-hand-rules -- in rad/s
+    double accel[3]; // | x, y, z| positive: right, up, towards player -- in m/s^2
 
 } gamepad_status_t;
 

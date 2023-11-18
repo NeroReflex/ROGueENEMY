@@ -5,24 +5,17 @@
 typedef struct imu_message {
     struct timeval read_time;
 
-    double gyro_x_in_rad_s;
     long gyro_x_raw;
-    
-    double gyro_y_in_rad_s;
-    int16_t gyro_y_raw;
-    
-    double gyro_z_in_rad_s;
-    int16_t gyro_z_raw;
+    long gyro_y_raw;
+    long gyro_z_raw;
 
-    double accel_x_in_m2s;
-    int16_t accel_x_raw;
-    
-    double accel_y_in_m2s;
-    int16_t accel_y_raw;
-
-    double accel_z_in_m2s;
-    int16_t accel_z_raw;
+    long accel_x_raw;
+    long accel_y_raw;
+    long accel_z_raw;
 
     int16_t temp_raw;
     double temp_in_k;
+
+    double gyro_rad_s[3]; // | x, y, z| right-hand-rules -- in rad/s
+    double accel_m2s[3]; // | x, y, z| positive: right, up, towards player -- in m/s^2
 } imu_message_t;
