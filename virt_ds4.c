@@ -527,13 +527,12 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
         .type = UHID_INPUT2,
         .u = {
             .input2 = {
-                .data = {},
-                .size = sizeof(buf),
+                .size = 64,
             }
         }
     };
 
-    memcpy(&l.u.output.data[0], &buf[0], l.u.output.size);
+    memcpy(&l.u.input2.data[0], &buf[0], l.u.input2.size);
 
     ++timestamp;
 
