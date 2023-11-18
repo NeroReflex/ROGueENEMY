@@ -670,9 +670,10 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 			} else if (msg->data.event.ev[i].code == BTN_EAST) {
 				printf("BTN_SOUTH\n");
 				gs->square = msg->data.event.ev[i].value;
-			} /*else if (msg->data.event.ev[i].code == BTN_) {
+			} else if (msg->data.event.ev[i].code == BTN_WEST) {
+				printf("BTN_WEST\n");
 				gs->square = msg->data.event.ev[i].value;
-			} */
+			}
 		}
 	}
 }
@@ -705,7 +706,9 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 
 			logic_end_status_update(out_dev->logic);
 
+#if defined(INCLUDE_OUTPUT_DEBUG)
 			printf("gyro_x: %d\t\t| gyro_y: %d\t\t| gyro_z: %d\t\t\n", (int)msg->data.imu.gyro_x_raw, (int)msg->data.imu.gyro_y_raw, (int)msg->data.imu.gyro_z_raw);
+#endif
 		} else {
 			fprintf(stderr, "[imu] Unable to begin the gamepad status update: %d\n", upd_beg_res);
 		}
