@@ -449,7 +449,7 @@ static uint8_t get_buttons_byte_by_gs(const gamepad_status_t *const gs) {
     res |= gs->triangle ? 0x80 : 0x00;
     res |= gs->circle ? 0x40 : 0x00;
     res |= gs->cross ? 0x20 : 0x00;
-    res |= gs->square ? 0x01 : 0x00;
+    res |= gs->square ? 0x10 : 0x00;
 
     return res;
 }
