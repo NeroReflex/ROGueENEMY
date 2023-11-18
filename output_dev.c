@@ -697,21 +697,23 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 				gs->r2_trigger = (int32_t)msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == ABS_HAT0X) {
 				const int v = msg->data.event.ev[i].value;
+				gs->dpad &= 0xF0;
 				if (v == 0) {
-					gs->dpad &= 0xF0;
+					gs->dpad |= 0x00;
 				} else if (v == 1) {
-					gs->dpad &= 0xF1;
+					gs->dpad |= 0x01;
 				} else if (v == -1) {
-					gs->dpad &= 0xF2;
+					gs->dpad |= 0x02;
 				}
 			} else if (msg->data.event.ev[i].code == ABS_HAT0Y) {
 				const int v = msg->data.event.ev[i].value;
+				gs->dpad &= 0x0F;
 				if (v == 0) {
-					gs->dpad &= 0x0F;
+					gs->dpad |= 0x00;
 				} else if (v == 1) {
-					gs->dpad &= 0x2F;
+					gs->dpad |= 0x20;
 				} else if (v == -1) {
-					gs->dpad &= 0x1F;
+					gs->dpad |= 0x10;
 				}
 			}
 		}
