@@ -674,9 +674,9 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 			} else if (msg->data.event.ev[i].code == BTN_START) {
 				gs->option = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_TR) {
-				//TODO: gs->option = msg->data.event.ev[i].value;
+				gs->r1 = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_TL) {
-				//TODO: gs->option = msg->data.event.ev[i].value;
+				gs->r1 = msg->data.event.ev[i].value;
 			}
 		} else if (msg->data.event.ev[i].type == EV_ABS) {
 			if (msg->data.event.ev[i].code == ABS_X) {

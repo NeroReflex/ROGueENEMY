@@ -459,8 +459,8 @@ static uint8_t get_buttons_byte2_by_gs(const gamepad_status_t *const gs) {
 
     res |= gs->r3 ? 0x80 : 0x00;
     res |= gs->l3 ? 0x40 : 0x00;
-    res |= gs->cross ? 0x20 : 0x00;
-    res |= gs->square ? 0x10 : 0x00;
+    res |= gs->share ? 0x20 : 0x00;
+    res |= gs->option ? 0x10 : 0x00;
 
     //res |= gs->l2 ? 0x08 : 0x00;
     //res |= gs->r2 ? 0x04 : 0x00;
@@ -517,7 +517,7 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     buf[2] = ((uint64_t)((int64_t)gs.joystick_positions[0][1] + (int64_t)32767) / (uint64_t)258); // L stick, Y axis
     buf[3] = ((uint64_t)((int64_t)gs.joystick_positions[1][0] + (int64_t)32767) / (uint64_t)258); // R stick, X axis
     buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32767) / (uint64_t)258); // R stick, Y axis
-    buf[5] = get_buttons_byte_by_gs(&gs);
+    buf[5] = get_buttons_byte_by_gs(&gs) | (uint8_t)gs.dpad;
     buf[6] = get_buttons_byte2_by_gs(&gs);
     buf[7] = ((counter % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
     buf[8] = gs.l2_trigger;
