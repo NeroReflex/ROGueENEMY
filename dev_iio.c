@@ -55,7 +55,7 @@ dev_iio_t* dev_iio_create(const char* path) {
     if (iio == NULL) {
         return NULL;
     }
-    
+
     iio->anglvel_x_fd = NULL;
     iio->anglvel_y_fd = NULL;
     iio->anglvel_z_fd = NULL;
@@ -392,9 +392,9 @@ int dev_iio_read(
 }
 
 static void multiplyMatrixVector(const double matrix[3][3], const double vector[3], double result[3]) {
-    result[0] = matrix[0][0] * vector[0] + matrix[0][1] * vector[1] + matrix[0][2] * vector[2];
-    result[1] = matrix[1][0] * vector[0] + matrix[1][1] * vector[1] + matrix[1][2] * vector[2];
-    result[2] = matrix[2][0] * vector[0] + matrix[2][1] * vector[1] + matrix[2][2] * vector[2];
+    result[0] = matrix[0][0] * vector[0] + matrix[1][0] * vector[1] + matrix[2][0] * vector[2];
+    result[1] = matrix[0][1] * vector[0] + matrix[1][1] * vector[1] + matrix[2][1] * vector[2];
+    result[2] = matrix[0][2] * vector[0] + matrix[1][2] * vector[1] + matrix[2][2] * vector[2];
 }
 
 int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
