@@ -69,18 +69,23 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
 
     if (logic->gamepad.flags & GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER) {
         static struct timeval press_time;
+        struct timeval now;
+        gettimeofday(&now, NULL);
+
+        // Calculate elapsed time in milliseconds
+        int64_t elapsed_time = (now.tv_sec - press_time.tv_sec) * 1000 +
+                               (now.tv_usec - press_time.tv_usec) / 1000;
+
         if (out->center) {
-            struct timeval now;
-            gettimeofday(&now, NULL);
-
-            int64_t elapsed_time = (now.tv_sec - press_time.tv_sec) * 1000 + (now.tv_usec - press_time.tv_usec) / 1000;
-
+            // If the center button is pressed and at least 500ms have passed
             if (elapsed_time >= 500) {
+                printf("Releasing center button\n");
                 out->center = 0;
                 logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
             }
         } else {
-            printf("Pressing center button");
+            // If the center button is pressed
+            printf("Pressing center button\n");
             out->center = 1;
             gettimeofday(&press_time, NULL);
         }
