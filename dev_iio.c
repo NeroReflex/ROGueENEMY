@@ -588,9 +588,9 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->temp_fd);
         if (tmp_read >= 0) {
             out->temp_raw = strtol(&tmp[0], NULL, 10);
-            out->temp_in_k = (double)out->temp_raw *iio->anglvel_scale_z;
+            out->temp_in_k = (double)out->temp_raw *iio->temp_scale;
         } else {
-            fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
+            fprintf(stderr, "While reading temp: %d\n", tmp_read);
             return tmp_read;
         }
     }
