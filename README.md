@@ -13,3 +13,5 @@ cd build
 cmake ..
 cmake --build .
 ```
+
+__WARNING__: CMake is currently __broken__. Use Make.
