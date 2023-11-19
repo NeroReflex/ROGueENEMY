@@ -32,6 +32,9 @@ typedef struct gamepad_status {
     double gyro[3]; // | x, y, z| right-hand-rules -- in rad/s
     double accel[3]; // | x, y, z| positive: right, up, towards player -- in m/s^2
 
+    int16_t raw_gyro[3];
+    int16_t raw_accel[3];
+
 } gamepad_status_t;
 
 #define LOGIC_FLAGS_VIRT_DS4_ENABLE   0x00000001U

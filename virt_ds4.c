@@ -8,6 +8,24 @@
 #define DS4_GYRO_RES_PER_DEG_S	1024
 #define DS4_ACC_RES_PER_G       8192
 
+static const uint16_t gyro_pitch_bias  = 0xfff9;
+static const uint16_t gyro_yaw_bias    = 0x0009;
+static const uint16_t gyro_roll_bias   = 0xfff9;
+static const uint16_t gyro_pitch_plus  = 0x22fe;
+static const uint16_t gyro_pitch_minus = 0xdcf4;
+static const uint16_t gyro_yaw_plus    = 0x22bb;
+static const uint16_t gyro_yaw_minus   = 0xdd59;
+static const uint16_t gyro_roll_plus   = 0x2289;
+static const uint16_t gyro_roll_minus  = 0xdd68;
+static const uint16_t gyro_speed_plus  = 0x021c /* 540 */; // speed_2x = (gyro_speed_plus + gyro_speed_minus) = 1080;
+static const uint16_t gyro_speed_minus = 0x021c /* 540 */; // speed_2x = (gyro_speed_plus + gyro_speed_minus) = 1080;
+static const uint16_t acc_x_plus       = 0x20d3;
+static const uint16_t acc_x_minus      = 0xdf07;
+static const uint16_t acc_y_plus       = 0x20bf;
+static const uint16_t acc_y_minus      = 0xe0aa;
+static const uint16_t acc_z_plus       = 0x1ebc;
+static const uint16_t acc_z_minus      = 0xe086;
+
 static const char* path = "/dev/uhid";
 
 static unsigned char rdesc[] = {
@@ -436,24 +454,6 @@ static int event(int fd)
                 }
             };
 
-            uint16_t gyro_pitch_bias  = 0xfff9;
-            uint16_t gyro_yaw_bias    = 0x0009;
-            uint16_t gyro_roll_bias   = 0xfff9;
-            uint16_t gyro_pitch_plus  = 0x22fe;
-            uint16_t gyro_pitch_minus = 0xdcf4;
-            uint16_t gyro_yaw_plus    = 0x22bb;
-            uint16_t gyro_yaw_minus   = 0xdd59;
-            uint16_t gyro_roll_plus   = 0x2289;
-            uint16_t gyro_roll_minus  = 0xdd68;
-            uint16_t gyro_speed_plus  = 0x021c /* 540 */; // speed_2x = (gyro_speed_plus + gyro_speed_minus) = 1080;
-            uint16_t gyro_speed_minus = 0x021c /* 540 */; // speed_2x = (gyro_speed_plus + gyro_speed_minus) = 1080;
-            uint16_t acc_x_plus       = 0x20d3;
-            uint16_t acc_x_minus      = 0xdf07;
-            uint16_t acc_y_plus       = 0x20bf;
-            uint16_t acc_y_minus      = 0xe0aa;
-            uint16_t acc_z_plus       = 0x1ebc;
-            uint16_t acc_z_minus      = 0xe086;
-
             // bias in kernel is 0 (embedded constant)
             // speed_2x = speed_2x*DS4_GYRO_RES_PER_DEG_S; calculated by the kernel will be 1080.
             // As a consequence sens_numer (for every axis) is 1080*1024.
@@ -578,7 +578,7 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
                                     ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec);
 
     // Calculate the time difference in multiples of 0.33 microseconds
-    const uint16_t timestamp = ((dime_diff_us * (int64_t)100) / (int64_t)533);
+    const uint16_t timestamp = ((dime_diff_us * (int64_t)3) / (int64_t)16);
 
     /*
     Example data:
@@ -610,12 +610,30 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
      * 
      * as we know sens_numer is 0, hence calib_data is zero.
      */
+    /*
     const int16_t g_x = ((gs.gyro[0]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
     const int16_t g_y = ((gs.gyro[1]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
     const int16_t g_z = ((gs.gyro[2]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
     const int16_t a_x = ((gs.accel[0]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
     const int16_t a_y = ((gs.accel[1]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
     const int16_t a_z = ((gs.accel[2]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
+    */
+
+    /*
+    const int16_t g_x = (gs.gyro[0]) / LSB_PER_RAD_S_2000_DEG_S;
+    const int16_t g_y = (gs.gyro[1]) / LSB_PER_RAD_S_2000_DEG_S;
+    const int16_t g_z = (gs.gyro[2]) / LSB_PER_RAD_S_2000_DEG_S;
+    const int16_t a_x = (gs.accel[0]) / LSB_PER_16G; // TODO: IDK how to test...
+    const int16_t a_y = (gs.accel[1]) / LSB_PER_16G; // TODO: IDK how to test...
+    const int16_t a_z = (gs.accel[2]) / LSB_PER_16G; // TODO: IDK how to test...
+    */
+
+    const int16_t g_x = gs.raw_gyro[0];
+    const int16_t g_y = gs.raw_gyro[1];
+    const int16_t g_z = gs.raw_gyro[2];
+    const int16_t a_x = gs.raw_accel[0];
+    const int16_t a_y = gs.raw_accel[1];
+    const int16_t a_z = gs.raw_accel[2];
 
     buf[0] = 0x01;  // [00] report ID (0x01)
     buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
