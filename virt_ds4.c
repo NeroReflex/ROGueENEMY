@@ -5,6 +5,9 @@
 #include <fcntl.h>
 #include <poll.h>
 
+#define DS4_GYRO_RES_PER_DEG_S	1024
+#define DS4_ACC_RES_PER_G       8192
+
 static const char* path = "/dev/uhid";
 
 static unsigned char rdesc[] = {
@@ -607,12 +610,12 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
      * 
      * as we know sens_numer is 0, hence calib_data is zero.
      */
-    const int16_t g_x = (gs.gyro[0]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t g_y = (gs.gyro[1]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t g_z = (gs.gyro[2]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t a_x = (gs.accel[0]) / LSB_PER_16G; // TODO: IDK how to test...
-    const int16_t a_y = (gs.accel[1]) / LSB_PER_16G; // TODO: IDK how to test...
-    const int16_t a_z = (gs.accel[2]) / LSB_PER_16G; // TODO: IDK how to test...
+    const int16_t g_x = ((gs.gyro[0]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
+    const int16_t g_y = ((gs.gyro[1]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
+    const int16_t g_z = ((gs.gyro[2]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
+    const int16_t a_x = ((gs.accel[0]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
+    const int16_t a_y = ((gs.accel[1]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
+    const int16_t a_z = ((gs.accel[2]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
 
     buf[0] = 0x01;  // [00] report ID (0x01)
     buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
@@ -652,8 +655,6 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     };
 
     memcpy(&l.u.input2.data[0], &buf[0], l.u.input2.size);
-
-    ++timestamp;
 
     return uhid_write(fd, &l);
 }
