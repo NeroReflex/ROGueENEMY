@@ -2,3 +2,4 @@
 /rogue_enemy
 *.o
 /depends
+/debug

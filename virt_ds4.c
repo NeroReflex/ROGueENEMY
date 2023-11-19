@@ -414,7 +414,7 @@ static int event(int fd)
 
             uhid_write(fd, &firmware_info_response);
         } else if (ev.u.get_report.rnum == 0x02) { // dualshock4_get_calibration_data
-            const struct uhid_event firmware_info_response = {
+            struct uhid_event firmware_info_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
@@ -422,16 +422,56 @@ static int event(int fd)
                         .id = ev.u.get_report.id,
                         .err = 0,
                         .data = {
-                            0x02, 0xf9, 0xff, 0x09, 0x00, 0xf9, 0xff, 0xfe,
-                            0x22, 0xf4, 0xdc, 0xbb, 0x22, 0x59, 0xdd, 0x89,
-                            0x22, 0x68, 0xdd, 0x1c, 0x02, 0x1c, 0x02, 0xd3,
-                            0x20, 0x07, 0xdf, 0xbf, 0x20, 0xaa, 0xe0, 0xbc,
-                            0x1e, 0x86, 0xe0, 0x06, 0x00,
+                            0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x06, 0x00,
 
                         }
                     }
                 }
             };
+
+            uint16_t gyro_pitch_bias  = 0xfff9;
+            uint16_t gyro_yaw_bias    = 0x0009;
+            uint16_t gyro_roll_bias   = 0xfeff;
+            uint16_t gyro_pitch_plus  = 0x2200;
+            uint16_t gyro_pitch_minus = 0xdcf4;
+            uint16_t gyro_yaw_plus    = 0x22bb;
+            uint16_t gyro_yaw_minus   = 0xdd59;
+            uint16_t gyro_roll_plus   = 0x2289;
+            uint16_t gyro_roll_minus  = 0xdd68;
+            uint16_t gyro_speed_plus  = 0x021c /* 540 */; // speed_2x = (gyro_speed_plus + gyro_speed_minus) = 1080;
+            uint16_t gyro_speed_minus = 0x021c /* 540 */; // speed_2x = (gyro_speed_plus + gyro_speed_minus) = 1080;
+            uint16_t acc_x_plus       = 0x20d3;
+            uint16_t acc_x_minus      = 0xdf07;
+            uint16_t acc_y_plus       = 0x20bf;
+            uint16_t acc_y_minus      = 0xe0aa;
+            uint16_t acc_z_plus       = 0x1ebc;
+            uint16_t acc_z_minus      = 0xe086;
+
+            // bias in kernel is 0 (embedded constant)
+            // speed_2x = speed_2x*DS_GYRO_RES_PER_DEG_S; calculated by the kernel will be 1080.
+            // As a consequence sens_numer (for every axis) is 1080*1024.
+            // that number will be 1105920
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[1], (const void*)&gyro_pitch_bias, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[3], (const void*)&gyro_yaw_bias, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[5], (const void*)&gyro_roll_bias, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[7], (const void*)&gyro_pitch_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[9], (const void*)&gyro_pitch_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[11], (const void*)&gyro_yaw_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[13], (const void*)&gyro_yaw_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[15], (const void*)&gyro_roll_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[17], (const void*)&gyro_roll_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[19], (const void*)&gyro_speed_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[21], (const void*)&gyro_speed_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[23], (const void*)&acc_x_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[25], (const void*)&acc_x_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[27], (const void*)&acc_y_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[29], (const void*)&acc_y_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[31], (const void*)&acc_z_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[33], (const void*)&acc_z_minus, sizeof(int16_t));
 
             uhid_write(fd, &firmware_info_response);
         }
@@ -561,6 +601,13 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
+    /*
+     * kernel will do:
+     * int calib_data = mult_frac(ds4->gyro_calib_data[i].sens_numer, raw_data, ds4->gyro_calib_data[i].sens_denom);
+     * input_report_abs(ds4->sensors, ds4->gyro_calib_data[i].abs_code, calib_data);
+     * 
+     * as we know sens_numer is 0, hence calib_data is zero.
+     */
     const int16_t g_x = (gs.gyro[0]) / LSB_PER_RAD_S_2000_DEG_S;
     const int16_t g_y = (gs.gyro[1]) / LSB_PER_RAD_S_2000_DEG_S;
     const int16_t g_z = (gs.gyro[2]) / LSB_PER_RAD_S_2000_DEG_S;

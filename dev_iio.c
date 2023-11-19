@@ -115,11 +115,23 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->outer_anglvel_scale_z = GYRO_SCALE;
     iio->outer_temp_scale = 0.0;
 
-    double mm[3][3] = {
+    double mm[3][3] = 
+    /*
+    // this is the testing but "wrong" mount matrix
+    {
         {0.0f, 0.0f, -1.0f},
         {0.0f, 1.0f, 0.0f},
-        {1.0f, 0.0f, 0.0f}
+        {-1.0f, 0.0f, 0.0f}
     };
+    */
+    // this is the correct matrix:
+    {
+        {-1.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0},
+        {0.0, 0.0, -1.0}
+    };
+
+    // store the mount matrix
     memcpy(iio->mount_matrix, mm, sizeof(mm));
 
     const long path_len = strlen(path) + 1;
@@ -202,6 +214,22 @@ dev_iio_t* dev_iio_create(const char* path) {
     // ==========================================================================================================
 
     // ============================================= temp_scale =================================================
+    {
+        char* const accel_scale = read_file(iio->path, "/in_temp_scale");
+        if (accel_scale != NULL) {
+            iio->temp_scale = strtod(accel_scale, NULL);
+            free((void*)accel_scale);
+        } else {
+            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
+
+            free(iio);
+            iio = NULL;
+            goto dev_iio_create_err;
+        }
+    }
+    // ==========================================================================================================
+
+    // ============================================ sampling_rate ================================================
     {
         char* const accel_scale = read_file(iio->path, "/in_temp_scale");
         if (accel_scale != NULL) {

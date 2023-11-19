@@ -44,6 +44,8 @@ typedef struct dev_iio {
     double outer_temp_scale;
 
     double mount_matrix[3][3];
+
+    double sampling_rate_hz;
 } dev_iio_t;
 
 dev_iio_t* dev_iio_create(const char* path);
