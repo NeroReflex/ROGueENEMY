@@ -216,7 +216,7 @@ dev_iio_t* dev_iio_create(const char* path) {
     {
         char* const accel_scale = read_file(iio->path, "/in_temp_scale");
         if (accel_scale != NULL) {
-            iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = strtod(accel_scale, NULL);
+            iio->temp_scale = strtod(accel_scale, NULL);
             free((void*)accel_scale);
         } else {
             fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
@@ -267,16 +267,6 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->temp_fd = fopen(tmp, "r");
 
     free(tmp);
-
-    printf(
-        "anglvel scale: | %f | %f | %f |, accel scale: | %f | %f | %f |",
-        iio->anglvel_scale_x,
-        iio->anglvel_scale_y,
-        iio->anglvel_scale_z, 
-        iio->accel_scale_x,
-        iio->accel_scale_y,
-        iio->accel_scale_z
-    );
 
 dev_iio_create_err:
     return iio;
@@ -578,8 +568,8 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
     multiplyMatrixVector(iio->mount_matrix, gyro_in, gyro_out);
     multiplyMatrixVector(iio->mount_matrix, accel_in, accel_out);
 
-    memcpy(out->accel_m2s, accel_out, sizeof(double) * 3);
-    memcpy(out->gyro_rad_s, gyro_out, sizeof(double) * 3);
+    memcpy(out->accel_m2s, accel_out, sizeof(double[3]));
+    memcpy(out->gyro_rad_s, gyro_out, sizeof(double[3]));
 
     return 0;
 }
