@@ -561,9 +561,9 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
 
-    const int16_t g_x = (gs.gyro[0] / LSB_PER_RAD_S_2000_DEG_S);
-    const int16_t g_y = (gs.gyro[1] / LSB_PER_RAD_S_2000_DEG_S);
-    const int16_t g_z = (gs.gyro[2] / LSB_PER_RAD_S_2000_DEG_S);
+    const int16_t g_x = (gs.gyro[0]) / LSB_PER_RAD_S_2000_DEG_S;
+    const int16_t g_y = (gs.gyro[1]) / LSB_PER_RAD_S_2000_DEG_S;
+    const int16_t g_z = (gs.gyro[2]) / LSB_PER_RAD_S_2000_DEG_S;
     const int16_t a_x = gs.accel[0] / (double)2.0; // TODO: IDK how to test...
     const int16_t a_y = gs.accel[1] / (double)2.0; // TODO: IDK how to test...
     const int16_t a_z = gs.accel[2] / (double)2.0; // TODO: IDK how to test...

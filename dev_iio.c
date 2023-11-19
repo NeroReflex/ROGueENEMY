@@ -170,7 +170,7 @@ dev_iio_t* dev_iio_create(const char* path) {
             iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
 
-            if (write_file(iio->path, "/in_anglvel_scale", preferred_scale, strlen(preferred_scale+1)) >= 0) {
+            if (write_file(iio->path, "/in_anglvel_scale", preferred_scale, strlen(preferred_scale)) >= 0) {
                 iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = LSB_PER_RAD_S_2000_DEG_S;
             } else {
                 fprintf(stderr, "Unable to set preferred in_anglvel_scale for device %s.\n", iio->name);
