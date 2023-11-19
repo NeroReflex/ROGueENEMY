@@ -172,7 +172,7 @@ dev_iio_t* dev_iio_create(const char* path) {
 
             if (write_file(iio->path, "/in_anglvel_scale", preferred_scale, strlen(preferred_scale)) >= 0) {
                 iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = LSB_PER_RAD_S_2000_DEG_S;
-                printf("anglvel scale changed to %f for device %s", iio->anglvel_scale_x, iio->name);
+                printf("anglvel scale changed to %f for device %s\n", iio->anglvel_scale_x, iio->name);
             } else {
                 fprintf(stderr, "Unable to set preferred in_anglvel_scale for device %s.\n", iio->name);
             }
@@ -197,7 +197,7 @@ dev_iio_t* dev_iio_create(const char* path) {
 
             if (write_file(iio->path, "/in_anglvel_scale", preferred_scale, strlen(preferred_scale)) >= 0) {
                 iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = LSB_PER_16G;
-                printf("accel scale changed to %f for device %s", iio->accel_scale_x, iio->name);
+                printf("accel scale changed to %f for device %s\n", iio->accel_scale_x, iio->name);
             } else {
                 fprintf(stderr, "Unable to set preferred in_accel_scale for device %s.\n", iio->name);
             }
@@ -267,6 +267,16 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->temp_fd = fopen(tmp, "r");
 
     free(tmp);
+
+    printf(
+        "anglvel scale: | %f | %f | %f |, accel scale: | %f | %f | %f |",
+        iio->anglvel_scale_x,
+        iio->anglvel_scale_y,
+        iio->anglvel_scale_z, 
+        iio->accel_scale_x,
+        iio->accel_scale_y,
+        iio->accel_scale_z
+    );
 
 dev_iio_create_err:
     return iio;
