@@ -258,7 +258,6 @@ static void* input_read_thread_func(void* ptr) {
 #endif
 
                 if ((msg->data.event.ev_count+1) == msg->data.event.ev_size) {
-                    // TODO: perform a memove
                     printf("maximum number of events reached, buffer enlarged.\n");
                     
                     const size_t new_size = msg->data.event.ev_size * 2;
@@ -341,7 +340,7 @@ static void input_iio(
         const int input_acquire_lock_result = pthread_mutex_lock(&input_acquire_mutex);
         if (input_acquire_lock_result != 0) {
             fprintf(stderr, "Cannot lock input mutex: %d, will retry later...\n", input_acquire_lock_result);
-            usleep(250000);
+            usleep(150000);
             continue;
         }
 
