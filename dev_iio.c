@@ -66,11 +66,10 @@ int write_file(const char* base_path, const char *file, const void* buf, size_t 
             res = fwrite(buf, 1, buf_sz, fp);
             if (res >= buf_sz) {
                 printf("Written %d bytes to fine %s\n", res, fdir);
-
-                fclose(fp);
             } else {
-                fprintf(stderr, "Cannot allocate %ld bytes for %s content.\n", len, fdir);
+                fprintf(stderr, "Cannot write to %s: %d.\n", fdir, res);
             }
+
             fclose(fp);
         } else {
             fprintf(stderr, "Cannot open file %s.\n", fdir);
