@@ -1,6 +1,7 @@
 #include "logic.h"
 #include "platform.h"
 #include "virt_ds4.h"
+#include <sys/time.h>
 
 int logic_create(logic_t *const logic) {
     logic->flags = 0x00000000U;
@@ -67,11 +68,21 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
     *out = logic->gamepad;
 
     if (logic->gamepad.flags & GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER) {
+        static struct timeval press_time;
         if (out->center) {
-            out->center = 0;
-            logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+            struct timeval now;
+            gettimeofday(&now, NULL);
+
+            int64_t elapsed_time = (now.tv_sec - press_time.tv_sec) * 1000 + (now.tv_usec - press_time.tv_usec) / 1000;
+
+            if (elapsed_time >= 500) {
+                out->center = 0;
+                logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+            }
         } else {
+            printf("Pressing center button");
             out->center = 1;
+            gettimeofday(&press_time, NULL);
         }
     }
 
