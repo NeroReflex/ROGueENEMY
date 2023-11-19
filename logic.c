@@ -20,7 +20,8 @@ int logic_create(logic_t *const logic) {
     logic->gamepad.center = 0;
     memset(logic->gamepad.gyro, 0, sizeof(logic->gamepad.gyro));
     memset(logic->gamepad.accel, 0, sizeof(logic->gamepad.accel));
-    
+    logic->gamepad.flags = 0;
+
     const int mutex_creation_res = pthread_mutex_init(&logic->gamepad_mutex, NULL);
     if (mutex_creation_res != 0) {
         fprintf(stderr, "Unable to create mutex: %d\n", mutex_creation_res);
@@ -64,6 +65,16 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
     }
 
     *out = logic->gamepad;
+
+    if (logic->gamepad.flags & GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER) {
+        if (out->center) {
+            out->center = 0;
+            logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+        } else {
+            out->center = 1;
+        }
+    }
+
     pthread_mutex_unlock(&logic->gamepad_mutex);
 
 logic_copy_gamepad_status_err:

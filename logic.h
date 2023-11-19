@@ -3,6 +3,8 @@
 #include "platform.h"
 #include "queue.h"
 
+#define GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER  0x00000001U
+
 typedef struct gamepad_status {
 
     int32_t joystick_positions[2][2]; // [0 left | 1 right][x axis | y axis]
@@ -34,6 +36,8 @@ typedef struct gamepad_status {
 
     int16_t raw_gyro[3];
     int16_t raw_accel[3];
+
+    uint32_t flags;
 
 } gamepad_status_t;
 

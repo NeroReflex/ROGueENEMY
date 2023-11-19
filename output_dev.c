@@ -681,6 +681,8 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 				gs->r3 = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_THUMBL) {
 				gs->l3 = msg->data.event.ev[i].value;
+			} else if (msg->data.event.ev[i].code == BTN_MODE) {
+				gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
 			}
 		} else if (msg->data.event.ev[i].type == EV_ABS) {
 			if (msg->data.event.ev[i].code == ABS_X) {
