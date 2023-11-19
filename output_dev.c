@@ -683,6 +683,8 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 				gs->l3 = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_MODE) {
 				gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+			} else if ((msg->data.event.ev_count == 2) && (msg->data.event.ev[0].value == -13565786) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F16)) {
+				gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
 			}
 		} else if (msg->data.event.ev[i].type == EV_ABS) {
 			if (msg->data.event.ev[i].code == ABS_X) {
