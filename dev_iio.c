@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 static char* read_file(const char* base_path, const char *file) {
+    char* res = NULL;
     char* fdir = NULL;
     long len = 0;
 
@@ -21,36 +22,28 @@ static char* read_file(const char* base_path, const char *file) {
             len = ftell(fp);
             rewind(fp);
 
-            free(fdir);
-            fdir = NULL;
-
             len += 1;
-            char* res = malloc(len);
+            res = malloc(len);
             if (res != NULL) {
-                fread(res, 1, len, fp);
-                
-                fclose(fp);
-
-                return res;
+                unsigned long read_bytes = fread(res, 1, len, fp);
+                printf("Read %lu bytes from file %s\n", read_bytes, fdir);
             } else {
-                fclose(fp);
-
                 fprintf(stderr, "Cannot allocate %ld bytes for %s content.\n", len, fdir);
-                goto read_file_err;
             }
+
+            fclose(fp);
         } else {
             fprintf(stderr, "Cannot open file %s.\n", fdir);
-            free(fdir);
-            goto read_file_err;
         }
     } else {
         fprintf(stderr, "File %s does not exists.\n", fdir);
-        free(fdir);
-        goto read_file_err;
     }
 
+    free(fdir);
+    fdir = NULL;
+
 read_file_err:
-    return NULL;
+    return res;
 }
 
 int write_file(const char* base_path, const char *file, const void* buf, size_t buf_sz) {
@@ -70,31 +63,24 @@ int write_file(const char* base_path, const char *file, const void* buf, size_t 
     if (access(fdir, F_OK) == 0) {
         FILE* fp = fopen(fdir, "w");
         if (fp != NULL) {
-            free(fdir);
-            fdir = NULL;
-
             res = fwrite(buf, 1, buf_sz, fp);
             if (res >= buf_sz) {
-                fclose(fp);
+                printf("Written %d bytes to fine %s\n", res, fdir);
 
-                return res;
+                fclose(fp);
             } else {
-                fclose(fp);
-
                 fprintf(stderr, "Cannot allocate %ld bytes for %s content.\n", len, fdir);
-                
-                goto write_file_err;
             }
+            fclose(fp);
         } else {
             fprintf(stderr, "Cannot open file %s.\n", fdir);
-            free(fdir);
-            goto write_file_err;
         }
     } else {
         fprintf(stderr, "File %s does not exists.\n", fdir);
-        free(fdir);
-        goto write_file_err;
     }
+
+    free(fdir);
+    fdir = NULL;
 
 write_file_err:
     return res;
@@ -267,6 +253,9 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->temp_fd = fopen(tmp, "r");
 
     free(tmp);
+
+    // give time to change the scale
+    sleep(4);
 
 dev_iio_create_err:
     return iio;
