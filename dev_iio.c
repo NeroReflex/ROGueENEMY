@@ -65,7 +65,7 @@ int write_file(const char* base_path, const char *file, const void* buf, size_t 
         if (fp != NULL) {
             res = fwrite(buf, 1, buf_sz, fp);
             if (res >= buf_sz) {
-                printf("Written %d bytes to fine %s\n", res, fdir);
+                printf("Written %d bytes to file %s\n", res, fdir);
             } else {
                 fprintf(stderr, "Cannot write to %s: %d.\n", fdir, res);
             }
@@ -256,6 +256,16 @@ dev_iio_t* dev_iio_create(const char* path) {
     iio->temp_fd = fopen(tmp, "r");
 
     free(tmp);
+
+    printf(
+        "anglvel scale: x=%f, y=%f, z=%f | accel scale: x=%f, y=%f, z=%f\n",
+        iio->anglvel_scale_x,
+        iio->anglvel_scale_y,
+        iio->anglvel_scale_z,
+        iio->accel_scale_x,
+        iio->accel_scale_y,
+        iio->accel_scale_z
+    );
 
     // give time to change the scale
     sleep(4);
