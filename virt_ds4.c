@@ -452,7 +452,7 @@ static int event(int fd)
             uint16_t acc_z_minus      = 0xe086;
 
             // bias in kernel is 0 (embedded constant)
-            // speed_2x = speed_2x*DS_GYRO_RES_PER_DEG_S; calculated by the kernel will be 1080.
+            // speed_2x = speed_2x*DS4_GYRO_RES_PER_DEG_S; calculated by the kernel will be 1080.
             // As a consequence sens_numer (for every axis) is 1080*1024.
             // that number will be 1105920
             memcpy((void*)&firmware_info_response.u.get_report_reply.data[1], (const void*)&gyro_pitch_bias, sizeof(int16_t));
@@ -571,12 +571,11 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     }
 
     // Calculate the time difference in microseconds
-    const int64_t timeDiffMicroseconds = (((int64_t)gs.last_motion_time.tv_sec - (int64_t)first_read_time.tv_sec) * (int64_t)1000000) +
-                                    ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec) * (int64_t)100;
+    const int64_t dime_diff_us = (((int64_t)gs.last_motion_time.tv_sec - (int64_t)first_read_time.tv_sec) * (int64_t)1000000) +
+                                    ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec);
 
     // Calculate the time difference in multiples of 0.33 microseconds
-    const int64_t timeDiffInMultiples = (timeDiffMicroseconds / (int64_t)33 - (int64_t)100) / (int64_t)33;
-    uint16_t timestamp = timeDiffInMultiples / (int64_t)100;
+    const uint16_t timestamp = ((dime_diff_us * (int64_t)100) / (int64_t)533);
 
     /*
     Example data:
