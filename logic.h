@@ -3,6 +3,8 @@
 #include "platform.h"
 #include "queue.h"
 
+#define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS    200
+
 #define GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER  0x00000001U
 
 typedef struct gamepad_status {

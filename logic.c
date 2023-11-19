@@ -76,7 +76,7 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
 
         if (logic->gamepad.center) {
             // If the center button is pressed and at least 500ms have passed
-            if (elapsed_time >= 500) {
+            if (elapsed_time >= PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS) {
                 printf("Releasing center button\n");
                 logic->gamepad.center = 0;
                 logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
