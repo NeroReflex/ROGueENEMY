@@ -188,10 +188,17 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     // =========================================== in_accel_scale ===============================================
     {
+        const char* preferred_scale = LSB_PER_16G_STR;
         char* const accel_scale = read_file(iio->path, "/in_accel_scale");
         if (accel_scale != NULL) {
             iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = strtod(accel_scale, NULL);
             free((void*)accel_scale);
+
+            if (write_file(iio->path, "/in_anglvel_scale", preferred_scale, strlen(preferred_scale)) >= 0) {
+                iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = LSB_PER_16G;
+            } else {
+                fprintf(stderr, "Unable to set preferred in_accel_scale for device %s.\n", iio->name);
+            }
         } else {
             // TODO: what about if those are plit in in_accel_{x,y,z}_scale?
             fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
@@ -471,7 +478,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_x_fd);
         if (tmp_read >= 0) {
             out->accel_x_raw = strtol(&tmp[0], NULL, 10);
-            accel_out[0] = (double)out->accel_x_raw * iio->accel_scale_x;
+            accel_in[0] = (double)out->accel_x_raw * iio->accel_scale_x;
         } else {
             fprintf(stderr, "While reading accel(x): %d\n", tmp_read);
             return tmp_read;
@@ -484,7 +491,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_y_fd);
         if (tmp_read >= 0) {
             out->accel_y_raw = strtol(&tmp[0], NULL, 10);
-            accel_out[1] = (double)out->accel_y_raw * iio->accel_scale_y;
+            accel_in[1] = (double)out->accel_y_raw * iio->accel_scale_y;
         } else {
             fprintf(stderr, "While reading accel(y): %d\n", tmp_read);
             return tmp_read;
@@ -497,7 +504,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_z_fd);
         if (tmp_read >= 0) {
             out->accel_z_raw = strtol(&tmp[0], NULL, 10);
-            accel_out[2] = (double)out->accel_z_raw * iio->accel_scale_z;
+            accel_in[2] = (double)out->accel_z_raw * iio->accel_scale_z;
         } else {
             fprintf(stderr, "While reading accel(z): %d\n", tmp_read);
             return tmp_read;

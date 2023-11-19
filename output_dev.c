@@ -740,8 +740,8 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 		const int upd_beg_res = logic_begin_status_update(out_dev->logic);
 		if (upd_beg_res == 0) {
 			out_dev->logic->gamepad.last_motion_time = msg->data.imu.read_time;
-			memcpy(out_dev->logic->gamepad.gyro, msg->data.imu.gyro_rad_s, sizeof(double) * 3);
-			memcpy(out_dev->logic->gamepad.accel, msg->data.imu.accel_m2s, sizeof(double) * 3);
+			memcpy(out_dev->logic->gamepad.gyro, msg->data.imu.gyro_rad_s, sizeof(double[3]));
+			memcpy(out_dev->logic->gamepad.accel, msg->data.imu.accel_m2s, sizeof(double[3]));
 
 			logic_end_status_update(out_dev->logic);
 
