@@ -150,12 +150,14 @@ dev_iio_t* dev_iio_create(const char* path) {
     // ========================================== in_anglvel_scale ==============================================
     {
         const char* preferred_scale = LSB_PER_RAD_S_2000_DEG_S_STR;
-        char* const anglvel_scale = read_file(iio->path, "/in_anglvel_scale");
+        const char *scale_main_file = "/in_anglvel_scale";
+
+        char* const anglvel_scale = read_file(iio->path, scale_main_file);
         if (anglvel_scale != NULL) {
             iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
 
-            if (write_file(iio->path, "/in_anglvel_scale", preferred_scale, strlen(preferred_scale)) >= 0) {
+            if (write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
                 iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = LSB_PER_RAD_S_2000_DEG_S;
                 printf("anglvel scale changed to %f for device %s\n", iio->anglvel_scale_x, iio->name);
             } else {
@@ -163,7 +165,7 @@ dev_iio_t* dev_iio_create(const char* path) {
             }
         } else {
             // TODO: what about if those are split in in_anglvel_{x,y,z}_scale?
-            fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", iio->path, "/in_accel_scale");
+            fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", iio->path, scale_main_file);
 
             free(iio);
             iio = NULL;
@@ -175,12 +177,14 @@ dev_iio_t* dev_iio_create(const char* path) {
     // =========================================== in_accel_scale ===============================================
     {
         const char* preferred_scale = LSB_PER_16G_STR;
-        char* const accel_scale = read_file(iio->path, "/in_accel_scale");
+        const char *scale_main_file = "/in_accel_scale";
+
+        char* const accel_scale = read_file(iio->path, scale_main_file);
         if (accel_scale != NULL) {
             iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = strtod(accel_scale, NULL);
             free((void*)accel_scale);
 
-            if (write_file(iio->path, "/in_anglvel_scale", preferred_scale, strlen(preferred_scale)) >= 0) {
+            if (write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
                 iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = LSB_PER_16G;
                 printf("accel scale changed to %f for device %s\n", iio->accel_scale_x, iio->name);
             } else {
@@ -188,7 +192,7 @@ dev_iio_t* dev_iio_create(const char* path) {
             }
         } else {
             // TODO: what about if those are plit in in_accel_{x,y,z}_scale?
-            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
+            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, scale_main_file);
 
             free(iio);
             iio = NULL;
