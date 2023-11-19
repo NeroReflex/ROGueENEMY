@@ -435,8 +435,8 @@ static int event(int fd)
 
             uint16_t gyro_pitch_bias  = 0xfff9;
             uint16_t gyro_yaw_bias    = 0x0009;
-            uint16_t gyro_roll_bias   = 0xfeff;
-            uint16_t gyro_pitch_plus  = 0x2200;
+            uint16_t gyro_roll_bias   = 0xfff9;
+            uint16_t gyro_pitch_plus  = 0x22fe;
             uint16_t gyro_pitch_minus = 0xdcf4;
             uint16_t gyro_yaw_plus    = 0x22bb;
             uint16_t gyro_yaw_minus   = 0xdd59;
