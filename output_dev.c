@@ -749,7 +749,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 
 			out_dev->logic->gamepad.raw_gyro[0] = msg->data.imu.gyro_x_raw;
 			out_dev->logic->gamepad.raw_gyro[1] = msg->data.imu.gyro_y_raw;
-			out_dev->logic->gamepad.raw_gyro[2] = msg->data.imu.gyro_x_raw;
+			out_dev->logic->gamepad.raw_gyro[2] = msg->data.imu.gyro_z_raw;
 
 			logic_end_status_update(out_dev->logic);
 
