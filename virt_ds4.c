@@ -628,12 +628,13 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     const int16_t a_z = (gs.accel[2]) / LSB_PER_16G; // TODO: IDK how to test...
     */
 
-    const int16_t g_x = (int16_t)(-1)*gs.raw_gyro[2];
-    const int16_t g_y = gs.raw_gyro[1];
-    const int16_t g_z = (int16_t)(-1)*gs.raw_gyro[0];
-    const int16_t a_x = (int16_t)(-1)*gs.raw_accel[2];
-    const int16_t a_y = gs.raw_accel[1];
-    const int16_t a_z = (int16_t)(-1)*gs.raw_accel[0];
+    const int16_t g_x = gs.raw_gyro[0];
+    const int16_t g_y = (int16_t)(-1) * gs.raw_gyro[1];  // Swap Y and Z
+    const int16_t g_z = (int16_t)(-1) * gs.raw_gyro[2];  // Swap Y and Z
+    const int16_t a_x = gs.raw_accel[0];
+    const int16_t a_y = (int16_t)(-1) * gs.raw_accel[1];  // Swap Y and Z
+    const int16_t a_z = (int16_t)(-1) * gs.raw_accel[2];  // Swap Y and Z
+
 
     buf[0] = 0x01;  // [00] report ID (0x01)
     buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
