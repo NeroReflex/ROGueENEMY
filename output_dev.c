@@ -544,7 +544,7 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 		// search for mouse-related events
 		for (uint32_t a = 0; a < msg->data.event.ev_count; ++a) {
 			if (msg->data.event.ev[a].type == EV_KEY) {
-				if ((msg->data.event.ev[0].code == BTN_MIDDLE) || (msg->data.event.ev[0].code == BTN_LEFT) || (msg->data.event.ev[0].code == BTN_RIGHT)) {
+				if ((msg->data.event.ev[a].code == BTN_MIDDLE) || (msg->data.event.ev[a].code == BTN_LEFT) || (msg->data.event.ev[a].code == BTN_RIGHT)) {
 					msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
 					return;
 				}
