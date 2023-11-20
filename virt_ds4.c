@@ -703,7 +703,7 @@ void *virt_ds4_thread_func(void *ptr) {
 	}
 
     for (;;) {
-        usleep(128);
+        usleep(1250);
 
         if ((logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) != 0) {
             event(fd);
