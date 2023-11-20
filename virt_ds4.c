@@ -352,31 +352,8 @@ static void handle_output(struct uhid_event *ev)
 		ev->u.output.data[1]);
 }
 
-static int event(int fd, int timeoutMillis)
+static int event(int fd)
 {
-    fd_set readSet;
-    struct timeval timeout;
-
-    // Initialize the set of file descriptors to watch for reading
-    FD_ZERO(&readSet);
-    FD_SET(fd, &readSet);
-
-    // Set the timeout
-    timeout.tv_sec = timeoutMillis / 1000;
-    timeout.tv_usec = (timeoutMillis % 1000) * 1000;
-
-    // Wait for data to be ready on the file descriptor or timeout
-    int result = select(fd + 1, &readSet, NULL, NULL, &timeout);
-
-    if (result == -1) {
-        // Handle error
-        fprintf(stderr, "Error in DS4 select on vhid device.\n");
-        return result;
-    } else if (result == 0) {
-        // Timeout occurred
-        return 0;
-    }
-
 	struct uhid_event ev;
 	ssize_t ret;
 
@@ -712,7 +689,7 @@ void *virt_ds4_thread_func(void *ptr) {
     logic_t *const logic = (logic_t*)ptr;
 
     fprintf(stderr, "Open uhid-cdev %s\n", path);
-	int fd = open(path, O_RDWR | O_CLOEXEC);
+	int fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
 	if (fd < 0) {
 		fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, fd);
 		return NULL;
@@ -726,8 +703,12 @@ void *virt_ds4_thread_func(void *ptr) {
 	}
 
     for (;;) {
+        usleep(1250);
+
         if ((logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) != 0) {
-            event(fd, 1250);
+            event(fd);
+
+            
 
             const int res = send_data(fd, logic);
             if (res < 0) {
