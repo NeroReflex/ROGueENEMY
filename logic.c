@@ -49,9 +49,12 @@ int logic_create(logic_t *const logic) {
 
     const int init_platform_res = init_platform(&logic->platform);
     if (init_platform_res == 0) {
+        printf("RC71L platform correctly initialized\n");
+
         logic->flags |= LOGIC_FLAGS_PLATFORM_ENABLE;
 
         if (is_mouse_mode(&logic->platform)) {
+            printf("Gamepad output will default to evdev when the controller is set in mouse mode\n");
             logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
         }
     } else {
