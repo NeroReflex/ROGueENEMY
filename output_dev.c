@@ -598,7 +598,8 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 				}
 			}
         } else if ((msg->data.event.ev_count == 2) && (msg->data.event.ev[0].value == -13565786) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F16)) {
-            msg->data.event.ev_count = 1;
+            printf("Converted AC short-press button to BTN_MODE\n");
+			msg->data.event.ev_count = 1;
             msg->data.event.ev[0].type = EV_KEY;
             msg->data.event.ev[0].code = BTN_MODE;
             msg->data.event.ev[0].value = msg->data.event.ev[1].value;
@@ -629,6 +630,8 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 			(msg->data.event.ev[1].type == EV_KEY) &&
 			(msg->data.event.ev[1].code == KEY_PROG1)
 		) {
+			// do nothing to match the DS4 joystick
+			/*
             msg->data.event.ev_count = 3;
 
             const int32_t val = msg->data.event.ev[1].value;
@@ -645,7 +648,7 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
             msg->data.event.ev[2].type = EV_KEY;
             msg->data.event.ev[2].code = BTN_SOUTH;
             msg->data.event.ev[2].value = val;
-/*
+
             events[3].type = SYN_REPORT;
             events[3].code = EV_SYN;
             events[3].value = 0;
@@ -653,12 +656,25 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
             events[4].type = EV_KEY;
             events[4].code = BTN_SOUTH;
             events[4].value = 0;
-*/
+			*/
         }
     }
 }
 
 static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) {
+	if ( // this is what happens at release of the AC button of the ROG Ally
+		(msg->data.event.ev_count == 2) &&
+		(msg->data.event.ev[0].value == -13565786) &&
+		(msg->data.event.ev[1].type == EV_KEY) &&
+		(msg->data.event.ev[1].code == KEY_F16) &&
+		(msg->data.event.ev[1].value == 1)
+	) {
+#if defined(INCLUDE_OUTPUT_DEBUG)
+		printf("RC71L AC button short-press detected\n");
+#endif
+		gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+	}
+
 	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
 		if (msg->data.event.ev[i].type == EV_KEY) {
 			if (msg->data.event.ev[i].code == BTN_EAST) {
@@ -682,17 +698,6 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 			} else if (msg->data.event.ev[i].code == BTN_THUMBL) {
 				gs->l3 = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_MODE) {
-				gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
-			} else if ( // this is what happens at release of the AC button of the ROG Ally
-				(msg->data.event.ev_count == 2) &&
-				(msg->data.event.ev[0].value == -13565786) &&
-				(msg->data.event.ev[1].type == EV_KEY) &&
-				(msg->data.event.ev[1].code == KEY_F16) &&
-				(msg->data.event.ev[1].value == 1)
-			) {
-#if defined(INCLUDE_OUTPUT_DEBUG)
-				printf("RC71L AC button short-press detected\n");
-#endif
 				gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
 			}
 		} else if (msg->data.event.ev[i].type == EV_ABS) {
