@@ -33,9 +33,11 @@ int logic_create(logic_t *const logic) {
     
     const int virt_ds4_thread_creation = pthread_create(&logic->virt_ds4_thread, NULL, virt_ds4_thread_func, (void*)(logic));
 	if (virt_ds4_thread_creation != 0) {
-		fprintf(stderr, "Error creating virtual DualShock4 thread: %d\n", virt_ds4_thread_creation);
+		fprintf(stderr, "Error creating virtual DualShock4 thread: %d. Will use evdev as output.\n", virt_ds4_thread_creation);
 	} else {
+        printf("Creation of virtual DualShock4 succeeded: using it as the defout output.\n");
         logic->flags |= LOGIC_FLAGS_VIRT_DS4_ENABLE;
+        logic->gamepad_output = GAMEPAD_OUTPUT_DS4;
     }
 
     if (queue_init_res < 0) {

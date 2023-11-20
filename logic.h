@@ -46,6 +46,11 @@ typedef struct gamepad_status {
 #define LOGIC_FLAGS_VIRT_DS4_ENABLE   0x00000001U
 #define LOGIC_FLAGS_PLATFORM_ENABLE   0x00000002U
 
+typedef enum gamepad_output {
+    GAMEPAD_OUTPUT_EVDEV = 0,
+    GAMEPAD_OUTPUT_DS4,
+} gamepad_output_t;
+
 typedef struct logic {
 
     rc71l_platform_t platform;
@@ -57,8 +62,11 @@ typedef struct logic {
 
     pthread_t virt_ds4_thread;
 
-    volatile uint32_t flags;
+    uint32_t flags;
 
+    // the mutex is not needed if only one thread is writing this and others are checking with equality
+    //pthread_mutex_t gamepad_output_mutex;
+    gamepad_output_t gamepad_output;
 } logic_t;
 
 int logic_create(logic_t *const logic);

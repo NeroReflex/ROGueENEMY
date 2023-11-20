@@ -61,7 +61,7 @@ int cycle_mode(rc71l_platform_t *const platform) {
 
     fclose(mode_file);
 
-    return 0;
+    return platform->mode;
 }
 
 int is_gamepad_mode(rc71l_platform_t *const platform) {

@@ -705,10 +705,8 @@ void *virt_ds4_thread_func(void *ptr) {
     for (;;) {
         usleep(1250);
 
-        if ((logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) != 0) {
+        if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
             event(fd);
-
-            
 
             const int res = send_data(fd, logic);
             if (res < 0) {

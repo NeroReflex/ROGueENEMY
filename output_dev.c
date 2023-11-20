@@ -539,16 +539,22 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 	static int gyroscope_mouse_translation = 0;
 
 	if (
+		(msg->data.event.ev_count >= 2) &&
+		(msg->data.event.ev[0].type == EV_MSC) &&
+		(msg->data.event.ev[0].code == MSC_SCAN) &&
 		(msg->data.event.ev[0].value == -13565784) &&
 		(msg->data.event.ev[1].type == EV_KEY) &&
 		(msg->data.event.ev[1].code == KEY_F18) &&
-		(msg->data.event.ev[1].value == 1) &&
-		(msg->data.event.ev_count >= 2) &&
-		(msg->data.event.ev[0].type == EV_MSC) &&
-		(msg->data.event.ev[0].code == MSC_SCAN)
+		(msg->data.event.ev[1].value == 1)
 	) {
 		printf("Detected mode switch command, switching mode...\n");
-		cycle_mode(&out_dev->logic->platform);
+		const int new_mode = cycle_mode(&out_dev->logic->platform);
+
+		if (new_mode < 0) {
+			fprintf(stderr, "Error in mode switching: %d\n", new_mode);
+		} else {
+			printf("Mode correctly switched to %d\n", new_mode);
+		}
 		//msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
 	}
 
@@ -765,7 +771,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 			fprintf(stderr, "[ev] Unable to begin the gamepad status update: %d\n", upd_beg_res);
 		}
 
-		if ((out_dev->logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) == 0) {
+		if (out_dev->logic->gamepad_output == GAMEPAD_OUTPUT_EVDEV) {
 			emit_ev(out_dev, msg);
 		}
 	} else if (msg->type == MSG_TYPE_IMU) {
