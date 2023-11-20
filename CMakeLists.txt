@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.1...3.27)
 project(
   ROGueENEMY
   VERSION 1.0
-  LANGUAGES CXX)
+  LANGUAGES C CXX)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
