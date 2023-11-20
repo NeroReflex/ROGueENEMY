@@ -554,6 +554,11 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 			fprintf(stderr, "Error in mode switching: %d\n", new_mode);
 		} else {
 			printf("Mode correctly switched to %d\n", new_mode);
+
+			if (new_mode == 1) {
+				printf("Mode switched to virtual evdev for lizard mode.\n");
+				out_dev->logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
+			}
 		}
 		//msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
 	}
@@ -762,6 +767,8 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 	if (msg->type == MSG_TYPE_EV) {
 		decode_ev(out_dev, msg);
 
+		// TODO: the mode could have been switched by decode_ev so change the output device too
+		
 		const int upd_beg_res = logic_begin_status_update(out_dev->logic);
 		if (upd_beg_res == 0) {
 			update_gs_from_ev(&out_dev->logic->gamepad, msg);
