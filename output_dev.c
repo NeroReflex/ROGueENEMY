@@ -1,5 +1,6 @@
 #include "output_dev.h"
 #include "logic.h"
+#include "platform.h"
 #include "queue.h"
 #include "message.h"
 #include <linux/input-event-codes.h>
@@ -538,6 +539,21 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 	static int F15_status = 0;
 	static int gyroscope_mouse_translation = 0;
 
+	// scan for mouse mode and emit events in the virtual mouse if required
+	if ((is_rc71l_ready(out_dev->logic)) && (is_mouse_mode(&out_dev->logic->platform))) {
+		// search for mouse-related events
+		for (uint32_t a = 0; a < msg->data.event.ev_count; ++a) {
+			if (msg->data.event.ev[a].type == EV_KEY) {
+				if ((msg->data.event.ev[0].code == BTN_MIDDLE) || (msg->data.event.ev[0].code == BTN_LEFT) || (msg->data.event.ev[0].code == BTN_RIGHT)) {
+					msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
+					return;
+				} else if (msg->data.event.ev[a].type == EV_REL) {
+					msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
+					return;
+				}
+			}
+		}
+	}
 
     if (msg->data.event.ev[0].type == EV_REL) {
         msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_MOUSE;
