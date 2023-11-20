@@ -3,3 +3,4 @@
 *.o
 /depends
 /debug
+/.cache
