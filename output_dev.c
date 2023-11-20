@@ -464,7 +464,8 @@ static void emit_ev(output_dev_t *const out_dev, const message_t *const msg) {
 	}
 
 	int fd = out_dev->gamepad_fd;
-	if ((msg->flags & EV_MESSAGE_FLAGS_IMU) != 0) {
+	const uint32_t msg_flags = msg->data.event.ev_flags;
+	if ((msg->data.event.ev_flags & EV_MESSAGE_FLAGS_IMU) != 0) {
 		fd = out_dev->imu_fd;
 	} else if ((msg->flags & EV_MESSAGE_FLAGS_MOUSE) != 0) {
 		fd = out_dev->mouse_fd;
@@ -472,7 +473,7 @@ static void emit_ev(output_dev_t *const out_dev, const message_t *const msg) {
 		fd = out_dev->gamepad_fd;
 	}
 
-	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
+	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {	
 		struct input_event ev = {
 			.code = msg->data.event.ev[i].code,
 			.type = msg->data.event.ev[i].type,

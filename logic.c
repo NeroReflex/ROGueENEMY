@@ -34,6 +34,8 @@ int logic_create(logic_t *const logic) {
     const int virt_ds4_thread_creation = pthread_create(&logic->virt_ds4_thread, NULL, virt_ds4_thread_func, (void*)(logic));
 	if (virt_ds4_thread_creation != 0) {
 		fprintf(stderr, "Error creating virtual DualShock4 thread: %d. Will use evdev as output.\n", virt_ds4_thread_creation);
+
+        logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
 	} else {
         printf("Creation of virtual DualShock4 succeeded: using it as the defout output.\n");
         logic->flags |= LOGIC_FLAGS_VIRT_DS4_ENABLE;
@@ -48,6 +50,10 @@ int logic_create(logic_t *const logic) {
     const int init_platform_res = init_platform(&logic->platform);
     if (init_platform_res == 0) {
         logic->flags |= LOGIC_FLAGS_PLATFORM_ENABLE;
+
+        if (is_mouse_mode(&logic->platform)) {
+            logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
+        }
     } else {
         fprintf(stderr, "Unable to initialize Asus RC71L MCU: %d", init_platform_res);
     }
