@@ -74,7 +74,7 @@ static input_dev_t in_xbox_dev = {
   .ev_input_filter_fn = input_filter_identity,
 };
 
-void request_termination() {
+void request_termination(void) {
   out_gamepadd_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
 
   in_xbox_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;

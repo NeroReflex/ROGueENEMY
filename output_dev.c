@@ -690,7 +690,9 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 				(msg->data.event.ev[1].code == KEY_F16) &&
 				(msg->data.event.ev[1].value == 1)
 			) {
-				printf("RC71L AC button short-press detected");
+#if defined(INCLUDE_OUTPUT_DEBUG)
+				printf("RC71L AC button short-press detected\n");
+#endif
 				gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
 			}
 		} else if (msg->data.event.ev[i].type == EV_ABS) {

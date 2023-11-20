@@ -21,8 +21,8 @@ static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
-    int32_t gyro_x = 0, gyro_y = 0, gyro_z = 0, accel_x = 0, accel_y = 0, accel_z = 0;
 /*
+    int32_t gyro_x = 0, gyro_y = 0, gyro_z = 0, accel_x = 0, accel_y = 0, accel_z = 0;
     if (gyroscope_mouse_translation > 0) {
         for (uint32_t i = 0; i < *count; ++i) {
             if (events[i].type != EV_ABS) {

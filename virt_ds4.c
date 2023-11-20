@@ -557,11 +557,11 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
     return DPAD_RELEASED;
 }
 
-static int send_data(int fd, logic_t *const logic, uint8_t counter) {
+static int send_data(int fd, logic_t *const logic) {
     struct timeval first_read_time;
     static int first_read_time_arrived = 0;
 
-    gamepad_status_t gs = {};
+    gamepad_status_t gs;
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
     if (gs_copy_res != 0) {
         fprintf(stderr, "Unable to copy the gamepad status: %d\n", gs_copy_res);
@@ -643,7 +643,14 @@ static int send_data(int fd, logic_t *const logic, uint8_t counter) {
     buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
     buf[5] = get_buttons_byte_by_gs(&gs) | (uint8_t)ds4_dpad_from_gamepad(gs.dpad);
     buf[6] = get_buttons_byte2_by_gs(&gs);
-    buf[7] = ((counter % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
+    
+    /*
+    static uint8_t counter = 0;
+    buf[7] = (((counter++) % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
+    */
+
+    buf[7] = get_buttons_byte3_by_gs(&gs);
+
     buf[8] = gs.l2_trigger;
     buf[9] = gs.r2_trigger;
     memcpy(&buf[10], &timestamp, sizeof(timestamp));
@@ -695,24 +702,19 @@ void *virt_ds4_thread_func(void *ptr) {
 		return NULL;
 	}
 
-    uint8_t counter = 0;
-
     for (;;) {
+        usleep(128);
+
         if ((logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) != 0) {
             event(fd);
 
-            usleep(128);
+            
 
-            const int res = send_data(fd, logic, counter);
-            if (res >= 0) {
-                ++counter;
-            } else {
+            const int res = send_data(fd, logic);
+            if (res < 0) {
                 fprintf(stderr, "Error sending HID report: %d", res);
             }
-        } else {
-            printf("PS4 output not enabled");
         }
-        
     }
 
     destroy(fd);
