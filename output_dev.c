@@ -569,6 +569,7 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
             if (msg->data.event.ev[1].value == 1) {
                 printf("Detected mode switch command, switching mode...\n");
 
+				const int was_mouse_mode = is_mouse_mode(&out_dev->logic->platform);
 				const int new_mode = cycle_mode(&out_dev->logic->platform);
 
 				if (new_mode < 0) {
@@ -577,8 +578,11 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 					printf("Mode correctly switched to %d\n", new_mode);
 
 					if (new_mode == 1) {
+						out_dev->logic->restore_to = out_dev->logic->gamepad_output;
 						printf("Mode switched to virtual evdev for lizard mode.\n");
 						out_dev->logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
+					} else if (was_mouse_mode) {
+						out_dev->logic->gamepad_output = out_dev->logic->restore_to;
 					}
 				}
             } else {

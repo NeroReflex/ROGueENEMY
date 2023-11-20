@@ -42,6 +42,8 @@ int logic_create(logic_t *const logic) {
         logic->gamepad_output = GAMEPAD_OUTPUT_DS4;
     }
 
+    logic->restore_to = logic->gamepad_output;
+
     if (queue_init_res < 0) {
         fprintf(stderr, "Unable to create queue: %d\n", queue_init_res);
         return queue_init_res;

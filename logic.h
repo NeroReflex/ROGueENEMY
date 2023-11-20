@@ -67,6 +67,8 @@ typedef struct logic {
     // the mutex is not needed if only one thread is writing this and others are checking with equality
     //pthread_mutex_t gamepad_output_mutex;
     gamepad_output_t gamepad_output;
+
+    gamepad_output_t restore_to;
 } logic_t;
 
 int logic_create(logic_t *const logic);
