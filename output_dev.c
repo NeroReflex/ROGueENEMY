@@ -673,6 +673,20 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) 
 		printf("RC71L AC button short-press detected\n");
 #endif
 		gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+	} else if ((msg->data.event.ev[0].value == -13565784) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F18)) {
+		if (msg->data.event.ev[1].value == 1) {
+
+			if ((msg->data.event.ev_count >= 2) && (msg->data.event.ev[0].type == EV_MSC) && (msg->data.event.ev[0].code == MSC_SCAN)) {
+				printf("???\n");
+			} else {
+				printf("EXCUSE ME...");
+			}
+			//cycle_mode(&out_dev->logic->platform);
+		} else {
+			// Do nothing effectively discarding the input
+		}
+
+		//msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
 	}
 
 	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
