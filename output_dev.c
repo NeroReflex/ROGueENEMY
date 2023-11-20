@@ -538,44 +538,32 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 	static int F15_status = 0;
 	static int gyroscope_mouse_translation = 0;
 
-	if (
-		(msg->data.event.ev_count >= 2) &&
-		(msg->data.event.ev[0].type == EV_MSC) &&
-		(msg->data.event.ev[0].code == MSC_SCAN) &&
-		(msg->data.event.ev[0].value == -13565784) &&
-		(msg->data.event.ev[1].type == EV_KEY) &&
-		(msg->data.event.ev[1].code == KEY_F18) &&
-		(msg->data.event.ev[1].value == 1)
-	) {
-		printf("Detected mode switch command, switching mode...\n");
-		const int new_mode = cycle_mode(&out_dev->logic->platform);
-
-		if (new_mode < 0) {
-			fprintf(stderr, "Error in mode switching: %d\n", new_mode);
-		} else {
-			printf("Mode correctly switched to %d\n", new_mode);
-
-			if (new_mode == 1) {
-				printf("Mode switched to virtual evdev for lizard mode.\n");
-				out_dev->logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
-			}
-		}
-		//msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
-	}
 
     if (msg->data.event.ev[0].type == EV_REL) {
         msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_MOUSE;
-    } else if ((msg->data.event.ev[0].type == EV_KEY) || (msg->data.event.ev[1].type == EV_KEY)) {
+    } /*else if ((msg->data.event.ev[0].type == EV_KEY) || (msg->data.event.ev[1].type == EV_KEY)) {
         if ((msg->data.event.ev[0].code == BTN_MIDDLE) || (msg->data.event.ev[0].code == BTN_LEFT) || (msg->data.event.ev[0].code == BTN_RIGHT)) {
             msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
         } else if ((msg->data.event.ev[1].code == BTN_MIDDLE) || (msg->data.event.ev[1].code == BTN_LEFT) || (msg->data.event.ev[1].code == BTN_RIGHT)) {
             msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
         }
-    } else if ((msg->data.event.ev_count >= 2) && (msg->data.event.ev[0].type == EV_MSC) && (msg->data.event.ev[0].code == MSC_SCAN)) {
+    }*/ else if ((msg->data.event.ev_count >= 2) && (msg->data.event.ev[0].type == EV_MSC) && (msg->data.event.ev[0].code == MSC_SCAN)) {
         if ((msg->data.event.ev[0].value == -13565784) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F18)) {
             if (msg->data.event.ev[1].value == 1) {
                 printf("Detected mode switch command, switching mode...\n");
-                cycle_mode(&out_dev->logic->platform);
+
+				const int new_mode = cycle_mode(&out_dev->logic->platform);
+
+				if (new_mode < 0) {
+					fprintf(stderr, "Error in mode switching: %d\n", new_mode);
+				} else {
+					printf("Mode correctly switched to %d\n", new_mode);
+
+					if (new_mode == 1) {
+						printf("Mode switched to virtual evdev for lizard mode.\n");
+						out_dev->logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
+					}
+				}
             } else {
                 // Do nothing effectively discarding the input
             }
