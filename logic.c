@@ -60,7 +60,7 @@ int logic_create(logic_t *const logic) {
             logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
         }
     } else {
-        fprintf(stderr, "Unable to initialize Asus RC71L MCU: %d", init_platform_res);
+        fprintf(stderr, "Unable to initialize Asus RC71L MCU: %d\n", init_platform_res);
     }
 
     return 0;

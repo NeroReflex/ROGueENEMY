@@ -710,7 +710,7 @@ void *virt_ds4_thread_func(void *ptr) {
         if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
             const int res = send_data(fd, logic);
             if (res < 0) {
-                fprintf(stderr, "Error sending HID report: %d", res);
+                fprintf(stderr, "Error sending HID report: %d\n", res);
             }
         }
     }

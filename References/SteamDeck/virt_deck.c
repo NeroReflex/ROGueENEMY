@@ -274,10 +274,10 @@ int main() {
 //            if (res >= 0) {
 //                ++counter;
 //            } else {
-//                fprintf(stderr, "Error sending HID report: %d", res);
+//                fprintf(stderr, "Error sending HID report: %d\n", res);
 //            }
 //        } else {
-//            printf("PS4 output not enabled");
+//            printf("PS4 output not enabled\n");
 //        }
         
     }
