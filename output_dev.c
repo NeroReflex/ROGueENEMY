@@ -558,13 +558,7 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 
     if (msg->data.event.ev[0].type == EV_REL) {
         msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_MOUSE;
-    } /*else if ((msg->data.event.ev[0].type == EV_KEY) || (msg->data.event.ev[1].type == EV_KEY)) {
-        if ((msg->data.event.ev[0].code == BTN_MIDDLE) || (msg->data.event.ev[0].code == BTN_LEFT) || (msg->data.event.ev[0].code == BTN_RIGHT)) {
-            msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
-        } else if ((msg->data.event.ev[1].code == BTN_MIDDLE) || (msg->data.event.ev[1].code == BTN_LEFT) || (msg->data.event.ev[1].code == BTN_RIGHT)) {
-            msg->data.event.ev_flags |= EV_MESSAGE_FLAGS_PRESERVE_TIME | EV_MESSAGE_FLAGS_MOUSE;
-        }
-    }*/ else if ((msg->data.event.ev_count >= 2) && (msg->data.event.ev[0].type == EV_MSC) && (msg->data.event.ev[0].code == MSC_SCAN)) {
+    } else if ((msg->data.event.ev_count >= 2) && (msg->data.event.ev[0].type == EV_MSC) && (msg->data.event.ev[0].code == MSC_SCAN)) {
         if ((msg->data.event.ev[0].value == -13565784) && (msg->data.event.ev[1].type == EV_KEY) && (msg->data.event.ev[1].code == KEY_F18)) {
             if (msg->data.event.ev[1].value == 1) {
                 printf("Detected mode switch command, switching mode...\n");
