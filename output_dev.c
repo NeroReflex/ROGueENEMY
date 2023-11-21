@@ -465,9 +465,9 @@ static void emit_ev(output_dev_t *const out_dev, const message_t *const msg) {
 
 	int fd = out_dev->gamepad_fd;
 	const uint32_t msg_flags = msg->data.event.ev_flags;
-	if ((msg->data.event.ev_flags & EV_MESSAGE_FLAGS_IMU) != 0) {
+	if ((msg_flags & EV_MESSAGE_FLAGS_IMU) != 0) {
 		fd = out_dev->imu_fd;
-	} else if ((msg->flags & EV_MESSAGE_FLAGS_MOUSE) != 0) {
+	} else if ((msg_flags & EV_MESSAGE_FLAGS_MOUSE) != 0) {
 		fd = out_dev->mouse_fd;
 	} else {
 		fd = out_dev->gamepad_fd;
@@ -481,7 +481,7 @@ static void emit_ev(output_dev_t *const out_dev, const message_t *const msg) {
 			.time = msg->data.event.ev[i].time,
 		};
 
-		if ((msg->data.event.ev_flags & EV_MESSAGE_FLAGS_PRESERVE_TIME) == 0) {
+		if ((msg_flags & EV_MESSAGE_FLAGS_PRESERVE_TIME) == 0) {
 			gettimeofday(&ev.time, NULL);
 		}
 
