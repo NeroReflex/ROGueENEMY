@@ -336,33 +336,67 @@ static void handle_output(struct uhid_event *ev)
 	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
 	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
         return;
-	
-	/*
-	if (ev->u.output.size != 2)
-		return;
+
+    /*
+    if (ds4->update_rumble) {
+		* Select classic rumble style haptics and enable it. *
+		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_MOTOR;
+		common->motor_left = ds4->motor_left;
+		common->motor_right = ds4->motor_right;
+		ds4->update_rumble = false;
+	}
+
+	if (ds4->update_lightbar) {
+		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED;
+		* Comptabile behavior with hid-sony, which used a dummy global LED to
+		 * allow enabling/disabling the lightbar. The global LED maps to
+		 * lightbar_enabled.
+		 *
+		common->lightbar_red = ds4->lightbar_enabled ? ds4->lightbar_red : 0;
+		common->lightbar_green = ds4->lightbar_enabled ? ds4->lightbar_green : 0;
+		common->lightbar_blue = ds4->lightbar_enabled ? ds4->lightbar_blue : 0;
+		ds4->update_lightbar = false;
+	}
+
+	if (ds4->update_lightbar_blink) {
+		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED_BLINK;
+		common->lightbar_blink_on = ds4->lightbar_blink_on;
+		common->lightbar_blink_off = ds4->lightbar_blink_off;
+		ds4->update_lightbar_blink = false;
+	}
     */
+	
+	if (ev->u.output.size != 32) {
+        fprintf(stderr, "output data length: %d\n", (int)ev->u.output.size);
+
+        return;
+    }
 
     fprintf(stderr, "output data length: %d\n", (int)ev->u.output.size);
 
 	// first byte is report-id which is 0x01
-	if (ev->u.output.data[0] != 0x1) {
+	if (ev->u.output.data[0] != 0x05) {
         fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev->u.output.data[0]);
         return;
     }
 	
-    const uint8_t right_duration = ev->u.output.data[2];   // Right motor duration (0xff means forever)
-	const uint8_t right_motor_on = ev->u.output.data[3];   // Right (small) motor on/off, only supports values of 0 or 1 (off/on)
-	const uint8_t left_duration = ev->u.output.data[4];    // Left motor duration (0xff means forever)
-	const uint8_t left_motor_force = ev->u.output.data[5]; // left (large) motor, supports force values from 0 to 255
-
-	const uint8_t leds_bitmap = ev->u.output.data[10]; // bitmap of enabled LEDs: LED_1 = 0x02, LED_2 = 0x04, ...
+    const uint8_t valid_flag0 = ev->u.output.data[1];
+	const uint8_t valid_flag1 = ev->u.output.data[2];
+	const uint8_t reserved = ev->u.output.data[3];
+	const uint8_t motor_right = ev->u.output.data[4];
+	const uint8_t motor_left = ev->u.output.data[5];
+	const uint8_t lightbar_red = ev->u.output.data[6];
+	const uint8_t lightbar_green = ev->u.output.data[7];
+	const uint8_t lightbar_blue = ev->u.output.data[8];
+	const uint8_t lightbar_blink_on = ev->u.output.data[9];
+	const uint8_t lightbar_blink_off = ev->u.output.data[10];
 
     printf(
-        "right_duration: %d, right_motor_on: %d, left_duration; %d, left_motor_force: %d\n",
-        right_duration,
-        right_motor_on,
-        left_duration,
-        left_motor_force
+        "motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
+        motor_left,
+        motor_right,
+        valid_flag0,
+        valid_flag1
     );
 }
 
