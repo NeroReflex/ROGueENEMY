@@ -342,9 +342,11 @@ static void handle_output(struct uhid_event *ev)
 		return;
     */
 
+    fprintf(stderr, "output data length: %d\n", (int)ev->u.output.size);
+
 	// first byte is report-id which is 0x01
 	if (ev->u.output.data[0] != 0x1) {
-        fprintf(stderr, "Unrecognised report-id: %d", (int)ev->u.output.data[0]);
+        fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev->u.output.data[0]);
         return;
     }
 	
