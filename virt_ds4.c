@@ -558,8 +558,8 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
 }
 
 static int send_data(int fd, logic_t *const logic) {
-    struct timeval first_read_time;
-    static int first_read_time_arrived = 0;
+    /* struct timeval first_read_time;
+    static int first_read_time_arrived = 0; */
 
     gamepad_status_t gs;
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
@@ -568,7 +568,7 @@ static int send_data(int fd, logic_t *const logic) {
         return gs_copy_res;
     }
 
-    if (first_read_time_arrived == 0) {
+    /* if (first_read_time_arrived == 0) {
         first_read_time = gs.last_motion_time;
         first_read_time_arrived = 1;
     }
@@ -578,7 +578,14 @@ static int send_data(int fd, logic_t *const logic) {
                                     ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec);
 
     // Calculate the time difference in multiples of 0.33 microseconds
-    const uint16_t timestamp = ((dime_diff_us * (int64_t)3) / (int64_t)16);
+    const uint16_t timestamp = ((dime_diff_us * (int64_t)3) / (int64_t)16); */
+
+    // FIXME: this code provides a fake but within spec timestamp
+    // this allows for certain Steam Input configurations to behave correctly
+    // however, this is not ideal: for precise input the timestamp should be based off of the
+    // IMU.
+    static uint16_t timestamp = 0;
+    timestamp += 188;
 
     /*
     Example data:
