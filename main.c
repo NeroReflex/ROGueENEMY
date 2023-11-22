@@ -211,8 +211,8 @@ int main(int argc, char ** argv) {
  
   pthread_join(iio_thread, NULL);
 
-iio2_thread_err:
-  pthread_join(iio2_thread, NULL);
+// iio2_thread_err:
+//   pthread_join(iio2_thread, NULL);
 
 iio_thread_err:
   pthread_join(asus_kb_3_thread, NULL);
