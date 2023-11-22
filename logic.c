@@ -63,6 +63,9 @@ int logic_create(logic_t *const logic) {
         fprintf(stderr, "Unable to initialize Asus RC71L MCU: %d\n", init_platform_res);
     }
 
+    sem_init(&logic->rumble.sem_full, 0, 1);
+    sem_init(&logic->rumble.sem_empty, 0, 0);
+
     return 0;
 }
 

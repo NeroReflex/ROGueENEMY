@@ -2,6 +2,9 @@
 
 #include "rogue_enemy.h"
 
+#define IMU_MESSAGE_FLAGS_ACCEL   0x00000001U
+#define IMU_MESSAGE_FLAGS_ANGLVEL 0x00000002U
+
 typedef struct imu_message {
     struct timeval read_time;
 
@@ -18,4 +21,7 @@ typedef struct imu_message {
 
     double gyro_rad_s[3]; // | x, y, z| right-hand-rules -- in rad/s
     double accel_m2s[3]; // | x, y, z| positive: right, up, towards player -- in m/s^2
+
+    uint32_t flags;
+
 } imu_message_t;

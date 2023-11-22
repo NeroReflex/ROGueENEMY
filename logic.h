@@ -39,6 +39,8 @@ typedef struct gamepad_status {
     int16_t raw_gyro[3];
     int16_t raw_accel[3];
 
+    uint8_t motors_intensity[2]; // 0 = left, 1 = right
+
     uint32_t flags;
 
 } gamepad_status_t;
@@ -50,6 +52,12 @@ typedef enum gamepad_output {
     GAMEPAD_OUTPUT_EVDEV = 0,
     GAMEPAD_OUTPUT_DS4,
 } gamepad_output_t;
+
+typedef struct rumble {
+    sem_t sem_full, sem_empty;
+
+    //TODO: add here what is needed
+} rumble_t;
 
 typedef struct logic {
 
@@ -69,6 +77,9 @@ typedef struct logic {
     gamepad_output_t gamepad_output;
 
     gamepad_output_t restore_to;
+
+    rumble_t rumble;
+
 } logic_t;
 
 int logic_create(logic_t *const logic);

@@ -4,9 +4,15 @@
 #include <linux/uhid.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <pthread.h>
 
 #define DS4_GYRO_RES_PER_DEG_S	1024
 #define DS4_ACC_RES_PER_G       8192
+
+/* Flags for DualShock4 output report. */
+#define DS4_OUTPUT_VALID_FLAG0_MOTOR		0x01
+#define DS4_OUTPUT_VALID_FLAG0_LED		    0x02
+#define DS4_OUTPUT_VALID_FLAG0_LED_BLINK	0x04
 
 static const uint16_t gyro_pitch_bias  = 0xfff9;
 static const uint16_t gyro_yaw_bias    = 0x0009;
@@ -331,7 +337,7 @@ static void destroy(int fd)
  * uhid program shouldn't do this but instead just forward the raw report.
  * However, for ducomentational purposes, we try to detect LED events here and
  * print debug messages for it. */
-static void handle_output(struct uhid_event *ev)
+static void handle_output(struct uhid_event *ev, logic_t *const logic)
 {
 	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
 	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
@@ -391,16 +397,30 @@ static void handle_output(struct uhid_event *ev)
 	const uint8_t lightbar_blink_on = ev->u.output.data[9];
 	const uint8_t lightbar_blink_off = ev->u.output.data[10];
 
-    printf(
-        "motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
-        motor_left,
-        motor_right,
-        valid_flag0,
-        valid_flag1
-    );
+    if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_MOTOR) && (logic->gamepad_output == LOGIC_FLAGS_VIRT_DS4_ENABLE)) {    
+        const int lock_res = pthread_mutex_lock(&logic->gamepad_mutex);
+        if (lock_res != 0) {
+            printf("Unable to lock gamepad mutex: %d, rumble will not be updated.\n", lock_res);
+
+            return;
+        }
+
+        logic->gamepad.motors_intensity[0] = motor_left;
+        logic->gamepad.motors_intensity[1] = motor_right;
+
+        pthread_mutex_unlock(&logic->gamepad_mutex);
+
+        printf(
+            "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
+            motor_left,
+            motor_right,
+            valid_flag0,
+            valid_flag1
+        );
+    }
 }
 
-static int event(int fd)
+static int event(int fd, logic_t *const logic)
 {
 	struct uhid_event ev;
 	ssize_t ret;
@@ -436,7 +456,7 @@ static int event(int fd)
 		break;
 	case UHID_OUTPUT:
 		fprintf(stderr, "UHID_OUTPUT from uhid-dev\n");
-		handle_output(&ev);
+		handle_output(&ev, logic);
 		break;
 	case UHID_OUTPUT_EV:
 		fprintf(stderr, "UHID_OUTPUT_EV from uhid-dev\n");
@@ -760,7 +780,7 @@ void *virt_ds4_thread_func(void *ptr) {
     for (;;) {
         usleep(1250);
         
-        event(fd);
+        event(fd, logic);
 
         if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
             const int res = send_data(fd, logic);

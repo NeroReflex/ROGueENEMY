@@ -142,11 +142,13 @@ static char* open_sysfs[] = {
 #define MAX_MESSAGES_IN_FLIGHT 32
 #define DEFAULT_EVENTS_IN_REPORT 8
 
+#define INPUT_CTX_FLAGS_READ_TERMINATED 0x00000001U
 
 struct input_ctx {
     struct libevdev* dev;
     dev_iio_t *iio_dev;
     queue_t* queue;
+    uint32_t flags;
     message_t messages[MAX_MESSAGES_IN_FLIGHT];
     ev_input_filter_t input_filter_fn;
 };
@@ -314,6 +316,8 @@ static void* input_read_thread_func(void* ptr) {
             }
         }
     } while (rc == 1 || rc == 0 || rc == -EAGAIN);
+
+    ctx->flags |= INPUT_CTX_FLAGS_READ_TERMINATED;
 
     return NULL;
 }
@@ -526,16 +530,55 @@ static void input_udev(
             continue;
         }
 
+        struct ff_effect effect;
+
+        const struct input_event rumble_terminate = {
+            .type = EV_FF,
+            .code = effect.id,
+            .value = 0,
+        };
+
+        // stop any effect
+        if (libevdev_has_event_type(ctx->dev, EV_FF)) {
+            write(libevdev_get_fd(ctx->dev), (const void*) &rumble_terminate, sizeof(rumble_terminate));
+        }
+
         pthread_t incoming_events_thread;
 
         const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)ctx);
         if (incoming_events_thread_creation != 0) {
             fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(ctx->dev), incoming_events_thread_creation);
+            continue;
         }
 
-        if (incoming_events_thread_creation == 0) {
-            pthread_join(incoming_events_thread, NULL);
+        while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
+            if (libevdev_has_event_type(ctx->dev, EV_FF)) {
+                const int timeout_ms = 500;
+
+                struct timespec timeout;
+                if (clock_gettime(CLOCK_MONOTONIC, &timeout) == -1) {
+                    timeout.tv_sec += timeout_ms / 1000;
+                    timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
+
+                    sem_timedwait(&in_dev->logic->rumble.sem_full, &timeout);
+                    
+                    // TODO: here read properties
+
+                    sem_post(&in_dev->logic->rumble.sem_full);
+                }
+                
+            }
         }
+
+        // stop any effect
+        if (libevdev_has_event_type(ctx->dev, EV_FF)) {
+            write(libevdev_get_fd(ctx->dev), (const void*) &rumble_terminate, sizeof(rumble_terminate));
+        }
+
+        pthread_join(incoming_events_thread, NULL);
+
+        ctx->flags = 0;
+
     }
 }
 
@@ -546,6 +589,7 @@ void *input_dev_thread_func(void *ptr) {
         .dev = NULL,
         .queue = &in_dev->logic->input_queue,
         .input_filter_fn = in_dev->ev_input_filter_fn,
+        .flags = 0x00000000U
     };
 
     if (in_dev->dev_type == input_dev_type_uinput) {
