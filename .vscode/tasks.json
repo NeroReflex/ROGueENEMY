@@ -1,0 +1,19 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build and Run in Subdir",
+            "type": "shell",
+            "command": "make clean && cmake --build . && sudo ./ROGueENEMY",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "detail": "Custom build and run task in a subdirectory"
+        }
+    ]
+}

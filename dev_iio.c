@@ -189,7 +189,9 @@ dev_iio_t* dev_iio_create(const char* path) {
     // =========================================== in_accel_scale ===============================================
     {
         const char* preferred_scale = LSB_PER_16G_STR;
-        const char *scale_main_file = "/in_accel_scale";
+        // const char *scale_main_file = "/in_accel_scale";
+        const char *scale_main_file = "/in_anglvel_scale";
+
 
         char* const accel_scale = read_file(iio->path, scale_main_file);
         if (accel_scale != NULL) {
@@ -215,7 +217,8 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     // ============================================= temp_scale =================================================
     {
-        char* const accel_scale = read_file(iio->path, "/in_temp_scale");
+        // char* const accel_scale = read_file(iio->path, "/in_temp_scale");
+        char* const accel_scale = read_file(iio->path, "/in_anglvel_scale");
         if (accel_scale != NULL) {
             iio->temp_scale = strtod(accel_scale, NULL);
             free((void*)accel_scale);
@@ -231,7 +234,9 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     // ============================================ sampling_rate ================================================
     {
-        char* const accel_scale = read_file(iio->path, "/in_temp_scale");
+        // char* const accel_scale = read_file(iio->path, "/in_temp_scale");
+        char* const accel_scale = read_file(iio->path, "/in_anglvel_scale");
+
         if (accel_scale != NULL) {
             iio->temp_scale = strtod(accel_scale, NULL);
             free((void*)accel_scale);
@@ -250,27 +255,31 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_accel_x_raw");
+    // strcat(tmp, "/in_accel_x_raw");
+    strcat(tmp, "/in_anglvel_y_raw");
     iio->accel_x_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_accel_y_raw");
+    // strcat(tmp, "/in_accel_y_raw");
+    strcat(tmp, "/in_anglvel_x_raw");
+
     iio->accel_y_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_accel_z_raw");
+    // strcat(tmp, "/in_accel_z_raw");
+    strcat(tmp, "/in_anglvel_z_raw");
     iio->accel_z_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_anglvel_x_raw");
+    strcat(tmp, "/in_anglvel_y_raw");
     iio->anglvel_x_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_anglvel_y_raw");
+    strcat(tmp, "/in_anglvel_x_raw");
     iio->anglvel_y_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
@@ -280,7 +289,7 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_temp_raw");
+    strcat(tmp, "/in_anglvel_z_raw");
     iio->temp_fd = fopen(tmp, "r");
 
     free(tmp);
@@ -550,8 +559,9 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_x_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[0] = (double)out->gyro_x_raw * iio->anglvel_scale_x;
+            printf("X axis: %d\n", gyro_in[0]);
         } else {
-            fprintf(stderr, "While reading anglvel(x): %d\n", tmp_read);
+            fprintf(stderr, "While reading anglvel(x): %d \n", tmp_read);
             return tmp_read;
         }
     }
@@ -563,6 +573,8 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_y_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[1] = (double)out->gyro_y_raw *iio->anglvel_scale_y;
+            printf("Y axis: %d ", gyro_in[1]);
+
         } else {
             fprintf(stderr, "While reading anglvel(y): %d\n", tmp_read);
             return tmp_read;
@@ -576,6 +588,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_z_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[2] = (double)out->gyro_z_raw *iio->anglvel_scale_z;
+            printf("Z axis: %d ", gyro_in[2]);
         } else {
             fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
             return tmp_read;
@@ -595,11 +608,12 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         }
     }
 
+    
+
     multiplyMatrixVector(iio->mount_matrix, gyro_in, gyro_out);
     multiplyMatrixVector(iio->mount_matrix, accel_in, accel_out);
 
     memcpy(out->accel_m2s, accel_out, sizeof(double[3]));
     memcpy(out->gyro_rad_s, gyro_out, sizeof(double[3]));
-
     return 0;
 }

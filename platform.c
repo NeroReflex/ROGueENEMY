@@ -6,29 +6,29 @@
 static const char* const platform_input_path = "/sys/devices/platform/asus-mcu.0/input/mode";
 
 int init_platform(rc71l_platform_t *const platform) {
-    if (access(platform_input_path, F_OK) != 0) {
-        fprintf(stderr, "Unable to find the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
-        return -ENOENT;
-    }
+    // if (access(platform_input_path, F_OK) != 0) {
+    //     fprintf(stderr, "Unable to find the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
+    //     return -ENOENT;
+    // }
 
-    FILE* mode_file = fopen(platform_input_path, "r");
-    if (mode_file == NULL) {
-        fprintf(stderr, "Unable to open the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
-        return -EINVAL;
-    }
+    // FILE* mode_file = fopen(platform_input_path, "r");
+    // if (mode_file == NULL) {
+    //     fprintf(stderr, "Unable to open the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
+    //     return -EINVAL;
+    // }
 
-    char mode_str[12];
-    unsigned long read_bytes = fread((void*)&mode_str[0], 1, sizeof(mode_str), mode_file);
-    if (read_bytes < 1) {
-        fprintf(stderr, "Unable to read the MCU platform mode file %s: no bytes.\n", platform_input_path);
-        fclose(mode_file);
-    }
+    // char mode_str[12];
+    // unsigned long read_bytes = fread((void*)&mode_str[0], 1, sizeof(mode_str), mode_file);
+    // if (read_bytes < 1) {
+    //     fprintf(stderr, "Unable to read the MCU platform mode file %s: no bytes.\n", platform_input_path);
+    //     fclose(mode_file);
+    // }
 
-    platform->mode = strtoul(&mode_str[0], NULL, 10);
+    // platform->mode = strtoul(&mode_str[0], NULL, 10);
 
-    fclose(mode_file);
+    // fclose(mode_file);
 
-    printf("Asus MCU platform found: current mode %lu\n", platform->mode);
+    // printf("Asus MCU platform found: current mode %lu\n", platform->mode);
     platform->modes_count = 3;
 
     return 0;

@@ -15,7 +15,8 @@ static output_dev_t out_gamepadd_dev = {
 };
 
 static iio_filters_t in_iio_filters = {
-  .name = "bmi323",
+  // .name = "bmi323",
+  .name = "gyro_3d",
 };
 
 static input_dev_t in_iio_dev = {
@@ -63,7 +64,8 @@ static input_dev_t in_asus_kb_3_dev = {
 };
 
 static uinput_filters_t in_xbox_filters = {
-  .name = "Microsoft X-Box 360 pad",
+  // .name = "Microsoft X-Box 360 pad",
+  .name = "Generic X-Box pad",
 };
 
 static input_dev_t in_xbox_dev = {

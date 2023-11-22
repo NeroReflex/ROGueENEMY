@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include "virt_ds4.h"
+#include "virt_ds5.h"
 
 int create_output_dev(const char* uinput_path, output_dev_type_t type) {
     int fd = open(uinput_path, O_WRONLY | O_NONBLOCK);
@@ -52,7 +52,7 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 		case output_dev_imu: {
 #if defined(UI_SET_PHYS_STR)
 			ioctl(fd, UI_SET_PHYS_STR(18), PHYS_STR);
-#else
+#els
 			fprintf(stderr, "UI_SET_PHYS_STR unavailable.\n");
 #endif
 
