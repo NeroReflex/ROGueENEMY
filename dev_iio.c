@@ -255,21 +255,21 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    // strcat(tmp, "/in_accel_x_raw");
-    strcat(tmp, "/in_anglvel_y_raw");
+    strcat(tmp, "/in_accel_x_raw");
+    // strcat(tmp, "/in_anglvel_y_raw");
     iio->accel_x_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    // strcat(tmp, "/in_accel_y_raw");
-    strcat(tmp, "/in_anglvel_x_raw");
+    strcat(tmp, "/in_accel_y_raw");
+    // strcat(tmp, "/in_anglvel_x_raw");
 
     iio->accel_y_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    // strcat(tmp, "/in_accel_z_raw");
-    strcat(tmp, "/in_anglvel_z_raw");
+    strcat(tmp, "/in_accel_z_raw");
+    // strcat(tmp, "/in_anglvel_z_raw");
     iio->accel_z_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
@@ -559,7 +559,6 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_x_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[0] = (double)out->gyro_x_raw * iio->anglvel_scale_x;
-            printf("X axis: %d\n", gyro_in[0]);
         } else {
             fprintf(stderr, "While reading anglvel(x): %d \n", tmp_read);
             return tmp_read;
@@ -573,8 +572,6 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_y_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[1] = (double)out->gyro_y_raw *iio->anglvel_scale_y;
-            printf("Y axis: %d ", gyro_in[1]);
-
         } else {
             fprintf(stderr, "While reading anglvel(y): %d\n", tmp_read);
             return tmp_read;
@@ -588,7 +585,6 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_z_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[2] = (double)out->gyro_z_raw *iio->anglvel_scale_z;
-            printf("Z axis: %d ", gyro_in[2]);
         } else {
             fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
             return tmp_read;

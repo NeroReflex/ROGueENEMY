@@ -27,6 +27,19 @@ static input_dev_t in_iio_dev = {
   //.input_filter_fn = input_filter_imu_identity,
 };
 
+// static iio_filters_t in_iio_2_filters = {
+//   // .name = "bmi323",
+//   .name = "accel_3d",
+// };
+// static input_dev_t in_iio_2_dev = {
+//   .dev_type = input_dev_type_iio,
+//   .crtl_flags = 0x00000000U,
+//   .iio_filters = &in_iio_filters,
+//   .logic = &global_logic,
+//   //.input_filter_fn = input_filter_imu_identity,
+// };
+
+
 static uinput_filters_t in_asus_kb_1_filters = {
   .name = "Asus Keyboard",
 };
@@ -136,7 +149,7 @@ int main(int argc, char ** argv) {
   int ret = 0;
 
   pthread_t gamepad_thread;
-  pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread, iio_thread;
+  pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread, iio_thread, iio2_thread;
   
   const int gamepad_thread_creation = pthread_create(&gamepad_thread, NULL, output_dev_thread_func, (void*)(&out_gamepadd_dev));
   if (gamepad_thread_creation != 0) {
@@ -178,15 +191,28 @@ int main(int argc, char ** argv) {
     goto asus_kb_3_thread_err;
   }
 
+  //  const int iio2_thread_creation = pthread_create(&iio2_thread, NULL, input_dev_thread_func, (void*)(&in_iio_2_dev));
+  // if (iio2_thread_creation != 0) {
+  //   fprintf(stderr, "Error creating iio input thread: %d\n", iio2_thread_creation);
+  //   ret = -1;
+  //   request_termination();
+  //   goto iio2_thread_err;
+  // }
+
+
   const int iio_thread_creation = pthread_create(&iio_thread, NULL, input_dev_thread_func, (void*)(&in_iio_dev));
   if (iio_thread_creation != 0) {
-    fprintf(stderr, "Error creating iio input thread: %d\n", asus_kb_3_thread_creation);
+    fprintf(stderr, "Error creating iio input thread: %d\n", iio_thread_creation);
     ret = -1;
     request_termination();
     goto iio_thread_err;
   }
 
+ 
   pthread_join(iio_thread, NULL);
+
+iio2_thread_err:
+  pthread_join(iio2_thread, NULL);
 
 iio_thread_err:
   pthread_join(asus_kb_3_thread, NULL);

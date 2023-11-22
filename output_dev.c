@@ -791,13 +791,13 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 			memcpy(out_dev->logic->gamepad.gyro, msg->data.imu.gyro_rad_s, sizeof(double[3]));
 			memcpy(out_dev->logic->gamepad.accel, msg->data.imu.accel_m2s, sizeof(double[3]));
 
-			out_dev->logic->gamepad.raw_accel[0] = msg->data.imu.accel_x_raw;
-			out_dev->logic->gamepad.raw_accel[1] = msg->data.imu.accel_y_raw;
-			out_dev->logic->gamepad.raw_accel[2] = msg->data.imu.accel_z_raw;
+			out_dev->logic->gamepad.raw_accel[0] = msg->data.imu.gyro_x_raw;
+			out_dev->logic->gamepad.raw_accel[1] = msg->data.imu.gyro_y_raw;
+			out_dev->logic->gamepad.raw_accel[2] = msg->data.imu.gyro_z_raw;
 
-			out_dev->logic->gamepad.raw_gyro[0] = msg->data.imu.gyro_x_raw;
-			out_dev->logic->gamepad.raw_gyro[1] = msg->data.imu.gyro_y_raw;
-			out_dev->logic->gamepad.raw_gyro[2] = msg->data.imu.gyro_z_raw;
+			out_dev->logic->gamepad.raw_gyro[0] = 20 * msg->data.imu.gyro_x_raw;
+			out_dev->logic->gamepad.raw_gyro[1] = 20 * msg->data.imu.gyro_y_raw;
+			out_dev->logic->gamepad.raw_gyro[2] = 30 * msg->data.imu.gyro_z_raw;
 
 			logic_end_status_update(out_dev->logic);
 
