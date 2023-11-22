@@ -333,23 +333,35 @@ static void destroy(int fd)
  * print debug messages for it. */
 static void handle_output(struct uhid_event *ev)
 {
-	/* LED messages are adverised via OUTPUT reports; ignore the rest */
-	if (ev->u.output.rtype != UHID_OUTPUT_REPORT) {
-        
-
+	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
+	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
         return;
-    }
-		
-	/* LED reports have length 2 bytes */
+	
+	/*
 	if (ev->u.output.size != 2)
 		return;
-	/* first byte is report-id which is 0x02 for LEDs in our rdesc */
-	if (ev->u.output.data[0] != 0x2)
-		return;
+    */
 
-	/* print flags payload */
-	fprintf(stderr, "LED output report received with flags %x\n",
-		ev->u.output.data[1]);
+	// first byte is report-id which is 0x01
+	if (ev->u.output.data[0] != 0x1) {
+        fprintf(stderr, "Unrecognised report-id: %d", (int)ev->u.output.data[0]);
+        return;
+    }
+	
+    const uint8_t right_duration = ev->u.output.data[2];   // Right motor duration (0xff means forever)
+	const uint8_t right_motor_on = ev->u.output.data[3];   // Right (small) motor on/off, only supports values of 0 or 1 (off/on)
+	const uint8_t left_duration = ev->u.output.data[4];    // Left motor duration (0xff means forever)
+	const uint8_t left_motor_force = ev->u.output.data[5]; // left (large) motor, supports force values from 0 to 255
+
+	const uint8_t leds_bitmap = ev->u.output.data[10]; // bitmap of enabled LEDs: LED_1 = 0x02, LED_2 = 0x04, ...
+
+    printf(
+        "right_duration: %d, right_motor_on: %d, left_duration; %d, left_motor_force: %d\n",
+        right_duration,
+        right_motor_on,
+        left_duration,
+        left_motor_force
+    );
 }
 
 static int event(int fd)
