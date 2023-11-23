@@ -5,9 +5,11 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #define DS4_GYRO_RES_PER_DEG_S	1024
 #define DS4_ACC_RES_PER_G       8192
+#define DS4_SPEC_DELTA_TIME     188.0f
 
 /* Flags for DualShock4 output report. */
 #define DS4_OUTPUT_VALID_FLAG0_MOTOR		0x01
@@ -626,9 +628,6 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
 }
 
 static int send_data(int fd, logic_t *const logic) {
-    /* struct timeval first_read_time;
-    static int first_read_time_arrived = 0; */
-
     gamepad_status_t gs;
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
     if (gs_copy_res != 0) {
@@ -636,24 +635,41 @@ static int send_data(int fd, logic_t *const logic) {
         return gs_copy_res;
     }
 
-    /* if (first_read_time_arrived == 0) {
-        first_read_time = gs.last_motion_time;
-        first_read_time_arrived = 1;
+    const int64_t time_us = gs.last_motion_time.tv_sec * 1000000 + gs.last_motion_time.tv_usec;
+
+    static uint32_t empty_reports = 0;
+    static uint64_t last_time = 0;
+    const int delta_time = time_us - last_time;
+    last_time = time_us;
+
+    // find the average Δt in the last 30 non-zero inputs;
+    // this has to run thousands of times a second so i'm trying to do this as fast as possible
+    static uint32_t dt_buffer[30] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    static uint32_t dt_sum = 0;
+    static uint8_t dt_buffer_current = 0; 
+
+    if (delta_time == 0) {
+        empty_reports++;
+    } else if (delta_time < 1000000 && delta_time > 0 ) { // ignore outliers
+        dt_sum -= dt_buffer[dt_buffer_current];
+        dt_sum += delta_time;
+        dt_buffer[dt_buffer_current] = delta_time;
+
+        if (dt_buffer_current == 29) {
+            dt_buffer_current = 0;
+        } else {
+            dt_buffer_current++;
+        }
     }
 
-    // Calculate the time difference in microseconds
-    const int64_t dime_diff_us = (((int64_t)gs.last_motion_time.tv_sec - (int64_t)first_read_time.tv_sec) * (int64_t)1000000) +
-                                    ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec);
+    static uint64_t sim_time = 0;
+    const double correction_factor = DS4_SPEC_DELTA_TIME / ((double)dt_sum / 30.f);
+    if (delta_time != 0) {
+        sim_time += (int)((double)delta_time * correction_factor);
+    }
 
-    // Calculate the time difference in multiples of 0.33 microseconds
-    const uint16_t timestamp = ((dime_diff_us * (int64_t)3) / (int64_t)16); */
-
-    // FIXME: this code provides a fake but within spec timestamp
-    // this allows for certain Steam Input configurations to behave correctly
-    // however, this is not ideal: for precise input the timestamp should be based off of the
-    // IMU.
-    static uint16_t timestamp = 0;
-    timestamp += 188;
+    const uint16_t timestamp = sim_time + (int)((double)empty_reports * DS4_SPEC_DELTA_TIME);
 
     /*
     Example data:
