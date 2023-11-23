@@ -527,17 +527,28 @@ static void input_udev(
             continue;
         }
 
-        struct ff_effect effect;
+        const int fd = libevdev_get_fd(ctx->dev);
+        int effect_upload_res = -1;
+        struct ff_effect effect = {
+            .id = -1,
+        };
 
-        const struct input_event rumble_terminate = {
+        struct input_event rumble_terminate = {
             .type = EV_FF,
-            .code = effect.id,
+            .code = -1,
             .value = 0,
         };
 
         // stop any effect
         if (libevdev_has_event_type(ctx->dev, EV_FF)) {
-            write(libevdev_get_fd(ctx->dev), (const void*) &rumble_terminate, sizeof(rumble_terminate));
+            effect_upload_res = ioctl(fd, EVIOCSFF, &effect);
+
+            if (effect_upload_res == 0) {
+                rumble_terminate.code = effect.id;
+                write(fd, (const void*) &rumble_terminate, sizeof(rumble_terminate));
+            } else {
+                fprintf(stderr, "Unable to upload force-feedback effect: %d", effect_upload_res);
+            }
         }
 
         pthread_t incoming_events_thread;
@@ -549,7 +560,7 @@ static void input_udev(
         }
 
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
-            if (libevdev_has_event_type(ctx->dev, EV_FF)) {
+            if (effect_upload_res == 0) {
                 const int timeout_ms = 500;
 
                 struct timespec timeout;
@@ -568,8 +579,9 @@ static void input_udev(
         }
 
         // stop any effect
-        if (libevdev_has_event_type(ctx->dev, EV_FF)) {
+        if (effect_upload_res == 0) {
             write(libevdev_get_fd(ctx->dev), (const void*) &rumble_terminate, sizeof(rumble_terminate));
+            ioctl(fd, EVIOCRMFF, effect.id);
         }
 
         pthread_join(incoming_events_thread, NULL);
