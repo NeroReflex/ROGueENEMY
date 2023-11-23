@@ -576,8 +576,8 @@ static uint8_t get_buttons_byte2_by_gs(const gamepad_status_t *const gs) {
     res |= gs->share ? 0x20 : 0x00;
     res |= gs->option ? 0x10 : 0x00;
 
-    //res |= gs->l2 ? 0x08 : 0x00;
-    //res |= gs->r2 ? 0x04 : 0x00;
+    res |= gs->r2_trigger > 200 ? 0x08 : 0x00;
+    res |= gs->l2_trigger > 200 ? 0x04 : 0x00;
     res |= gs->r1 ? 0x02 : 0x00;
     res |= gs->l1 ? 0x01 : 0x00;
 
