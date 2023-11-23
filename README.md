@@ -13,3 +13,19 @@ cd build
 cmake ..
 cmake --build .
 ```
+
+__Notes__: This project should be compiled with the following flags: *-O3 -march=znver4 -flto=full*
+
+## Design
+This software is meant to be run all the time in background and avoid busy wait, as well as quick reaction time from user input are both a design goal as well as ensuring reliable operation across many linux distributions in different conditions.
+
+## Contributions
+The following is a (probably incomplete) list of contributions this project had.
+
+As this project was met in a great way by the community contributions were many:
+  - __ashtopeth101__ for providing capture data of a real DS4 controller, for his precious testing and in general his time
+  - __143mailliw__ for spotting and fixing a bug with the timestamp and the following time required to ensure proper operation
+  __jlobue10__ for suggestions and allowing easy end-user usage of this software in fedora-based distros
+  - everybody else testing and providing feedback
+
+If I have forgotten someone please tell me and/or send a pull request.
