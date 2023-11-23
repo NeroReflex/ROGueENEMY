@@ -9,13 +9,10 @@
 #include <linux/input-event-codes.h>
 #include <linux/input.h>
 #include <unistd.h>
-#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <termios.h>
-
-#include <dirent.h> 
-#include <stdio.h> 
+#include <dirent.h>
 
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";

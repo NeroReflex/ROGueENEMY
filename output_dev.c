@@ -3,10 +3,6 @@
 #include "platform.h"
 #include "queue.h"
 #include "message.h"
-#include <linux/input-event-codes.h>
-#include <stdio.h>
-#include <unistd.h>
-
 #include "virt_ds4.h"
 
 int create_output_dev(const char* uinput_path, output_dev_type_t type) {
@@ -821,9 +817,12 @@ void *output_dev_thread_func(void *ptr) {
 	__time_t usecAtInit = now.tv_usec;
 #endif
 
+	pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
+	uint64_t rumble_events_count = out_dev->logic->gamepad.rumble_events_count;
+	pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
     for (;;) {
 		void *raw_ev;
-		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1000);
+		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 100);
 		if (pop_res == 0) {
 			message_t *const msg = (message_t*)raw_ev;
 			handle_msg(out_dev, msg);
@@ -836,6 +835,20 @@ void *output_dev_thread_func(void *ptr) {
 			fprintf(stderr, "Cannot read from input queue: %d\n", pop_res);
 			continue;
 		}
+
+		// here transmit the rumble request to the input-device-handling components
+		pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
+		
+		// check if the gamepad has notified the presence of a rumble event
+		if (out_dev->logic->gamepad.rumble_events_count != rumble_events_count) {
+			sem_wait(&out_dev->logic->rumble.sem_empty);
+			
+			// TODO: translate the rumble to evdev
+
+			sem_post(&out_dev->logic->rumble.sem_full);
+		}
+		
+		pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
 
         const uint32_t flags = out_dev->crtl_flags;
 		if (flags & OUTPUT_DEV_CTRL_FLAG_EXIT) {

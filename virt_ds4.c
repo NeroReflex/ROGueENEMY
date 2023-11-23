@@ -409,6 +409,7 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
 
         logic->gamepad.motors_intensity[0] = motor_left;
         logic->gamepad.motors_intensity[1] = motor_right;
+        ++logic->gamepad.rumble_events_count;
 
         pthread_mutex_unlock(&logic->gamepad_mutex);
 

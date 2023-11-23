@@ -39,6 +39,7 @@ typedef struct gamepad_status {
     int16_t raw_gyro[3];
     int16_t raw_accel[3];
 
+    uint64_t rumble_events_count;
     uint8_t motors_intensity[2]; // 0 = left, 1 = right
 
     uint32_t flags;

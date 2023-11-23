@@ -1,5 +1,4 @@
 #include "queue.h"
-#include <stdlib.h>
 
 int queue_init(queue_t* const q, size_t max_elements) {
     q->front = q->rear = -1;
