@@ -822,7 +822,7 @@ void *output_dev_thread_func(void *ptr) {
 	pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
     for (;;) {
 		void *raw_ev;
-		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 100);
+		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1000);
 		if (pop_res == 0) {
 			message_t *const msg = (message_t*)raw_ev;
 			handle_msg(out_dev, msg);
@@ -835,7 +835,7 @@ void *output_dev_thread_func(void *ptr) {
 			fprintf(stderr, "Cannot read from input queue: %d\n", pop_res);
 			continue;
 		}
-		
+		/*
 		// here transmit the rumble request to the input-device-handling components
 		pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
 		
@@ -856,6 +856,7 @@ void *output_dev_thread_func(void *ptr) {
 			out_dev->crtl_flags &= ~OUTPUT_DEV_CTRL_FLAG_EXIT;
             break;
         }
+		*/
     }
 
     return NULL;
