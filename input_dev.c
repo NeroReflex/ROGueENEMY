@@ -570,7 +570,14 @@ static void input_udev(
 
                     sem_timedwait(&in_dev->logic->rumble.sem_full, &timeout);
                     
-                    // TODO: here read properties
+                    // here read properties
+                    struct input_event rumble_upload = {
+                        .type = EV_FF,
+                        .code = effect.id,
+                        .value = in_dev->logic->rumble.value,
+                    };
+
+                    printf("Rumble upload: %d\n", rumble_upload.value);
 
                     sem_post(&in_dev->logic->rumble.sem_full);
                 }
@@ -580,7 +587,7 @@ static void input_udev(
 
         // stop any effect
         if (effect_upload_res == 0) {
-            write(libevdev_get_fd(ctx->dev), (const void*) &rumble_terminate, sizeof(rumble_terminate));
+            write(fd, (const void*) &rumble_terminate, sizeof(rumble_terminate));
             ioctl(fd, EVIOCRMFF, effect.id);
         }
 

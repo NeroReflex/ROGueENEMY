@@ -57,7 +57,7 @@ typedef enum gamepad_output {
 typedef struct rumble {
     sem_t sem_full, sem_empty;
 
-    //TODO: add here what is needed
+    int32_t value;
 } rumble_t;
 
 typedef struct logic {

@@ -835,7 +835,7 @@ void *output_dev_thread_func(void *ptr) {
 			fprintf(stderr, "Cannot read from input queue: %d\n", pop_res);
 			continue;
 		}
-
+		
 		// here transmit the rumble request to the input-device-handling components
 		pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
 		
@@ -843,7 +843,8 @@ void *output_dev_thread_func(void *ptr) {
 		if (out_dev->logic->gamepad.rumble_events_count != rumble_events_count) {
 			sem_wait(&out_dev->logic->rumble.sem_empty);
 			
-			// TODO: translate the rumble to evdev
+			// translate the rumble to evdev
+			out_dev->logic->rumble.value = out_dev->logic->gamepad.motors_intensity[0];
 
 			sem_post(&out_dev->logic->rumble.sem_full);
 		}
