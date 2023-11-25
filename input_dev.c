@@ -1,4 +1,5 @@
 #include "input_dev.h"
+#include "logic.h"
 #include "message.h"
 #include "queue.h"
 #include "dev_iio.h"
@@ -326,9 +327,7 @@ static void input_iio(
     int open_sysfs_idx = -1;
 
     for (;;) {
-        const uint32_t flags = in_dev->crtl_flags;
-        if (flags & INPUT_DEV_CTRL_FLAG_EXIT) {
-            in_dev->crtl_flags &= ~INPUT_DEV_CTRL_FLAG_EXIT;
+        if (logic_termination_requested(in_dev->logic)) {
             break;
         }
 
@@ -435,9 +434,7 @@ static void input_udev(
     int open_sysfs_idx = -1;
 
     for (;;) {
-        const uint32_t flags = in_dev->crtl_flags;
-        if (flags & INPUT_DEV_CTRL_FLAG_EXIT) {
-            in_dev->crtl_flags &= ~INPUT_DEV_CTRL_FLAG_EXIT;
+        if (logic_termination_requested(in_dev->logic)) {
             break;
         }
 

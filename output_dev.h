@@ -37,9 +37,6 @@
 
 #define PHYS_STR "00:11:22:33:44:55"
 
-#define OUTPUT_DEV_CTRL_FLAG_EXIT 0x00000001U
-#define OUTPUT_DEV_CTRL_FLAG_DATA 0x00000002U
-
 #define ACCEL_RANGE 512
 #define GYRO_RANGE  2000 // max range is +/- 35 radian/s
 
@@ -58,8 +55,6 @@ typedef struct output_dev {
     int gamepad_fd;
     int imu_fd;
     int mouse_fd;
-
-    volatile uint32_t crtl_flags;
 
     logic_t *logic;
 } output_dev_t;

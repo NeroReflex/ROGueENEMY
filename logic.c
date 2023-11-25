@@ -131,3 +131,11 @@ logic_begin_status_update_err:
 void logic_end_status_update(logic_t *const logic) {
     pthread_mutex_unlock(&logic->gamepad_mutex);
 }
+
+void logic_request_termination(logic_t *const logic) {
+    logic->flags |= LOGIC_FLAGS_TERMINATION_REQUESTED;
+}
+
+int logic_termination_requested(logic_t *const logic) {
+    return (logic->flags & LOGIC_FLAGS_TERMINATION_REQUESTED) != 0;
+}

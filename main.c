@@ -10,7 +10,6 @@ logic_t global_logic;
 static output_dev_t out_gamepadd_dev = {
   .gamepad_fd = -1,
   .imu_fd = -1,
-  .crtl_flags = 0x00000000U,
   .logic = &global_logic,
 };
 
@@ -20,7 +19,6 @@ static iio_filters_t in_iio_filters = {
 
 static input_dev_t in_iio_dev = {
   .dev_type = input_dev_type_iio,
-  .crtl_flags = 0x00000000U,
   .iio_filters = &in_iio_filters,
   .logic = &global_logic,
   //.input_filter_fn = input_filter_imu_identity,
@@ -32,7 +30,6 @@ static uinput_filters_t in_asus_kb_1_filters = {
 
 static input_dev_t in_asus_kb_1_dev = {
   .dev_type = input_dev_type_uinput,
-  .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_1_filters,
   .logic = &global_logic,
   .ev_input_filter_fn = input_filter_asus_kb,
@@ -44,7 +41,6 @@ static uinput_filters_t in_asus_kb_2_filters = {
 
 static input_dev_t in_asus_kb_2_dev = {
   .dev_type = input_dev_type_uinput,
-  .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_2_filters,
   .logic = &global_logic,
   .ev_input_filter_fn = input_filter_asus_kb,
@@ -56,7 +52,6 @@ static uinput_filters_t in_asus_kb_3_filters = {
 
 static input_dev_t in_asus_kb_3_dev = {
   .dev_type = input_dev_type_uinput,
-  .crtl_flags = 0x00000000U,
   .ev_filters = &in_asus_kb_3_filters,
   .logic = &global_logic,
   .ev_input_filter_fn = input_filter_asus_kb,
@@ -68,25 +63,15 @@ static uinput_filters_t in_xbox_filters = {
 
 static input_dev_t in_xbox_dev = {
   .dev_type = input_dev_type_uinput,
-  .crtl_flags = 0x00000000U,
   .ev_filters = &in_xbox_filters,
   .logic = &global_logic,
   .ev_input_filter_fn = input_filter_identity,
 };
 
-void request_termination(void) {
-  out_gamepadd_dev.crtl_flags |= OUTPUT_DEV_CTRL_FLAG_EXIT;
-
-  in_xbox_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
-  in_asus_kb_3_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
-  in_asus_kb_2_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
-  in_asus_kb_1_dev.crtl_flags |= INPUT_DEV_CTRL_FLAG_EXIT;
-}
-
 void sig_handler(int signo)
 {
   if (signo == SIGINT) {
-    request_termination();
+    logic_request_termination(&global_logic);
     printf("received SIGINT\n");
   }
 }
@@ -140,7 +125,7 @@ int main(int argc, char ** argv) {
   if (gamepad_thread_creation != 0) {
     fprintf(stderr, "Error creating gamepad output thread: %d\n", gamepad_thread_creation);
     ret = -1;
-    request_termination();
+    logic_request_termination(&global_logic);
     goto gamepad_thread_err;
   }
 
@@ -148,7 +133,7 @@ int main(int argc, char ** argv) {
   if (xbox_thread_creation != 0) {
     fprintf(stderr, "Error creating xbox input thread: %d\n", xbox_thread_creation);
     ret = -1;
-    request_termination();
+    logic_request_termination(&global_logic);
     goto xbox_drv_thread_err;
   }
 
@@ -156,7 +141,7 @@ int main(int argc, char ** argv) {
   if (asus_kb_1_thread_creation != 0) {
     fprintf(stderr, "Error creating asus keyboard (1) input thread: %d\n", asus_kb_1_thread_creation);
     ret = -1;
-    request_termination();
+    logic_request_termination(&global_logic);
     goto asus_kb_1_thread_err;
   }
 
@@ -164,7 +149,7 @@ int main(int argc, char ** argv) {
   if (asus_kb_2_thread_creation != 0) {
     fprintf(stderr, "Error creating asus keyboard (2) input thread: %d\n", asus_kb_2_thread_creation);
     ret = -1;
-    request_termination();
+    logic_request_termination(&global_logic);
     goto asus_kb_2_thread_err;
   }
 
@@ -172,7 +157,7 @@ int main(int argc, char ** argv) {
   if (asus_kb_3_thread_creation != 0) {
     fprintf(stderr, "Error creating asus keyboard (3) input thread: %d\n", asus_kb_3_thread_creation);
     ret = -1;
-    request_termination();
+    logic_request_termination(&global_logic);
     goto asus_kb_3_thread_err;
   }
 
@@ -180,7 +165,7 @@ int main(int argc, char ** argv) {
   if (iio_thread_creation != 0) {
     fprintf(stderr, "Error creating iio input thread: %d\n", asus_kb_3_thread_creation);
     ret = -1;
-    request_termination();
+    logic_request_termination(&global_logic);
     goto iio_thread_err;
   }
 

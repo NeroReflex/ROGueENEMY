@@ -46,8 +46,9 @@ typedef struct gamepad_status {
 
 } gamepad_status_t;
 
-#define LOGIC_FLAGS_VIRT_DS4_ENABLE   0x00000001U
-#define LOGIC_FLAGS_PLATFORM_ENABLE   0x00000002U
+#define LOGIC_FLAGS_VIRT_DS4_ENABLE         0x00000001U
+#define LOGIC_FLAGS_PLATFORM_ENABLE         0x00000002U
+#define LOGIC_FLAGS_TERMINATION_REQUESTED   0x80000000U
 
 typedef enum gamepad_output {
     GAMEPAD_OUTPUT_EVDEV = 0,
@@ -71,7 +72,7 @@ typedef struct logic {
 
     pthread_t virt_ds4_thread;
 
-    uint32_t flags;
+    volatile uint32_t flags;
 
     // the mutex is not needed if only one thread is writing this and others are checking with equality
     //pthread_mutex_t gamepad_output_mutex;
@@ -92,3 +93,7 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
 int logic_begin_status_update(logic_t *const logic);
 
 void logic_end_status_update(logic_t *const logic);
+
+void logic_request_termination(logic_t *const logic);
+
+int logic_termination_requested(logic_t *const logic);

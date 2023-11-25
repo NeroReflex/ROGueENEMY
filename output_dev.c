@@ -806,7 +806,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 	}
 }
 
-void *output_dev_thread_func(void *ptr) {
+void *output_dev_rumble_thread_func(void* ptr) {
 	output_dev_t *const out_dev = (output_dev_t*)ptr;
 
 	struct timeval now = {0};
@@ -820,6 +820,67 @@ void *output_dev_thread_func(void *ptr) {
 	pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
 	uint64_t rumble_events_count = out_dev->logic->gamepad.rumble_events_count;
 	pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
+
+	// maximum number of ms that the gamepad can remain in a blocked status
+	const int timeout_ms = 10;
+
+    for (;;) {
+		// sleep for about 4ms: this is an aggressive polling for rumble.
+		usleep(4000);
+
+		// here transmit the rumble request to the input-device-handling components
+		pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
+		
+		// check if the gamepad has notified the presence of a rumble event
+		if (out_dev->logic->gamepad.rumble_events_count != rumble_events_count) {
+			
+			struct timespec timeout;
+			if (clock_gettime(CLOCK_MONOTONIC, &timeout) == 0) {	
+				timeout.tv_sec += timeout_ms / 1000;
+				timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
+
+				int result = sem_timedwait(&out_dev->logic->rumble.sem_empty, &timeout);
+
+				if (result == 0) {
+					// translate the rumble to evdev
+					out_dev->logic->rumble.value = out_dev->logic->gamepad.motors_intensity[0] * 255;
+
+					// wake up the input thread that will propagate the rumble to raw devices.
+					sem_post(&out_dev->logic->rumble.sem_full);
+
+					// update the rumble events counter: this rumble event was handled
+					rumble_events_count = out_dev->logic->gamepad.rumble_events_count;
+				}
+			}
+		}
+		
+		pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
+
+		if (logic_termination_requested(out_dev->logic)) {
+            break;
+        }
+    }
+
+    return NULL;
+}
+
+void *output_dev_thread_func(void *ptr) {
+	output_dev_t *const out_dev = (output_dev_t*)ptr;
+
+	struct timeval now = {0};
+
+#if defined(INCLUDE_TIMESTAMP)
+	gettimeofday(&now, NULL);
+	__time_t secAtInit = now.tv_sec;
+	__time_t usecAtInit = now.tv_usec;
+#endif
+
+	pthread_t rumble_thread;
+	const int rumble_thread_creation = pthread_create(&rumble_thread, NULL, output_dev_rumble_thread_func, ptr);
+	if (rumble_thread_creation != 0) {
+		fprintf(stderr, "Error creating the rumble thread: %d -- rumble will not work.\n", rumble_thread_creation);
+	}
+
     for (;;) {
 		void *raw_ev;
 		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1000);
@@ -835,29 +896,13 @@ void *output_dev_thread_func(void *ptr) {
 			fprintf(stderr, "Cannot read from input queue: %d\n", pop_res);
 			continue;
 		}
-		/*
-		// here transmit the rumble request to the input-device-handling components
-		pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
-		
-		// check if the gamepad has notified the presence of a rumble event
-		if (out_dev->logic->gamepad.rumble_events_count != rumble_events_count) {
-			sem_wait(&out_dev->logic->rumble.sem_empty);
-			
-			// translate the rumble to evdev
-			out_dev->logic->rumble.value = out_dev->logic->gamepad.motors_intensity[0];
 
-			sem_post(&out_dev->logic->rumble.sem_full);
-		}
-		
-		pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
-
-        const uint32_t flags = out_dev->crtl_flags;
-		if (flags & OUTPUT_DEV_CTRL_FLAG_EXIT) {
-			out_dev->crtl_flags &= ~OUTPUT_DEV_CTRL_FLAG_EXIT;
+		if (logic_termination_requested(out_dev->logic)) {
             break;
         }
-		*/
     }
+
+	pthread_join(rumble_thread, NULL);
 
     return NULL;
 }
