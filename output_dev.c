@@ -870,7 +870,9 @@ void *output_dev_rumble_thread_func(void* ptr) {
 
 				const int rumble_emit_res = queue_push_timeout(&out_dev->logic->rumble_events_queue, (void*)rumble_msg, timeout_ms);
 				if (rumble_emit_res == 0) {
+#if defined(INCLUDE_OUTPUT_DEBUG)
 					printf("Rumble request propagated\n");
+#endif
 
 					// update the rumble events counter: this rumble event was handled
 					rumble_events_count = tmp_ev_count;
@@ -886,8 +888,6 @@ void *output_dev_rumble_thread_func(void* ptr) {
 			}
 		}
 		
-		
-
 		if (logic_termination_requested(out_dev->logic)) {
             break;
         }
