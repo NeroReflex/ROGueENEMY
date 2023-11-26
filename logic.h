@@ -56,7 +56,8 @@ typedef enum gamepad_output {
 } gamepad_output_t;
 
 typedef struct rumble_message {
-    int32_t value;
+    uint16_t strong_magnitude;
+    uint16_t weak_magnitude;
 } rumble_message_t;
 
 typedef struct logic {

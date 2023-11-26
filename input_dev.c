@@ -526,39 +526,35 @@ static void input_udev(
         }
 
         const int fd = libevdev_get_fd(ctx->dev);
-        int effect_upload_res = -1;
-        struct ff_effect effect = {
+
+        struct ff_effect current_effect = {
+            .type = FF_RUMBLE,
             .id = -1,
-        };
-
-        struct input_event rumble_terminate = {
-            .type = EV_FF,
-            .code = -1,
-            .value = 0,
-        };
-
-        // stop any effect
-        if (libevdev_has_event_type(ctx->dev, EV_FF)) {
-            effect_upload_res = ioctl(fd, EVIOCSFF, &effect);
-
-            if (effect_upload_res == 0) {
-                rumble_terminate.code = effect.id;
-                write(fd, (const void*) &rumble_terminate, sizeof(rumble_terminate));
-            } else {
-                fprintf(stderr, "Unable to upload force-feedback effect: %d\n", effect_upload_res);
+            .replay = {
+                .delay = 1000,
+                .length = 5000,
+            },
+            .u = {
+                .rumble = {
+                    .strong_magnitude = 0x8000,
+                    .weak_magnitude = 0x0000,
+                }
             }
-        }
+        };
 
+        const int has_ff = libevdev_has_event_type(ctx->dev, EV_FF);
+
+        // start the incoming events read thread
         pthread_t incoming_events_thread;
-
         const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)ctx);
         if (incoming_events_thread_creation != 0) {
             fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(ctx->dev), incoming_events_thread_creation);
             continue;
         }
 
+        // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
-            //if (effect_upload_res == 0) {
+            if (has_ff) {
                 const int timeout_ms = 500;
 
                 void* rmsg = NULL;
@@ -567,33 +563,59 @@ static void input_udev(
                 if (rumble_msg_recv_res == 0) {
                     rumble_message_t *const rumble_msg = (rumble_message_t*)rmsg;
 
-                    // here read properties
-                    struct input_event rumble_upload = {
-                        .type = EV_FF,
-                        .code = effect.id,
-                        .value = rumble_msg->value,
-                    };
+                    // here stop the previous rumble
+                    if (current_effect.id != -1) {
+                        struct input_event rumble_stop = {
+                            .type = EV_FF,
+                            .code = current_effect.id,
+                            .value = 0,
+                        };
+
+                        const int rumble_stop_res = write(fd, (const void*) &rumble_stop, sizeof(rumble_stop));
+                        if (rumble_stop_res < 0) {
+                            fprintf(stderr, "Unable to stop the previous rumble: %d\n", rumble_stop_res);
+                        }
+                    }
+
+                    current_effect.u.rumble.strong_magnitude = rumble_msg->strong_magnitude;
+                    current_effect.u.rumble.weak_magnitude = rumble_msg->weak_magnitude;
+
+                    printf("Rumble strong_magnitude: %u, weak_magnitude: %u\n", (unsigned)current_effect.u.rumble.strong_magnitude, (unsigned)current_effect.u.rumble.weak_magnitude);
+
+                    const int effect_upload_res = ioctl(fd, EVIOCSFF, &current_effect);
+                    if (effect_upload_res == 0) {
+                        const struct input_event rumble_play = {
+                            .type = EV_FF,
+                            .code = current_effect.id,
+                            .value = 1,
+                        };
+
+                        const int effect_start_res = write(fd, (const void*) &rumble_play, sizeof(rumble_play));
+                        if (effect_start_res < 0) {
+                            fprintf(stderr, "Unable to write input event starting the rumble: %d\n", effect_start_res);
+                        }
+                    } else {
+                        fprintf(stderr, "Unable to update force-feedback effect: %d\n", effect_upload_res);
+                    }
 
                     // this message was allocated by output_dev so I have to free it
                     free(rumble_msg);
-
-                    printf("Rumble upload: %d\n", rumble_upload.value);
                 }
-                
-
-            //}
+            }
         }
 
         // stop any effect
-        if (effect_upload_res == 0) {
-            write(fd, (const void*) &rumble_terminate, sizeof(rumble_terminate));
-            ioctl(fd, EVIOCRMFF, effect.id);
+        if ((has_ff) && (current_effect.id != -1)) {
+            const int effect_removal_res = ioctl(fd, EVIOCRMFF, current_effect.id);
+            if (effect_removal_res == 0) {
+                printf("\n");
+            } else {
+                fprintf(stderr, "Error removing rumble effect: %d\n", effect_removal_res);
+            }
         }
 
+        // wait for incoming events thread to totally stop
         pthread_join(incoming_events_thread, NULL);
-
-        ctx->flags = 0;
-
     }
 }
 

@@ -839,7 +839,8 @@ void *output_dev_rumble_thread_func(void* ptr) {
 		if (tmp_ev_count != rumble_events_count) {
 			rumble_message_t *const rumble_msg = malloc(sizeof(rumble_message_t));
 			if(rumble_msg != NULL) {
-				rumble_msg->value = right_motor * 220;
+				rumble_msg->strong_magnitude = (uint16_t)right_motor << (uint16_t)8;
+				rumble_msg->weak_magnitude = (uint16_t)left_motor << (uint16_t)8;
 
 				const int rumble_emit_res = queue_push_timeout(&out_dev->logic->rumble_events_queue, (void*)rumble_msg, timeout_ms);
 
