@@ -565,18 +565,21 @@ static void input_udev(
                     timeout.tv_sec += timeout_ms / 1000;
                     timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
 
-                    sem_timedwait(&in_dev->logic->rumble.sem_full, &timeout);
+                    const int rumble_sem_wait_result = sem_timedwait(&in_dev->logic->rumble.sem_full, &timeout);
                     
-                    // here read properties
-                    struct input_event rumble_upload = {
-                        .type = EV_FF,
-                        .code = effect.id,
-                        .value = in_dev->logic->rumble.value,
-                    };
+                    if (rumble_sem_wait_result == 0) {
+                        // here read properties
+                        struct input_event rumble_upload = {
+                            .type = EV_FF,
+                            .code = effect.id,
+                            .value = in_dev->logic->rumble.value,
+                        };
 
-                    printf("Rumble upload: %d\n", rumble_upload.value);
+                        printf("Rumble upload: %d\n", rumble_upload.value);
 
-                    sem_post(&in_dev->logic->rumble.sem_empty);
+                        sem_post(&in_dev->logic->rumble.sem_empty);
+                    }
+                    
                 }
                 
             }

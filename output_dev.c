@@ -839,7 +839,7 @@ void *output_dev_rumble_thread_func(void* ptr) {
 				timeout.tv_sec += timeout_ms / 1000;
 				timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
 
-				int result = sem_timedwait(&out_dev->logic->rumble.sem_empty, &timeout);
+				const int result = sem_timedwait(&out_dev->logic->rumble.sem_empty, &timeout);
 
 				if (result == 0) {
 					// translate the rumble to evdev
