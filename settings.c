@@ -36,5 +36,6 @@ int fill_config(controller_settings_t *const conf, const char* file) {
     }
 
 fill_config_err:
+    config_destroy(&cfg);
     return res;
 }
