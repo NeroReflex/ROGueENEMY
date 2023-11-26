@@ -536,7 +536,7 @@ static void input_udev(
             },
             .u = {
                 .rumble = {
-                    .strong_magnitude = 0x8000,
+                    .strong_magnitude = 0x0000,
                     .weak_magnitude = 0x0000,
                 }
             }
@@ -553,12 +553,12 @@ static void input_udev(
         const int has_ff = libevdev_has_event_type(ctx->dev, EV_FF);
 
         if (has_ff) {
-            printf("Setting master gain to 75%%...\n");
+            printf("Setting master gain to 100%%...\n");
             
             const struct input_event gain = {
                 .type = EV_FF,
                 .code = FF_GAIN,
-                .value = 0xC000, // [0, 0xFFFF])
+                .value = 0xFFFF, // [0, 0xFFFF])
             };
 
             const int gain_set_res = write(fd, (const void*)&gain, sizeof(gain));
