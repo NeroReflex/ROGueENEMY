@@ -531,7 +531,7 @@ static void input_udev(
             .type = FF_RUMBLE,
             .id = -1,
             .replay = {
-                .delay = 1000,
+                .delay = 0,
                 .length = 5000,
             },
             .u = {
@@ -615,6 +615,8 @@ static void input_udev(
                         }
                     } else {
                         fprintf(stderr, "Unable to update force-feedback effect: %d\n", effect_upload_res);
+
+                        current_effect.id = -1;
                     }
 
                     // this message was allocated by output_dev so I have to free it
