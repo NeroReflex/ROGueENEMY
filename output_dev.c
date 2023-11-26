@@ -822,7 +822,7 @@ void *output_dev_rumble_thread_func(void* ptr) {
 	pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
 
 	// maximum number of ms that the gamepad can remain in a blocked status
-	const int timeout_ms = 10;
+	const int timeout_ms = 40;
 
     for (;;) {
 		// sleep for about 4ms: this is an aggressive polling for rumble.

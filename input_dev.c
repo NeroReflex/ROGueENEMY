@@ -545,7 +545,7 @@ static void input_udev(
                 rumble_terminate.code = effect.id;
                 write(fd, (const void*) &rumble_terminate, sizeof(rumble_terminate));
             } else {
-                fprintf(stderr, "Unable to upload force-feedback effect: %d", effect_upload_res);
+                fprintf(stderr, "Unable to upload force-feedback effect: %d\n", effect_upload_res);
             }
         }
 
@@ -558,7 +558,7 @@ static void input_udev(
         }
 
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
-            if (effect_upload_res == 0) {
+            //if (effect_upload_res == 0) {
                 const int timeout_ms = 500;
 
                 void* rmsg = NULL;
@@ -574,13 +574,14 @@ static void input_udev(
                         .value = rumble_msg->value,
                     };
 
+                    // this message was allocated by output_dev so I have to free it
                     free(rumble_msg);
 
                     printf("Rumble upload: %d\n", rumble_upload.value);
                 }
                 
 
-            }
+            //}
         }
 
         // stop any effect
