@@ -2,6 +2,7 @@
 
 #include "platform.h"
 #include "queue.h"
+#include "settings.h"
 
 #define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS    200
 
@@ -80,6 +81,8 @@ typedef struct logic {
     gamepad_output_t restore_to;
 
     queue_t rumble_events_queue;
+
+    controller_settings_t controller_settings;
 
 } logic_t;
 

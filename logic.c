@@ -4,6 +4,8 @@
 #include "virt_ds4.h"
 #include <sys/time.h>
 
+static const char* configuration_file = "~/.config/ROGueENEMY/config";
+
 int logic_create(logic_t *const logic) {
     logic->flags = 0x00000000U;
 
@@ -66,6 +68,12 @@ int logic_create(logic_t *const logic) {
     }
 
     queue_init(&logic->rumble_events_queue, 1);
+
+    init_config(&logic->controller_settings);
+    const int fill_config_res = fill_config(&logic->controller_settings, configuration_file);
+    if (fill_config_res != 0) {
+        fprintf(stderr, "Unable to fill configuration from file %s\n", configuration_file);
+    }
 
     return 0;
 }

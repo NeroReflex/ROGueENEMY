@@ -147,6 +147,7 @@ struct input_ctx {
     dev_iio_t *iio_dev;
     queue_t* queue;
     queue_t* rumble_queue;
+    controller_settings_t* settings;
     uint32_t flags;
     message_t messages[MAX_MESSAGES_IN_FLIGHT];
     ev_input_filter_t input_filter_fn;
@@ -558,12 +559,14 @@ static void input_udev(
             const struct input_event gain = {
                 .type = EV_FF,
                 .code = FF_GAIN,
-                .value = 0xFFFF, // [0, 0xFFFF])
+                .value = ctx->settings->ff_gain,
             };
 
             const int gain_set_res = write(fd, (const void*)&gain, sizeof(gain));
             if (gain_set_res != sizeof(gain)) {
                 fprintf(stderr, "Unable to adjust gain for force-feedback: %d\n", gain_set_res);
+            } else {
+                printf("Gain for force-feedback set to %u\n", gain.value);
             }
         } else {
             fprintf(stderr, "Unable to adjust gain for force-feedback: EV_FF not supported.\n");
@@ -647,6 +650,7 @@ void *input_dev_thread_func(void *ptr) {
         .dev = NULL,
         .queue = &in_dev->logic->input_queue,
         .rumble_queue = &in_dev->logic->rumble_events_queue,
+        .settings = &in_dev->logic->controller_settings,
         .input_filter_fn = in_dev->ev_input_filter_fn,
         .flags = 0x00000000U
     };

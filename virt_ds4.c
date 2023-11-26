@@ -413,6 +413,7 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
 
         pthread_mutex_unlock(&logic->gamepad_mutex);
 
+#if defined(VIRT_DS4_DEBUG)
         printf(
             "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
             motor_left,
@@ -420,6 +421,7 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
             valid_flag0,
             valid_flag1
         );
+#endif
     }
 }
 
@@ -446,26 +448,38 @@ static int event(int fd, logic_t *const logic)
 
 	switch (ev.type) {
 	case UHID_START:
-		fprintf(stderr, "UHID_START from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+		printf("UHID_START from uhid-dev\n");
+#endif
 		break;
 	case UHID_STOP:
-		fprintf(stderr, "UHID_STOP from uhid-dev\n");
-		break;
+#if defined(VIRT_DS4_DEBUG)
+        printf("UHID_STOP from uhid-dev\n");
+#endif
+        break;
 	case UHID_OPEN:
-		fprintf(stderr, "UHID_OPEN from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+        printf("UHID_OPEN from uhid-dev\n");
+#endif
 		break;
 	case UHID_CLOSE:
-		fprintf(stderr, "UHID_CLOSE from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+        printf(stderr, "UHID_CLOSE from uhid-dev\n");
+#endif
 		break;
 	case UHID_OUTPUT:
-		fprintf(stderr, "UHID_OUTPUT from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+		printf("UHID_OUTPUT from uhid-dev\n");
+#endif
 		handle_output(&ev, logic);
 		break;
 	case UHID_OUTPUT_EV:
-		fprintf(stderr, "UHID_OUTPUT_EV from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+		printf("UHID_OUTPUT_EV from uhid-dev\n");
+#endif
 		break;
     case UHID_GET_REPORT:
-        fprintf(stderr, "UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
+        //fprintf(stderr, "UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
         if (ev.u.get_report.rnum == 18) {
             const struct uhid_event mac_addr_response = {
                 .type = UHID_GET_REPORT_REPLY,
