@@ -40,7 +40,7 @@ int logic_create(logic_t *const logic) {
 
         logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
 	} else {
-        printf("Creation of virtual DualShock4 succeeded: using it as the defout output.\n");
+        printf("Creation of virtual DualShock4 succeeded: using it as the defaut output.\n");
         logic->flags |= LOGIC_FLAGS_VIRT_DS4_ENABLE;
         logic->gamepad_output = GAMEPAD_OUTPUT_DS4;
     }
