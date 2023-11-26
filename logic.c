@@ -113,28 +113,35 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
         struct timeval now;
         gettimeofday(&now, NULL);
 
+        static int releasing = 0;
+
         // Calculate elapsed time in milliseconds
         int64_t elapsed_time = (now.tv_sec - press_time.tv_sec) * 1000 +
                                (now.tv_usec - press_time.tv_usec) / 1000;
 
         if ((logic->gamepad.center) && (!logic->gamepad.cross)) {
             // If the center button is pressed and at least 500ms have passed
-            if (elapsed_time >= PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS) {
+            if ((!releasing) && (elapsed_time >= PRESS_TIME_BEFORE_CROSS_BUTTON_MS)) {
                 logic->gamepad.center = 1;
                 logic->gamepad.cross = 1;
                 press_time = now;
                 //logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
-            }
-        } else if ((logic->gamepad.center) && (logic->gamepad.cross)) {
-            if (elapsed_time >= PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS) {
-                logic->gamepad.center = 0;
-                logic->gamepad.cross = 0;
+            } else if ((releasing) && (elapsed_time >= PRESS_TIME_AFTER_CROSS_BUTTON_MS)) {
+                logic->gamepad.center = 1;
+                logic->gamepad.cross = 1;
                 press_time = now;
                 logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
+            }
+        } else if ((logic->gamepad.center) && (logic->gamepad.cross)) {
+            if (elapsed_time >= PRESS_TIME_CROSS_BUTTON_MS) {
+                logic->gamepad.center = 1;
+                logic->gamepad.cross = 0;
+                press_time = now;
             }
         } else {
             // If the center button is pressed
             logic->gamepad.center = 1;
+            releasing = 0;
             gettimeofday(&press_time, NULL);
         }
     }
