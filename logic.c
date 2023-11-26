@@ -2,9 +2,8 @@
 #include "platform.h"
 #include "queue.h"
 #include "virt_ds4.h"
-#include <sys/time.h>
 
-static const char* configuration_file = "~/.config/ROGueENEMY/config";
+static const char* configuration_file = "/etc/ROGueENEMY/config";
 
 int logic_create(logic_t *const logic) {
     logic->flags = 0x00000000U;
