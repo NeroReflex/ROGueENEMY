@@ -843,14 +843,15 @@ void *output_dev_rumble_thread_func(void* ptr) {
 				rumble_msg->weak_magnitude = (uint16_t)right_motor << (uint16_t)8;
 
 				const int rumble_emit_res = queue_push_timeout(&out_dev->logic->rumble_events_queue, (void*)rumble_msg, timeout_ms);
-
 				if (rumble_emit_res == 0) {
 					printf("Rumble request propagated\n");
 
 					// update the rumble events counter: this rumble event was handled
 					rumble_events_count = tmp_ev_count;
 				} else {
+#if defined(INCLUDE_OUTPUT_DEBUG)
 					fprintf(stderr, "Error propating the rumble event: %d\n", rumble_emit_res);
+#endif
 
 					free(rumble_msg);
 				}
