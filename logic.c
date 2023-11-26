@@ -136,6 +136,7 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
             if (elapsed_time >= PRESS_TIME_CROSS_BUTTON_MS) {
                 logic->gamepad.center = 1;
                 logic->gamepad.cross = 0;
+                releasing = 1;
                 press_time = now;
             }
         } else {
