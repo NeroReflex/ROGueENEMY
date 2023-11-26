@@ -542,14 +542,31 @@ static void input_udev(
             }
         };
 
-        const int has_ff = libevdev_has_event_type(ctx->dev, EV_FF);
-
         // start the incoming events read thread
         pthread_t incoming_events_thread;
         const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)ctx);
         if (incoming_events_thread_creation != 0) {
             fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(ctx->dev), incoming_events_thread_creation);
             continue;
+        }
+
+        const int has_ff = libevdev_has_event_type(ctx->dev, EV_FF);
+
+        if (has_ff) {
+            printf("Setting master gain to 75%%...\n");
+            
+            const struct input_event gain = {
+                .type = EV_FF,
+                .code = FF_GAIN,
+                .value = 0xC000, // [0, 0xFFFF])
+            };
+
+            const int gain_set_res = write(fd, (const void*)&gain, sizeof(gain));
+            if (gain_set_res != sizeof(gain)) {
+                fprintf(stderr, "Unable to adjust gain for force-feedback: %d\n", gain_set_res);
+            }
+        } else {
+            fprintf(stderr, "Unable to adjust gain for force-feedback: EV_FF not supported.\n");
         }
 
         // while the incoming events thread run...
@@ -572,7 +589,7 @@ static void input_udev(
                         };
 
                         const int rumble_stop_res = write(fd, (const void*) &rumble_stop, sizeof(rumble_stop));
-                        if (rumble_stop_res < 0) {
+                        if (rumble_stop_res != sizeof(rumble_stop)) {
                             fprintf(stderr, "Unable to stop the previous rumble: %d\n", rumble_stop_res);
                         }
                     }
@@ -580,7 +597,7 @@ static void input_udev(
                     current_effect.u.rumble.strong_magnitude = rumble_msg->strong_magnitude;
                     current_effect.u.rumble.weak_magnitude = rumble_msg->weak_magnitude;
 
-                    printf("Rumble strong_magnitude: %u, weak_magnitude: %u\n", (unsigned)current_effect.u.rumble.strong_magnitude, (unsigned)current_effect.u.rumble.weak_magnitude);
+                    printf("Rumble event received -- strong_magnitude: %u, weak_magnitude: %u\n", (unsigned)current_effect.u.rumble.strong_magnitude, (unsigned)current_effect.u.rumble.weak_magnitude);
 
                     const int effect_upload_res = ioctl(fd, EVIOCSFF, &current_effect);
                     if (effect_upload_res == 0) {
@@ -590,8 +607,10 @@ static void input_udev(
                             .value = 1,
                         };
 
-                        const int effect_start_res = write(fd, (const void*) &rumble_play, sizeof(rumble_play));
-                        if (effect_start_res < 0) {
+                        const int effect_start_res = write(fd, (const void*)&rumble_play, sizeof(rumble_play));
+                        if (effect_start_res == sizeof(rumble_play)) {
+                            printf("Rumble effect play requested to driver\n");
+                        } else {
                             fprintf(stderr, "Unable to write input event starting the rumble: %d\n", effect_start_res);
                         }
                     } else {
