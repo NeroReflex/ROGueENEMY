@@ -570,11 +570,11 @@ static void input_udev(
             fprintf(stderr, "Unable to adjust gain for force-feedback: EV_FF not supported.\n");
         }
 
+        const int timeout_ms = 500;
+
         // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
             if (has_ff) {
-                const int timeout_ms = 500;
-
                 void* rmsg = NULL;
 
                 const int rumble_msg_recv_res = queue_pop_timeout(ctx->rumble_queue, &rmsg, timeout_ms);
@@ -627,6 +627,8 @@ static void input_udev(
                     // this message was allocated by output_dev so I have to free it
                     free(rumble_msg);
                 }
+            } else {
+                usleep(timeout_ms * 1000);
             }
         }
 
