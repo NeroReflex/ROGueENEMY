@@ -53,7 +53,7 @@ int queue_pop(queue_t* const q, void **out_item) {
 
 int queue_push_timeout(queue_t* const  q, void *in_item, int timeout_ms) {
     struct timespec timeout;
-    if (clock_gettime(CLOCK_MONOTONIC, &timeout) == -1) {
+    if (clock_gettime(CLOCK_REALTIME, &timeout) == -1) {
         // Handle clock_gettime error
         return -1;
     }

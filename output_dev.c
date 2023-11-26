@@ -850,6 +850,8 @@ void *output_dev_rumble_thread_func(void* ptr) {
 					rumble_events_count = tmp_ev_count;
 				} else {
 					fprintf(stderr, "Error propating the rumble event: %d\n", rumble_emit_res);
+
+					free(rumble_msg);
 				}
 			} else {
 				fprintf(stderr, "Error allocating resources to request a rumble\n");
