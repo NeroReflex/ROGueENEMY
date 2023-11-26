@@ -561,7 +561,7 @@ static void input_udev(
                 const int timeout_ms = 500;
 
                 struct timespec timeout;
-                if (clock_gettime(CLOCK_MONOTONIC, &timeout) == -1) {
+                if (clock_gettime(CLOCK_MONOTONIC, &timeout) == 0) {
                     timeout.tv_sec += timeout_ms / 1000;
                     timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
 
