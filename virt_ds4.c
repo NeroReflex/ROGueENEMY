@@ -375,12 +375,10 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
     */
 	
 	if (ev->u.output.size != 32) {
-        fprintf(stderr, "output data length: %d\n", (int)ev->u.output.size);
+        fprintf(stderr, "Invalid data length: got %d, expected 32\n", (int)ev->u.output.size);
 
         return;
     }
-
-    fprintf(stderr, "output data length: %d\n", (int)ev->u.output.size);
 
 	// first byte is report-id which is 0x01
 	if (ev->u.output.data[0] != 0x05) {
