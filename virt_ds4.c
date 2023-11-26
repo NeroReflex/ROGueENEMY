@@ -777,6 +777,11 @@ static int send_data(int fd, logic_t *const logic) {
     return uhid_write(fd, &l);
 }
 
+/**
+ * Thread function emulating the DualShock4 controller at USB level using USB UHID ( https://www.kernel.org/doc/html/latest/hid/uhid.html ) kernel APIs.
+ *
+ * See https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/hid/uhid.txt?id=refs/tags/v4.10-rc3
+ */
 void *virt_ds4_thread_func(void *ptr) {
     logic_t *const logic = (logic_t*)ptr;
 
