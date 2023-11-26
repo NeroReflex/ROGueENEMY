@@ -6,11 +6,13 @@
 #define IMU_MESSAGE_FLAGS_ANGLVEL 0x00000002U
 
 typedef struct imu_message {
-    struct timeval read_time;
+    struct timeval gyro_read_time;
 
     long gyro_x_raw;
     long gyro_y_raw;
     long gyro_z_raw;
+
+    struct timeval accel_read_time;
 
     long accel_x_raw;
     long accel_y_raw;

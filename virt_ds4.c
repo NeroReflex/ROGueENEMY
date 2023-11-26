@@ -650,7 +650,7 @@ static int send_data(int fd, logic_t *const logic) {
         return gs_copy_res;
     }
 
-    const int64_t time_us = gs.last_motion_time.tv_sec * 1000000 + gs.last_motion_time.tv_usec;
+    const int64_t time_us = gs.last_gyro_motion_time.tv_sec * 1000000 + gs.last_gyro_motion_time.tv_usec;
 
     static uint32_t empty_reports = 0;
     static uint64_t last_time = 0;

@@ -198,7 +198,7 @@ static void* iio_read_thread_func(void* ptr) {
         }
 
         // TODO: configure equal as sampling rate
-        usleep(100);
+        usleep(1250);
 
         // either way.... fill a new buffer on the next cycle
         msg = NULL;
