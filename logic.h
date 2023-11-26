@@ -4,9 +4,10 @@
 #include "queue.h"
 #include "settings.h"
 
-#define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS    200
+#define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS    80
 
 #define GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER  0x00000001U
+#define GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM             0x00000002U
 
 typedef struct gamepad_status {
 
@@ -43,7 +44,7 @@ typedef struct gamepad_status {
     uint64_t rumble_events_count;
     uint8_t motors_intensity[2]; // 0 = left, 1 = right
 
-    uint32_t flags;
+    volatile uint32_t flags;
 
 } gamepad_status_t;
 

@@ -3,6 +3,7 @@
 #include "platform.h"
 #include "queue.h"
 #include "message.h"
+#include "settings.h"
 #include "virt_ds4.h"
 
 int create_output_dev(const char* uinput_path, output_dev_type_t type) {
@@ -685,18 +686,35 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
     }
 }
 
-static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg) {
-	if ( // this is what happens at release of the AC button of the ROG Ally
+static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg, controller_settings_t *const settings) {
+	if ( // this is what happens at release of the left-screen button of the ROG Ally
 		(msg->data.event.ev_count == 2) &&
+		(msg->data.event.ev[0].type == EV_MSC) &&
+		(msg->data.event.ev[0].code == MSC_SCAN) &&
 		(msg->data.event.ev[0].value == -13565786) &&
 		(msg->data.event.ev[1].type == EV_KEY) &&
 		(msg->data.event.ev[1].code == KEY_F16) &&
 		(msg->data.event.ev[1].value == 1)
 	) {
 #if defined(INCLUDE_OUTPUT_DEBUG)
-		printf("RC71L AC button short-press detected\n");
+		printf("RC71L CC button short-press detected\n");
 #endif
 		gs->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+	} else if ( // this is what happens at release of the right-screen button of the ROG Ally
+		(msg->data.event.ev_count == 2) &&
+		(msg->data.event.ev[0].type == EV_MSC) &&
+		(msg->data.event.ev[0].code == MSC_SCAN) &&
+		(msg->data.event.ev[0].value == -13565896) &&
+		(msg->data.event.ev[1].type == EV_KEY) &&
+		(msg->data.event.ev[1].code == KEY_PROG1) &&
+		(msg->data.event.ev[1].value == 1)
+	) {
+#if defined(INCLUDE_OUTPUT_DEBUG)
+		printf("RC71L AC button short-press detected\n");
+#endif
+		if (settings->enable_qam) {
+			gs->flags |= GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
+		}
 	}
 
 	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
@@ -770,7 +788,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 		
 		const int upd_beg_res = logic_begin_status_update(out_dev->logic);
 		if (upd_beg_res == 0) {
-			update_gs_from_ev(&out_dev->logic->gamepad, msg);
+			update_gs_from_ev(&out_dev->logic->gamepad, msg, &out_dev->logic->controller_settings);
 
 			logic_end_status_update(out_dev->logic);
 		} else {

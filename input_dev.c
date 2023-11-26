@@ -598,7 +598,9 @@ static void input_udev(
                     current_effect.u.rumble.strong_magnitude = rumble_msg->strong_magnitude;
                     current_effect.u.rumble.weak_magnitude = rumble_msg->weak_magnitude;
 
+#if defined(INCLUDE_INPUT_DEBUG)
                     printf("Rumble event received -- strong_magnitude: %u, weak_magnitude: %u\n", (unsigned)current_effect.u.rumble.strong_magnitude, (unsigned)current_effect.u.rumble.weak_magnitude);
+#endif
 
                     const int effect_upload_res = ioctl(fd, EVIOCSFF, &current_effect);
                     if (effect_upload_res == 0) {
@@ -610,7 +612,9 @@ static void input_udev(
 
                         const int effect_start_res = write(fd, (const void*)&rumble_play, sizeof(rumble_play));
                         if (effect_start_res == sizeof(rumble_play)) {
+#if defined(INCLUDE_INPUT_DEBUG)
                             printf("Rumble effect play requested to driver\n");
+#endif
                         } else {
                             fprintf(stderr, "Unable to write input event starting the rumble: %d\n", effect_start_res);
                         }
