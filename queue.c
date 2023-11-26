@@ -57,6 +57,7 @@ int queue_push_timeout(queue_t* const  q, void *in_item, int timeout_ms) {
         // Handle clock_gettime error
         return -1;
     }
+
     timeout.tv_sec += timeout_ms / 1000;
     timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
 
@@ -81,6 +82,7 @@ int queue_pop_timeout(queue_t* const q, void **out_item, int timeout_ms) {
         // Handle clock_gettime error
         return -1;
     }
+
     timeout.tv_sec += timeout_ms / 1000;
     timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
 
