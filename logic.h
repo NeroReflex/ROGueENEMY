@@ -5,9 +5,9 @@
 #include "settings.h"
 
 #define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS     80
-#define PRESS_TIME_BEFORE_CROSS_BUTTON_MS                   80
+#define PRESS_TIME_BEFORE_CROSS_BUTTON_MS                   250
 #define PRESS_TIME_CROSS_BUTTON_MS                          80
-#define PRESS_TIME_AFTER_CROSS_BUTTON_MS                    80
+#define PRESS_TIME_AFTER_CROSS_BUTTON_MS                    180
 
 #define GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER  0x00000001U
 #define GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM             0x00000002U
