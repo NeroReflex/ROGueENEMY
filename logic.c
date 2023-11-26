@@ -127,7 +127,7 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
                 press_time = now;
                 //logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
             } else if ((releasing) && (elapsed_time >= PRESS_TIME_AFTER_CROSS_BUTTON_MS)) {
-                logic->gamepad.center = 1;
+                logic->gamepad.center = 0;
                 logic->gamepad.cross = 0;
                 press_time = now;
                 logic->gamepad.flags &= ~GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
