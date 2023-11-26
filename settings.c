@@ -35,7 +35,8 @@ int fill_config(controller_settings_t *const conf, const char* file) {
         fprintf(stderr, "ff_gain (int) configuration not found. Default value will be used.\n");
     }
 
-fill_config_err:
     config_destroy(&cfg);
+
+fill_config_err:
     return res;
 }
