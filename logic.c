@@ -1,5 +1,6 @@
 #include "logic.h"
 #include "platform.h"
+#include "queue.h"
 #include "virt_ds4.h"
 #include <sys/time.h>
 
@@ -64,10 +65,7 @@ int logic_create(logic_t *const logic) {
         fprintf(stderr, "Unable to initialize Asus RC71L MCU: %d\n", init_platform_res);
     }
 
-    logic->rumble.value = 0;
-    sem_init(&logic->rumble.sem_empty, 0, 1);
-    sem_init(&logic->rumble.sem_full, 0, 0);
-    
+    queue_init(&logic->rumble_events_queue, 1);
 
     return 0;
 }

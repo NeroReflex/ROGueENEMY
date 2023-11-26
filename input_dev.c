@@ -146,6 +146,7 @@ struct input_ctx {
     struct libevdev* dev;
     dev_iio_t *iio_dev;
     queue_t* queue;
+    queue_t* rumble_queue;
     uint32_t flags;
     message_t messages[MAX_MESSAGES_IN_FLIGHT];
     ev_input_filter_t input_filter_fn;
@@ -560,28 +561,25 @@ static void input_udev(
             if (effect_upload_res == 0) {
                 const int timeout_ms = 500;
 
-                struct timespec timeout;
-                if (clock_gettime(CLOCK_MONOTONIC, &timeout) == 0) {
-                    timeout.tv_sec += timeout_ms / 1000;
-                    timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
+                void* rmsg = NULL;
 
-                    const int rumble_sem_wait_result = sem_timedwait(&in_dev->logic->rumble.sem_full, &timeout);
-                    
-                    if (rumble_sem_wait_result == 0) {
-                        // here read properties
-                        struct input_event rumble_upload = {
-                            .type = EV_FF,
-                            .code = effect.id,
-                            .value = in_dev->logic->rumble.value,
-                        };
+                const int rumble_msg_recv_res = queue_pop_timeout(ctx->rumble_queue, &rmsg, timeout_ms);
+                if (rumble_msg_recv_res == 0) {
+                    rumble_message_t *const rumble_msg = (rumble_message_t*)rmsg;
 
-                        printf("Rumble upload: %d\n", rumble_upload.value);
+                    // here read properties
+                    struct input_event rumble_upload = {
+                        .type = EV_FF,
+                        .code = effect.id,
+                        .value = rumble_msg->value,
+                    };
 
-                        sem_post(&in_dev->logic->rumble.sem_empty);
-                    }
-                    
+                    free(rumble_msg);
+
+                    printf("Rumble upload: %d\n", rumble_upload.value);
                 }
                 
+
             }
         }
 
@@ -604,6 +602,7 @@ void *input_dev_thread_func(void *ptr) {
     struct input_ctx ctx = {
         .dev = NULL,
         .queue = &in_dev->logic->input_queue,
+        .rumble_queue = &in_dev->logic->rumble_events_queue,
         .input_filter_fn = in_dev->ev_input_filter_fn,
         .flags = 0x00000000U
     };

@@ -55,11 +55,9 @@ typedef enum gamepad_output {
     GAMEPAD_OUTPUT_DS4,
 } gamepad_output_t;
 
-typedef struct rumble {
-    sem_t sem_full, sem_empty;
-
+typedef struct rumble_message {
     int32_t value;
-} rumble_t;
+} rumble_message_t;
 
 typedef struct logic {
 
@@ -80,7 +78,7 @@ typedef struct logic {
 
     gamepad_output_t restore_to;
 
-    rumble_t rumble;
+    queue_t rumble_events_queue;
 
 } logic_t;
 

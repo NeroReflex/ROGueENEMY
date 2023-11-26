@@ -830,31 +830,33 @@ void *output_dev_rumble_thread_func(void* ptr) {
 
 		// here transmit the rumble request to the input-device-handling components
 		pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
-		
+		uint64_t tmp_ev_count = out_dev->logic->gamepad.rumble_events_count;
+		uint8_t right_motor = out_dev->logic->gamepad.motors_intensity[0];
+		uint8_t left_motor = out_dev->logic->gamepad.motors_intensity[1];
+		pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
+
 		// check if the gamepad has notified the presence of a rumble event
-		if (out_dev->logic->gamepad.rumble_events_count != rumble_events_count) {
-			
-			struct timespec timeout;
-			if (clock_gettime(CLOCK_MONOTONIC, &timeout) == 0) {	
-				timeout.tv_sec += timeout_ms / 1000;
-				timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
+		if (tmp_ev_count != rumble_events_count) {
+			rumble_message_t *const rumble_msg = malloc(sizeof(rumble_message_t));
+			if(rumble_msg != NULL) {
+				rumble_msg->value = right_motor * 220;
 
-				const int result = sem_timedwait(&out_dev->logic->rumble.sem_empty, &timeout);
+				const int rumble_emit_res = queue_push_timeout(&out_dev->logic->rumble_events_queue, (void*)rumble_msg, timeout_ms);
 
-				if (result == 0) {
-					// translate the rumble to evdev
-					out_dev->logic->rumble.value = out_dev->logic->gamepad.motors_intensity[0] * 255;
-
-					// wake up the input thread that will propagate the rumble to raw devices.
-					sem_post(&out_dev->logic->rumble.sem_full);
+				if (rumble_emit_res == 0) {
+					printf("Rumble request propagated\n");
 
 					// update the rumble events counter: this rumble event was handled
-					rumble_events_count = out_dev->logic->gamepad.rumble_events_count;
+					rumble_events_count = tmp_ev_count;
+				} else {
+					fprintf(stderr, "Error propating the rumble event: %d\n", rumble_emit_res);
 				}
+			} else {
+				fprintf(stderr, "Error allocating resources to request a rumble\n");
 			}
 		}
 		
-		pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
+		
 
 		if (logic_termination_requested(out_dev->logic)) {
             break;
