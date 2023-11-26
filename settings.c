@@ -11,6 +11,8 @@ int fill_config(controller_settings_t *const conf, const char* file) {
 
     config_t cfg;
 
+    config_init(&cfg);
+
     const int config_read_res = config_read_file(&cfg, file);
     if (config_read_res != CONFIG_TRUE) {
         fprintf(stderr, "Error in reading config file: %s\n", config_error_text(&cfg));
