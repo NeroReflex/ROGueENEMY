@@ -576,7 +576,7 @@ static void input_udev(
 
                     printf("Rumble upload: %d\n", rumble_upload.value);
 
-                    sem_post(&in_dev->logic->rumble.sem_full);
+                    sem_post(&in_dev->logic->rumble.sem_empty);
                 }
                 
             }

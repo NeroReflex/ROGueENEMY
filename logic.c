@@ -65,8 +65,9 @@ int logic_create(logic_t *const logic) {
     }
 
     logic->rumble.value = 0;
-    sem_init(&logic->rumble.sem_full, 0, 1);
-    sem_init(&logic->rumble.sem_empty, 0, 0);
+    sem_init(&logic->rumble.sem_empty, 0, 1);
+    sem_init(&logic->rumble.sem_full, 0, 0);
+    
 
     return 0;
 }
