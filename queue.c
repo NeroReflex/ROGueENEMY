@@ -59,7 +59,7 @@ int queue_push_timeout(queue_t* const  q, void *in_item, int timeout_ms) {
     }
 
     timeout.tv_sec += timeout_ms / 1000;
-    timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
+    timeout.tv_nsec += (timeout_ms % 1000) * 1000;
 
     int result = sem_timedwait(&q->empty, &timeout);
 
@@ -84,7 +84,7 @@ int queue_pop_timeout(queue_t* const q, void **out_item, int timeout_ms) {
     }
 
     timeout.tv_sec += timeout_ms / 1000;
-    timeout.tv_nsec += (timeout_ms % 1000) * 1000000;
+    timeout.tv_nsec += (timeout_ms % 1000) * 1000;
 
     int result = sem_timedwait(&q->full, &timeout);
 
