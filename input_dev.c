@@ -566,11 +566,9 @@ static void input_udev(
             } else {
                 printf("Gain for force-feedback set to %u\n", gain.value);
             }
-        } else {
-            fprintf(stderr, "Unable to adjust gain for force-feedback: EV_FF not supported.\n");
         }
 
-        const int timeout_ms = 500;
+        const int timeout_ms = 1200;
 
         // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
