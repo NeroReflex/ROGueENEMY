@@ -640,6 +640,9 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
     return DPAD_RELEASED;
 }
 
+/**
+ * This function arranges HID packets as described on https://www.psdevwiki.com/ps4/DS4-USB
+ */
 static int send_data(int fd, logic_t *const logic) {
     gamepad_status_t gs;
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
