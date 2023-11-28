@@ -1,8 +1,14 @@
 # ROGueENEMY
 Collects ROG Ally input events to a single (active) virtual controller in linux to allow the use of the gyroscope and every button but also maximize controller compatibility with multiple games.
 
-## Steam Configuration
-In the emulated PS4 controller remember to remove the default deadzone for both left and right joystick: the ROG ally joystics appears to be way better than DS4 ones.
+## Usage
+On steam head for settings for the emulated PS4 controller and remove the default deadzone for both left and right joystick: the ROG ally joystics appears to be way better than DS4 ones.
+
+On steam disable *Nintendo buttons layout* and rely on the proper configuration option on this software to accomplish what you seek.
+
+Tweak ff_rumble to a value between 0 and 100 to configure the strenght for rumble output.
+
+Remember to look /etc/ROGueENEMY/config.cfg for additional configurations.
 
 ## Compilation
 To compile from source you need CMake and make. After the usual git clone and cd inside the cloned directory to use CMake do:

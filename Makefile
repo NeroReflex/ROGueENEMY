@@ -3,7 +3,7 @@ CFLAGS= -O3 -march=znver4 -D _DEFAULT_SOURCE -D_POSIX_C_SOURCE=200112L -std=c11 
 LDFLAGS=-lpthread -levdev -lconfig -lrt -lm -flto=full
 CC=clang
 OBJECTS=main.o input_dev.o dev_iio.o output_dev.o queue.o logic.o platform.o settings.o virt_ds4.o
-TARGET=rogue_enemy
+TARGET=rogue-enemy
 
 all: $(TARGET)
 
