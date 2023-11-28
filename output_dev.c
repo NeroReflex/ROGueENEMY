@@ -720,13 +720,29 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg, 
 	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
 		if (msg->data.event.ev[i].type == EV_KEY) {
 			if (msg->data.event.ev[i].code == BTN_EAST) {
-				gs->circle = msg->data.event.ev[i].value;
+				if (settings->nintendo_layout) {
+					gs->cross = msg->data.event.ev[i].value;
+				} else {
+					gs->circle = msg->data.event.ev[i].value;
+				}
 			} else if (msg->data.event.ev[i].code == BTN_NORTH) {
-				gs->square = msg->data.event.ev[i].value;
+				if (settings->nintendo_layout) {
+					gs->triangle = msg->data.event.ev[i].value;
+				} else {
+					gs->square = msg->data.event.ev[i].value;
+				}
 			} else if (msg->data.event.ev[i].code == BTN_SOUTH) {
-				gs->cross = msg->data.event.ev[i].value;
+				if (settings->nintendo_layout) {
+					gs->circle = msg->data.event.ev[i].value;
+				} else {
+					gs->cross = msg->data.event.ev[i].value;
+				}
 			} else if (msg->data.event.ev[i].code == BTN_WEST) {
-				gs->triangle = msg->data.event.ev[i].value;
+				if (settings->nintendo_layout) {
+					gs->square = msg->data.event.ev[i].value;
+				} else {
+					gs->triangle = msg->data.event.ev[i].value;
+				}
 			} else if (msg->data.event.ev[i].code == BTN_SELECT) {
 				gs->option = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_START) {
