@@ -2,6 +2,7 @@
 #include "platform.h"
 #include "queue.h"
 #include "virt_ds4.h"
+#include "virt_ds5.h"
 
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 
@@ -45,7 +46,14 @@ int logic_create(logic_t *const logic) {
         logic->gamepad_output = GAMEPAD_OUTPUT_DS4;
     }
 
-    logic->restore_to = logic->gamepad_output;
+    const int virt_ds5_thread_creation = pthread_create(&logic->virt_ds5_thread, NULL, virt_ds5_thread_func, (void*)(logic));
+	if (virt_ds4_thread_creation != 0) {
+		fprintf(stderr, "Error creating virtual DualSense thread: %d.\n", virt_ds5_thread_creation);
+	} else {
+        printf("Creation of virtual DualShock4 succeeded: using it as the defaut output.\n");
+        logic->flags |= LOGIC_FLAGS_VIRT_DS5_ENABLE;
+        logic->gamepad_output = GAMEPAD_OUTPUT_DS5;
+    }
 
     if (queue_init_res < 0) {
         fprintf(stderr, "Unable to create queue: %d\n", queue_init_res);
@@ -59,9 +67,15 @@ int logic_create(logic_t *const logic) {
         logic->flags |= LOGIC_FLAGS_PLATFORM_ENABLE;
 
         if (is_mouse_mode(&logic->platform)) {
-            printf("Gamepad output will default to evdev when the controller is set in mouse mode\n");
+            printf("Gamepad output will default to evdev when the controller is set in mouse mode.\n");
             logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
+        } else if (is_gamepad_mode(&logic->platform)) {
+            logic->gamepad_output = (logic->flags & LOGIC_FLAGS_VIRT_DS5_ENABLE) ? GAMEPAD_OUTPUT_DS5 : ((logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) ? GAMEPAD_OUTPUT_DS4: GAMEPAD_OUTPUT_EVDEV);
+        } else if (is_macro_mode(&logic->platform)) {
+            logic->gamepad_output = (logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) ? GAMEPAD_OUTPUT_DS4 : GAMEPAD_OUTPUT_EVDEV;
         }
+
+        printf("Gamepad output is %d\n", (int)logic->gamepad_output);
     } else {
         fprintf(stderr, "Unable to initialize Asus RC71L MCU: %d\n", init_platform_res);
     }

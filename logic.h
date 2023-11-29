@@ -53,12 +53,14 @@ typedef struct gamepad_status {
 } gamepad_status_t;
 
 #define LOGIC_FLAGS_VIRT_DS4_ENABLE         0x00000001U
-#define LOGIC_FLAGS_PLATFORM_ENABLE         0x00000002U
+#define LOGIC_FLAGS_VIRT_DS5_ENABLE         0x00000002U
+#define LOGIC_FLAGS_PLATFORM_ENABLE         0x00000010U
 #define LOGIC_FLAGS_TERMINATION_REQUESTED   0x80000000U
 
 typedef enum gamepad_output {
     GAMEPAD_OUTPUT_EVDEV = 0,
     GAMEPAD_OUTPUT_DS4,
+    GAMEPAD_OUTPUT_DS5,
 } gamepad_output_t;
 
 typedef struct rumble_message {
@@ -77,13 +79,13 @@ typedef struct logic {
 
     pthread_t virt_ds4_thread;
 
+    pthread_t virt_ds5_thread;
+
     volatile uint32_t flags;
 
     // the mutex is not needed if only one thread is writing this and others are checking with equality
     //pthread_mutex_t gamepad_output_mutex;
     gamepad_output_t gamepad_output;
-
-    gamepad_output_t restore_to;
 
     queue_t rumble_events_queue;
 

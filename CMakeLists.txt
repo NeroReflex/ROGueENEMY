@@ -15,7 +15,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 # Adding something we can run - Output name matches target name
-add_executable(${EXECUTABLE_NAME} dev_iio.c input_dev.c logic.c main.c output_dev.c platform.c queue.c settings.c virt_ds4.c)
+add_executable(${EXECUTABLE_NAME} dev_iio.c input_dev.c logic.c main.c output_dev.c platform.c queue.c settings.c virt_ds4.c virt_ds5.c)
 
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -lconfig)
 

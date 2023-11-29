@@ -560,7 +560,6 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
             if (msg->data.event.ev[1].value == 1) {
                 printf("Detected mode switch command, switching mode...\n");
 
-				const int was_mouse_mode = is_mouse_mode(&out_dev->logic->platform);
 				const int new_mode = cycle_mode(&out_dev->logic->platform);
 
 				if (new_mode < 0) {
@@ -568,12 +567,15 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 				} else {
 					printf("Mode correctly switched to %d\n", new_mode);
 
-					if (new_mode == 1) {
-						out_dev->logic->restore_to = out_dev->logic->gamepad_output;
+					if (new_mode == 0) {
+						printf("Mode switched to virtual DualSense for game mode.\n");
+						out_dev->logic->gamepad_output = (out_dev->logic->flags & LOGIC_FLAGS_VIRT_DS5_ENABLE) ? GAMEPAD_OUTPUT_DS5 : ((out_dev->logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) ? GAMEPAD_OUTPUT_DS4: GAMEPAD_OUTPUT_EVDEV);
+					} else if (new_mode == 1) {
 						printf("Mode switched to virtual evdev for lizard mode.\n");
 						out_dev->logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
-					} else if (was_mouse_mode) {
-						out_dev->logic->gamepad_output = out_dev->logic->restore_to;
+					} else if (new_mode == 2) {
+						printf("Mode switched to virtual DualShock for macro mode.\n");
+						out_dev->logic->gamepad_output = (out_dev->logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) ? GAMEPAD_OUTPUT_DS4 : GAMEPAD_OUTPUT_EVDEV;
 					}
 				}
             } else {

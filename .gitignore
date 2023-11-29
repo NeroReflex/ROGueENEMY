@@ -1,5 +1,6 @@
 /build
 /rogue_enemy
+/rogue-enemy
 *.o
 /depends
 /debug
