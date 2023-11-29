@@ -328,6 +328,8 @@ static int send_data(int fd, logic_t *const logic) {
         return gs_copy_res;
     }
 
+    static uint8_t seq_num = 0x00;
+
     const int64_t time_us = gs.last_gyro_motion_time.tv_sec * 1000000 + gs.last_gyro_motion_time.tv_usec;
 
     static uint32_t empty_reports = 0;
@@ -386,7 +388,7 @@ static int send_data(int fd, logic_t *const logic) {
     buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
     buf[5] = gs.l2_trigger; // Z
     buf[6] = gs.r2_trigger; // RZ
-    buf[7] = 0x00; // seq_number
+    buf[7] = seq_num++; // seq_number
     buf[8] = (gs.square ? 0x10 : 0x00) |
                 (gs.cross ? 0x20 : 0x00) |
                 (gs.circle ? 0x40 : 0x00) |
