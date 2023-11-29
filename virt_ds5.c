@@ -401,7 +401,7 @@ static int send_data(int fd, logic_t *const logic) {
             (gs.r3 ? 0x80 : 0x00);
 
     buf[10] = (gs.center ? 0x01 : 0x00);
-    buf[11] = (gs.lfn ? 0x01 : 0x00) | (gs.rfn ? 0x02 : 0x00);
+    buf[11] = (gs.lfn ? 0x10 : 0x00) | (gs.rfn ? 0x20 : 0x00);
     
     //buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
     memcpy(&buf[16], &g_x, sizeof(int16_t));
