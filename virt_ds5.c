@@ -400,7 +400,7 @@ static int send_data(int fd, logic_t *const logic) {
             (gs.l3 ? 0x40 : 0x00) |
             (gs.r3 ? 0x80 : 0x00);
 
-    buf[10] = (gs.lfn ? 0x10 : 0x00) | (gs.rfn ? 0x20 : 0x00) | (gs.center ? 0x01 : 0x00);
+    buf[10] = (gs.l4 ? 0x10 : 0x00) | (gs.r4 ? 0x20 : 0x00) | (gs.center ? 0x01 : 0x00);
     //buf[11] = ;
     
     //buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...

@@ -725,7 +725,7 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg, 
 		(msg->data.event.ev[1].type == EV_KEY) &&
 		(msg->data.event.ev[1].code == KEY_F17)
 	) {
-		gs->rfn = msg->data.event.ev[1].value;
+		gs->l4 = msg->data.event.ev[1].value;
     } else if (
 		(msg->data.event.ev_count == 2) &&
 		(msg->data.event.ev[0].type == EV_MSC) &&
@@ -734,7 +734,7 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg, 
 		(msg->data.event.ev[1].type == EV_KEY) &&
 		(msg->data.event.ev[1].code == KEY_F18)
 	) {
-		gs->lfn = msg->data.event.ev[1].value;
+		gs->r4 = msg->data.event.ev[1].value;
 	}
 
 	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
