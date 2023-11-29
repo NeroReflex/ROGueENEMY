@@ -286,7 +286,7 @@ static uint8_t get_buttons_byte3_by_gs(const gamepad_status_t *const gs) {
     return res;
 }
 
-typedef enum ds4_dpad_status {
+typedef enum ds5_dpad_status {
     DPAD_N        = 0,
     DPAD_NE       = 1,
     DPAD_E        = 2,
@@ -296,9 +296,9 @@ typedef enum ds4_dpad_status {
     DPAD_W        = 6,
     DPAD_NW       = 7,
     DPAD_RELEASED = 0x08,
-} ds4_dpad_status_t;
+} ds5_dpad_status_t;
 
-static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
+static ds5_dpad_status_t ds5_dpad_from_gamepad(uint8_t dpad) {
     if (dpad == 0x01) {
         return DPAD_E;
     } else if (dpad == 0x02) {
@@ -390,7 +390,8 @@ static int send_data(int fd, logic_t *const logic) {
     buf[8] = (gs.square ? 0x10 : 0x00) |
                 (gs.cross ? 0x20 : 0x00) |
                 (gs.circle ? 0x40 : 0x00) |
-                (gs.triangle ? 0x80 : 0x00);
+                (gs.triangle ? 0x80 : 0x00) |
+                (uint8_t)ds5_dpad_from_gamepad(gs.dpad);
     buf[9] = (gs.l1 ? 0x01 : 0x00) |
             (gs.r1 ? 0x02 : 0x00) |
             (gs.l2_trigger >= 225 ? 0x04 : 0x00) |
