@@ -384,8 +384,8 @@ static int send_data(int fd, logic_t *const logic) {
     buf[2] = ((uint64_t)((int64_t)gs.joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
     buf[3] = ((uint64_t)((int64_t)gs.joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
     buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
-    buf[5] = 0x00; // Z
-    buf[6] = 0x00; // RZ
+    buf[5] = gs.l2_trigger; // Z
+    buf[6] = gs.r2_trigger; // RZ
     buf[7] = 0x00; // seq_number
     buf[8] = (gs.square ? 0x10 : 0x00) |
                 (gs.cross ? 0x20 : 0x00) |
@@ -393,8 +393,8 @@ static int send_data(int fd, logic_t *const logic) {
                 (gs.triangle ? 0x80 : 0x00);
     buf[9] = (gs.l1 ? 0x01 : 0x00) |
             (gs.r1 ? 0x02 : 0x00) |
-            (gs.l2_trigger >= 200 ? 0x04 : 0x00) |
-            (gs.r2_trigger >= 200 ? 0x08 : 0x00) |
+            (gs.l2_trigger >= 225 ? 0x04 : 0x00) |
+            (gs.r2_trigger >= 225 ? 0x08 : 0x00) |
             (gs.option ? 0x10 : 0x00) |
             (gs.share ? 0x20 : 0x00) |
             (gs.l3 ? 0x40 : 0x00) |
