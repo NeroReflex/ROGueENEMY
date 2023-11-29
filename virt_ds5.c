@@ -74,7 +74,7 @@ static int create(int fd)
 	ev.u.create.rd_size = sizeof(rdesc);
 	ev.u.create.bus = BUS_USB;
 	ev.u.create.vendor = 0x054C;
-	ev.u.create.product = 0x09CC;
+	ev.u.create.product = 0x0df2;
 	ev.u.create.version = 0;
 	ev.u.create.country = 0;
 

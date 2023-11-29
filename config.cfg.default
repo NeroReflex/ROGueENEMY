@@ -1,0 +1,3 @@
+enable_qam = true;
+ff_gain = 100;
+nintendo_layout = false;
