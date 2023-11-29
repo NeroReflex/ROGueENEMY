@@ -1,4 +1,4 @@
-#include "virt_ds4.h"
+#include "virt_ds5.h"
 
 #include <linux/uhid.h>
 
@@ -317,9 +317,6 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
     return DPAD_RELEASED;
 }
 
-/**
- * This function arranges HID packets as described on https://www.psdevwiki.com/ps4/DS4-USB
- */
 static int send_data(int fd, logic_t *const logic) {
     gamepad_status_t gs;
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
@@ -459,7 +456,7 @@ void *virt_ds5_thread_func(void *ptr) {
         
         event(fd, logic);
 
-        if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
+        if (logic->gamepad_output == GAMEPAD_OUTPUT_DS5) {
             const int res = send_data(fd, logic);
             if (res < 0) {
                 fprintf(stderr, "Error sending HID report: %d\n", res);
