@@ -717,6 +717,24 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg, 
 		if (settings->enable_qam) {
 			gs->flags |= GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
 		}
+	} else if (
+		(msg->data.event.ev_count == 2) &&
+		(msg->data.event.ev[0].type == EV_MSC) &&
+		(msg->data.event.ev[0].code == MSC_SCAN) &&
+		(msg->data.event.ev[0].value == 458860) &&
+		(msg->data.event.ev[1].type == EV_KEY) &&
+		(msg->data.event.ev[1].code == KEY_F17)
+	) {
+		gs->rfn = msg->data.event.ev[1].value;
+    } else if (
+		(msg->data.event.ev_count == 2) &&
+		(msg->data.event.ev[0].type == EV_MSC) &&
+		(msg->data.event.ev[0].code == MSC_SCAN) &&
+		(msg->data.event.ev[0].value == 458861) &&
+		(msg->data.event.ev[1].type == EV_KEY) &&
+		(msg->data.event.ev[1].code == KEY_F18)
+	) {
+		gs->lfn = msg->data.event.ev[1].value;
 	}
 
 	for (uint32_t i = 0; i < msg->data.event.ev_count; ++i) {
