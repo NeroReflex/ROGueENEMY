@@ -36,6 +36,12 @@ typedef struct gamepad_status {
     uint8_t share;
     uint8_t center;
 
+    uint8_t l4;
+    uint8_t r4;
+    
+    uint8_t l5;
+    uint8_t r5;
+
     struct timeval last_gyro_motion_time;
     struct timeval last_accel_motion_time;
 

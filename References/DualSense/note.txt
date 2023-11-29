@@ -1,0 +1,2 @@
+ffff88813967c900 1248578633 C Ii:5:002:4 0:8 64 = 017e8080 7e0000a9 0800X000 2736395a f7fff5ff 0400bcff fc1fc205 1fcc9337
+Where X is 1 for Lfn, 2 for Rfn, 3 for both pressed 
