@@ -11,7 +11,8 @@
 #define DS_FEATURE_REPORT_CALIBRATION       0x05
 #define DS_FEATURE_REPORT_CALIBRATION_SIZE  41
 
-#define DS_INPUT_REPORT_USB_SIZE 64
+#define DS_INPUT_REPORT_USB         0x01
+#define DS_INPUT_REPORT_USB_SIZE    64
 
 static const char* path = "/dev/uhid";
 
@@ -362,9 +363,8 @@ static int send_data(int fd, logic_t *const logic) {
 
     const uint16_t timestamp = sim_time + (int)((double)empty_reports * DS4_SPEC_DELTA_TIME);
 */
-    const uint16_t timestamp = 0;
+    const uint32_t timestamp = 0;
     
-    // [12] battery level
     uint8_t buf[] = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -380,34 +380,41 @@ static int send_data(int fd, logic_t *const logic) {
     const int16_t a_z = (int16_t)(-1) * gs.raw_accel[2];  // Swap Y and Z
 
 
-    buf[0] = 0x01;  // [00] report ID (0x01)
+    buf[0] = DS_INPUT_REPORT_USB;  // [00] report ID (0x01)
     buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
     buf[2] = ((uint64_t)((int64_t)gs.joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
     buf[3] = ((uint64_t)((int64_t)gs.joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
     buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
-    buf[5] = get_buttons_byte_by_gs(&gs) | (uint8_t)ds4_dpad_from_gamepad(gs.dpad);
-    buf[6] = get_buttons_byte2_by_gs(&gs);
+    buf[5] = 0x00; // Z
+    buf[6] = 0x00; // RZ
+    buf[7] = 0x00; // seq_number
+    buf[8] = (gs.square ? 0x10 : 0x00) |
+                (gs.cross ? 0x20 : 0x00) |
+                (gs.circle ? 0x40 : 0x00) |
+                (gs.circle ? 0x80 : 0x00);
+    buf[9] = (gs.l1 ? 0x01 : 0x00) |
+            (gs.r1 ? 0x02 : 0x00) |
+            (gs.l2_trigger >= 200 ? 0x04 : 0x00) |
+            (gs.r2_trigger >= 200 ? 0x08 : 0x00) |
+            (gs.share ? 0x10 : 0x00) |
+            (gs.option ? 0x20 : 0x00) |
+            (gs.l3 ? 0x40 : 0x00) |
+            (gs.r3 ? 0x80 : 0x00);
+
+    buf[10] = (gs.center ? 0x01 : 0x00);
     
-    /*
-    static uint8_t counter = 0;
-    buf[7] = (((counter++) % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
-    */
+    //buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
+    memcpy(&buf[16], &g_x, sizeof(int16_t));
+    memcpy(&buf[20], &g_y, sizeof(int16_t));
+    memcpy(&buf[22], &g_z, sizeof(int16_t));
+    memcpy(&buf[24], &a_x, sizeof(int16_t));
+    memcpy(&buf[26], &a_y, sizeof(int16_t));
+    memcpy(&buf[28], &a_z, sizeof(int16_t));
+    memcpy(&buf[30], &timestamp, sizeof(timestamp));
 
-    buf[7] = get_buttons_byte3_by_gs(&gs);
-
-    buf[8] = gs.l2_trigger;
-    buf[9] = gs.r2_trigger;
-    memcpy(&buf[10], &timestamp, sizeof(timestamp));
-    buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
-    memcpy(&buf[13], &g_x, sizeof(int16_t));
-    memcpy(&buf[15], &g_y, sizeof(int16_t));
-    memcpy(&buf[17], &g_z, sizeof(int16_t));
-    memcpy(&buf[19], &a_x, sizeof(int16_t));
-    memcpy(&buf[21], &a_y, sizeof(int16_t));
-    memcpy(&buf[23], &a_z, sizeof(int16_t));
-
+/*
     buf[30] = 0x1b; // no headset attached
-
+*/
     buf[62] = 0x80; // IDK... it seems constant...
     buf[57] = 0x80; // IDK... it seems constant...
     buf[53] = 0x80; // IDK... it seems constant...
