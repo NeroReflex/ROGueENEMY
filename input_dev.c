@@ -1,4 +1,5 @@
 #include "input_dev.h"
+#include "logic.h"
 #include "message.h"
 #include "queue.h"
 #include "dev_iio.h"
@@ -9,13 +10,10 @@
 #include <linux/input-event-codes.h>
 #include <linux/input.h>
 #include <unistd.h>
-#include <string.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <termios.h>
-
-#include <dirent.h> 
-#include <stdio.h> 
+#include <dirent.h>
 
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
@@ -142,11 +140,15 @@ static char* open_sysfs[] = {
 #define MAX_MESSAGES_IN_FLIGHT 32
 #define DEFAULT_EVENTS_IN_REPORT 8
 
+#define INPUT_CTX_FLAGS_READ_TERMINATED 0x00000001U
 
 struct input_ctx {
     struct libevdev* dev;
     dev_iio_t *iio_dev;
     queue_t* queue;
+    queue_t* rumble_queue;
+    controller_settings_t* settings;
+    uint32_t flags;
     message_t messages[MAX_MESSAGES_IN_FLIGHT];
     ev_input_filter_t input_filter_fn;
 };
@@ -196,7 +198,7 @@ static void* iio_read_thread_func(void* ptr) {
         }
 
         // TODO: configure equal as sampling rate
-        usleep(100);
+        usleep(1250);
 
         // either way.... fill a new buffer on the next cycle
         msg = NULL;
@@ -315,6 +317,8 @@ static void* input_read_thread_func(void* ptr) {
         }
     } while (rc == 1 || rc == 0 || rc == -EAGAIN);
 
+    ctx->flags |= INPUT_CTX_FLAGS_READ_TERMINATED;
+
     return NULL;
 }
 
@@ -325,9 +329,7 @@ static void input_iio(
     int open_sysfs_idx = -1;
 
     for (;;) {
-        const uint32_t flags = in_dev->crtl_flags;
-        if (flags & INPUT_DEV_CTRL_FLAG_EXIT) {
-            in_dev->crtl_flags &= ~INPUT_DEV_CTRL_FLAG_EXIT;
+        if (logic_termination_requested(in_dev->logic)) {
             break;
         }
 
@@ -434,9 +436,7 @@ static void input_udev(
     int open_sysfs_idx = -1;
 
     for (;;) {
-        const uint32_t flags = in_dev->crtl_flags;
-        if (flags & INPUT_DEV_CTRL_FLAG_EXIT) {
-            in_dev->crtl_flags &= ~INPUT_DEV_CTRL_FLAG_EXIT;
+        if (logic_termination_requested(in_dev->logic)) {
             break;
         }
 
@@ -526,16 +526,122 @@ static void input_udev(
             continue;
         }
 
-        pthread_t incoming_events_thread;
+        const int fd = libevdev_get_fd(ctx->dev);
 
+        struct ff_effect current_effect = {
+            .type = FF_RUMBLE,
+            .id = -1,
+            .replay = {
+                .delay = 0,
+                .length = 5000,
+            },
+            .u = {
+                .rumble = {
+                    .strong_magnitude = 0x0000,
+                    .weak_magnitude = 0x0000,
+                }
+            }
+        };
+
+        // start the incoming events read thread
+        pthread_t incoming_events_thread;
         const int incoming_events_thread_creation = pthread_create(&incoming_events_thread, NULL, input_read_thread_func, (void*)ctx);
         if (incoming_events_thread_creation != 0) {
             fprintf(stderr, "Error creating the input thread for device %s: %d\n", libevdev_get_name(ctx->dev), incoming_events_thread_creation);
+            continue;
         }
 
-        if (incoming_events_thread_creation == 0) {
-            pthread_join(incoming_events_thread, NULL);
+        const int has_ff = libevdev_has_event_type(ctx->dev, EV_FF);
+
+        if (has_ff) {
+            const struct input_event gain = {
+                .type = EV_FF,
+                .code = FF_GAIN,
+                .value = ctx->settings->ff_gain,
+            };
+
+            const int gain_set_res = write(fd, (const void*)&gain, sizeof(gain));
+            if (gain_set_res != sizeof(gain)) {
+                fprintf(stderr, "Unable to adjust gain for force-feedback: %d\n", gain_set_res);
+            } else {
+                printf("Gain for force-feedback set to %u\n", gain.value);
+            }
         }
+
+        const int timeout_ms = 1200;
+
+        // while the incoming events thread run...
+        while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
+            if (has_ff) {
+                void* rmsg = NULL;
+
+                const int rumble_msg_recv_res = queue_pop_timeout(ctx->rumble_queue, &rmsg, timeout_ms);
+                if (rumble_msg_recv_res == 0) {
+                    rumble_message_t *const rumble_msg = (rumble_message_t*)rmsg;
+
+                    // here stop the previous rumble
+                    if (current_effect.id != -1) {
+                        struct input_event rumble_stop = {
+                            .type = EV_FF,
+                            .code = current_effect.id,
+                            .value = 0,
+                        };
+
+                        const int rumble_stop_res = write(fd, (const void*) &rumble_stop, sizeof(rumble_stop));
+                        if (rumble_stop_res != sizeof(rumble_stop)) {
+                            fprintf(stderr, "Unable to stop the previous rumble: %d\n", rumble_stop_res);
+                        }
+                    }
+
+                    current_effect.u.rumble.strong_magnitude = rumble_msg->strong_magnitude;
+                    current_effect.u.rumble.weak_magnitude = rumble_msg->weak_magnitude;
+
+#if defined(INCLUDE_INPUT_DEBUG)
+                    printf("Rumble event received -- strong_magnitude: %u, weak_magnitude: %u\n", (unsigned)current_effect.u.rumble.strong_magnitude, (unsigned)current_effect.u.rumble.weak_magnitude);
+#endif
+
+                    const int effect_upload_res = ioctl(fd, EVIOCSFF, &current_effect);
+                    if (effect_upload_res == 0) {
+                        const struct input_event rumble_play = {
+                            .type = EV_FF,
+                            .code = current_effect.id,
+                            .value = 1,
+                        };
+
+                        const int effect_start_res = write(fd, (const void*)&rumble_play, sizeof(rumble_play));
+                        if (effect_start_res == sizeof(rumble_play)) {
+#if defined(INCLUDE_INPUT_DEBUG)
+                            printf("Rumble effect play requested to driver\n");
+#endif
+                        } else {
+                            fprintf(stderr, "Unable to write input event starting the rumble: %d\n", effect_start_res);
+                        }
+                    } else {
+                        fprintf(stderr, "Unable to update force-feedback effect: %d\n", effect_upload_res);
+
+                        current_effect.id = -1;
+                    }
+
+                    // this message was allocated by output_dev so I have to free it
+                    free(rumble_msg);
+                }
+            } else {
+                usleep(timeout_ms * 1000);
+            }
+        }
+
+        // stop any effect
+        if ((has_ff) && (current_effect.id != -1)) {
+            const int effect_removal_res = ioctl(fd, EVIOCRMFF, current_effect.id);
+            if (effect_removal_res == 0) {
+                printf("\n");
+            } else {
+                fprintf(stderr, "Error removing rumble effect: %d\n", effect_removal_res);
+            }
+        }
+
+        // wait for incoming events thread to totally stop
+        pthread_join(incoming_events_thread, NULL);
     }
 }
 
@@ -545,7 +651,10 @@ void *input_dev_thread_func(void *ptr) {
     struct input_ctx ctx = {
         .dev = NULL,
         .queue = &in_dev->logic->input_queue,
+        .rumble_queue = &in_dev->logic->rumble_events_queue,
+        .settings = &in_dev->logic->controller_settings,
         .input_filter_fn = in_dev->ev_input_filter_fn,
+        .flags = 0x00000000U
     };
 
     if (in_dev->dev_type == input_dev_type_uinput) {

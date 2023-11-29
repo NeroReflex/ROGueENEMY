@@ -2,10 +2,15 @@
 
 #include "platform.h"
 #include "queue.h"
+#include "settings.h"
 
-#define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS    200
+#define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS     80
+#define PRESS_TIME_BEFORE_CROSS_BUTTON_MS                   250
+#define PRESS_TIME_CROSS_BUTTON_MS                          80
+#define PRESS_TIME_AFTER_CROSS_BUTTON_MS                    180
 
 #define GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER  0x00000001U
+#define GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM             0x00000002U
 
 typedef struct gamepad_status {
 
@@ -31,7 +36,8 @@ typedef struct gamepad_status {
     uint8_t share;
     uint8_t center;
 
-    struct timeval last_motion_time;
+    struct timeval last_gyro_motion_time;
+    struct timeval last_accel_motion_time;
 
     double gyro[3]; // | x, y, z| right-hand-rules -- in rad/s
     double accel[3]; // | x, y, z| positive: right, up, towards player -- in m/s^2
@@ -39,17 +45,28 @@ typedef struct gamepad_status {
     int16_t raw_gyro[3];
     int16_t raw_accel[3];
 
-    uint32_t flags;
+    uint64_t rumble_events_count;
+    uint8_t motors_intensity[2]; // 0 = left, 1 = right
+
+    volatile uint32_t flags;
 
 } gamepad_status_t;
 
-#define LOGIC_FLAGS_VIRT_DS4_ENABLE   0x00000001U
-#define LOGIC_FLAGS_PLATFORM_ENABLE   0x00000002U
+#define LOGIC_FLAGS_VIRT_DS4_ENABLE         0x00000001U
+#define LOGIC_FLAGS_VIRT_DS5_ENABLE         0x00000002U
+#define LOGIC_FLAGS_PLATFORM_ENABLE         0x00000010U
+#define LOGIC_FLAGS_TERMINATION_REQUESTED   0x80000000U
 
 typedef enum gamepad_output {
     GAMEPAD_OUTPUT_EVDEV = 0,
     GAMEPAD_OUTPUT_DS4,
+    GAMEPAD_OUTPUT_DS5,
 } gamepad_output_t;
+
+typedef struct rumble_message {
+    uint16_t strong_magnitude;
+    uint16_t weak_magnitude;
+} rumble_message_t;
 
 typedef struct logic {
 
@@ -62,13 +79,18 @@ typedef struct logic {
 
     pthread_t virt_ds4_thread;
 
-    uint32_t flags;
+    pthread_t virt_ds5_thread;
+
+    volatile uint32_t flags;
 
     // the mutex is not needed if only one thread is writing this and others are checking with equality
     //pthread_mutex_t gamepad_output_mutex;
     gamepad_output_t gamepad_output;
 
-    gamepad_output_t restore_to;
+    queue_t rumble_events_queue;
+
+    controller_settings_t controller_settings;
+
 } logic_t;
 
 int logic_create(logic_t *const logic);
@@ -80,3 +102,7 @@ int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out)
 int logic_begin_status_update(logic_t *const logic);
 
 void logic_end_status_update(logic_t *const logic);
+
+void logic_request_termination(logic_t *const logic);
+
+int logic_termination_requested(logic_t *const logic);

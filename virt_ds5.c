@@ -1,227 +1,49 @@
-#include "virt_ds4.h"
+#include "virt_ds5.h"
 
-#include <bits/types/time_t.h>
 #include <linux/uhid.h>
-#include <fcntl.h>
-#include <poll.h>
 
-#define DS4_GYRO_RES_PER_DEG_S	1024
-#define DS4_ACC_RES_PER_G       8192
+#define DS_FEATURE_REPORT_PAIRING_INFO      0x09
+#define DS_FEATURE_REPORT_PAIRING_INFO_SIZE 20
 
-static const uint16_t gyro_pitch_bias  = 0xfff9;
-static const uint16_t gyro_yaw_bias    = 0x0009;
-static const uint16_t gyro_roll_bias   = 0xfff9;
-static const uint16_t gyro_pitch_plus  = 0x22fe;
-static const uint16_t gyro_pitch_minus = 0xdcf4;
-static const uint16_t gyro_yaw_plus    = 0x22bb;
-static const uint16_t gyro_yaw_minus   = 0xdd59;
-static const uint16_t gyro_roll_plus   = 0x2289;
-static const uint16_t gyro_roll_minus  = 0xdd68;
-static const uint16_t gyro_speed_plus  = 0x021c /* 540 */; // speed_2x = (gyro_speed_plus + gyro_speed_minus) = 1080;
-static const uint16_t gyro_speed_minus = 0x021c /* 540 */; // speed_2x = (gyro_speed_plus + gyro_speed_minus) = 1080;
-static const uint16_t acc_x_plus       = 0x20d3;
-static const uint16_t acc_x_minus      = 0xdf07;
-static const uint16_t acc_y_plus       = 0x20bf;
-static const uint16_t acc_y_minus      = 0xe0aa;
-static const uint16_t acc_z_plus       = 0x1ebc;
-static const uint16_t acc_z_minus      = 0xe086;
+#define DS_FEATURE_REPORT_FIRMWARE_INFO         0x20
+#define DS_FEATURE_REPORT_FIRMWARE_INFO_SIZE    64
+
+#define DS_FEATURE_REPORT_CALIBRATION       0x05
+#define DS_FEATURE_REPORT_CALIBRATION_SIZE  41
+
+#define DS_INPUT_REPORT_USB_SIZE 64
 
 static const char* path = "/dev/uhid";
 
+static const char* const MAC_ADDR_STR = "e8:47:3a:d6:e7:74";
+static const uint8_t MAC_ADDR[] = { 0x74, 0xe7, 0xd6, 0x3a, 0x47, 0xe8 };
+
 static unsigned char rdesc[] = {
-    //Sony Interactive Entertainment DualSense Edge Wireless Controller
-    0x05, 0x01,                    // Usage Page (Generic Desktop)        0
-    0x09, 0x05,                    // Usage (Game Pad)                    2
-    0xa1, 0x01,                    // Collection (Application)            4
-    0x85, 0x01,                    //  Report ID (1)                      6
-    0x09, 0x30,                    //  Usage (X)                          8
-    0x09, 0x31,                    //  Usage (Y)                          10
-    0x09, 0x32,                    //  Usage (Z)                          12
-    0x09, 0x35,                    //  Usage (Rz)                         14
-    0x09, 0x33,                    //  Usage (Rx)                         16
-    0x09, 0x34,                    //  Usage (Ry)                         18
-    0x15, 0x00,                    //  Logical Minimum (0)                20
-    0x26, 0xff, 0x00,              //  Logical Maximum (255)              22
-    0x75, 0x08,                    //  Report Size (8)                    25
-    0x95, 0x06,                    //  Report Count (6)                   27
-    0x81, 0x02,                    //  Input (Data,Var,Abs)               29
-    0x06, 0x00, 0xff,              //  Usage Page (Vendor Defined Page 1) 31
-    0x09, 0x20,                    //  Usage (Vendor Usage 0x20)          34
-    0x95, 0x01,                    //  Report Count (1)                   36
-    0x81, 0x02,                    //  Input (Data,Var,Abs)               38
-    0x05, 0x01,                    //  Usage Page (Generic Desktop)       40
-    0x09, 0x39,                    //  Usage (Hat switch)                 42
-    0x15, 0x00,                    //  Logical Minimum (0)                44
-    0x25, 0x07,                    //  Logical Maximum (7)                46
-    0x35, 0x00,                    //  Physical Minimum (0)               48
-    0x46, 0x3b, 0x01,              //  Physical Maximum (315)             50
-    0x65, 0x14,                    //  Unit (EnglishRotation: deg)        53
-    0x75, 0x04,                    //  Report Size (4)                    55
-    0x95, 0x01,                    //  Report Count (1)                   57
-    0x81, 0x42,                    //  Input (Data,Var,Abs,Null)          59
-    0x65, 0x00,                    //  Unit (None)                        61
-    0x05, 0x09,                    //  Usage Page (Button)                63
-    0x19, 0x01,                    //  Usage Minimum (1)                  65
-    0x29, 0x0f,                    //  Usage Maximum (15)                 67
-    0x15, 0x00,                    //  Logical Minimum (0)                69
-    0x25, 0x01,                    //  Logical Maximum (1)                71
-    0x75, 0x01,                    //  Report Size (1)                    73
-    0x95, 0x0f,                    //  Report Count (15)                  75
-    0x81, 0x02,                    //  Input (Data,Var,Abs)               77
-    0x06, 0x00, 0xff,              //  Usage Page (Vendor Defined Page 1) 79
-    0x09, 0x21,                    //  Usage (Vendor Usage 0x21)          82
-    0x95, 0x0d,                    //  Report Count (13)                  84
-    0x81, 0x02,                    //  Input (Data,Var,Abs)               86
-    0x06, 0x00, 0xff,              //  Usage Page (Vendor Defined Page 1) 88
-    0x09, 0x22,                    //  Usage (Vendor Usage 0x22)          91
-    0x15, 0x00,                    //  Logical Minimum (0)                93
-    0x26, 0xff, 0x00,              //  Logical Maximum (255)              95
-    0x75, 0x08,                    //  Report Size (8)                    98
-    0x95, 0x34,                    //  Report Count (52)                  100
-    0x81, 0x02,                    //  Input (Data,Var,Abs)               102
-    0x85, 0x02,                    //  Report ID (2)                      104
-    0x09, 0x23,                    //  Usage (Vendor Usage 0x23)          106
-    0x95, 0x3f,                    //  Report Count (63)                  108
-    0x91, 0x02,                    //  Output (Data,Var,Abs)              110
-    0x85, 0x05,                    //  Report ID (5)                      112
-    0x09, 0x33,                    //  Usage (Vendor Usage 0x33)          114
-    0x95, 0x28,                    //  Report Count (40)                  116
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             118
-    0x85, 0x08,                    //  Report ID (8)                      120
-    0x09, 0x34,                    //  Usage (Vendor Usage 0x34)          122
-    0x95, 0x2f,                    //  Report Count (47)                  124
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             126
-    0x85, 0x09,                    //  Report ID (9)                      128
-    0x09, 0x24,                    //  Usage (Vendor Usage 0x24)          130
-    0x95, 0x13,                    //  Report Count (19)                  132
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             134
-    0x85, 0x0a,                    //  Report ID (10)                     136
-    0x09, 0x25,                    //  Usage (Vendor Usage 0x25)          138
-    0x95, 0x1a,                    //  Report Count (26)                  140
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             142
-    0x85, 0x20,                    //  Report ID (32)                     144
-    0x09, 0x26,                    //  Usage (Vendor Usage 0x26)          146
-    0x95, 0x3f,                    //  Report Count (63)                  148
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             150
-    0x85, 0x21,                    //  Report ID (33)                     152
-    0x09, 0x27,                    //  Usage (Vendor Usage 0x27)          154
-    0x95, 0x04,                    //  Report Count (4)                   156
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             158
-    0x85, 0x22,                    //  Report ID (34)                     160
-    0x09, 0x40,                    //  Usage (Vendor Usage 0x40)          162
-    0x95, 0x3f,                    //  Report Count (63)                  164
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             166
-    0x85, 0x80,                    //  Report ID (128)                    168
-    0x09, 0x28,                    //  Usage (Vendor Usage 0x28)          170
-    0x95, 0x3f,                    //  Report Count (63)                  172
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             174
-    0x85, 0x81,                    //  Report ID (129)                    176
-    0x09, 0x29,                    //  Usage (Vendor Usage 0x29)          178
-    0x95, 0x3f,                    //  Report Count (63)                  180
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             182
-    0x85, 0x82,                    //  Report ID (130)                    184
-    0x09, 0x2a,                    //  Usage (Vendor Usage 0x2a)          186
-    0x95, 0x09,                    //  Report Count (9)                   188
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             190
-    0x85, 0x83,                    //  Report ID (131)                    192
-    0x09, 0x2b,                    //  Usage (Vendor Usage 0x2b)          194
-    0x95, 0x3f,                    //  Report Count (63)                  196
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             198
-    0x85, 0x84,                    //  Report ID (132)                    200
-    0x09, 0x2c,                    //  Usage (Vendor Usage 0x2c)          202
-    0x95, 0x3f,                    //  Report Count (63)                  204
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             206
-    0x85, 0x85,                    //  Report ID (133)                    208
-    0x09, 0x2d,                    //  Usage (Vendor Usage 0x2d)          210
-    0x95, 0x02,                    //  Report Count (2)                   212
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             214
-    0x85, 0xa0,                    //  Report ID (160)                    216
-    0x09, 0x2e,                    //  Usage (Vendor Usage 0x2e)          218
-    0x95, 0x01,                    //  Report Count (1)                   220
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             222
-    0x85, 0xe0,                    //  Report ID (224)                    224
-    0x09, 0x2f,                    //  Usage (Vendor Usage 0x2f)          226
-    0x95, 0x3f,                    //  Report Count (63)                  228
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             230
-    0x85, 0xf0,                    //  Report ID (240)                    232
-    0x09, 0x30,                    //  Usage (Vendor Usage 0x30)          234
-    0x95, 0x3f,                    //  Report Count (63)                  236
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             238
-    0x85, 0xf1,                    //  Report ID (241)                    240
-    0x09, 0x31,                    //  Usage (Vendor Usage 0x31)          242
-    0x95, 0x3f,                    //  Report Count (63)                  244
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             246
-    0x85, 0xf2,                    //  Report ID (242)                    248
-    0x09, 0x32,                    //  Usage (Vendor Usage 0x32)          250
-    0x95, 0x34,                    //  Report Count (52)                  252
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             254
-    0x85, 0xf4,                    //  Report ID (244)                    256
-    0x09, 0x35,                    //  Usage (Vendor Usage 0x35)          258
-    0x95, 0x3f,                    //  Report Count (63)                  260
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             262
-    0x85, 0xf5,                    //  Report ID (245)                    264
-    0x09, 0x36,                    //  Usage (Vendor Usage 0x36)          266
-    0x95, 0x03,                    //  Report Count (3)                   268
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             270
-    0x85, 0x60,                    //  Report ID (96)                     272
-    0x09, 0x41,                    //  Usage (Vendor Usage 0x41)          274
-    0x95, 0x3f,                    //  Report Count (63)                  276
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             278
-    0x85, 0x61,                    //  Report ID (97)                     280
-    0x09, 0x42,                    //  Usage (Vendor Usage 0x42)          282
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             284
-    0x85, 0x62,                    //  Report ID (98)                     286
-    0x09, 0x43,                    //  Usage (Vendor Usage 0x43)          288
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             290
-    0x85, 0x63,                    //  Report ID (99)                     292
-    0x09, 0x44,                    //  Usage (Vendor Usage 0x44)          294
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             296
-    0x85, 0x64,                    //  Report ID (100)                    298
-    0x09, 0x45,                    //  Usage (Vendor Usage 0x45)          300
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             302
-    0x85, 0x65,                    //  Report ID (101)                    304
-    0x09, 0x46,                    //  Usage (Vendor Usage 0x46)          306
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             308
-    0x85, 0x68,                    //  Report ID (104)                    310
-    0x09, 0x47,                    //  Usage (Vendor Usage 0x47)          312
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             314
-    0x85, 0x70,                    //  Report ID (112)                    316
-    0x09, 0x48,                    //  Usage (Vendor Usage 0x48)          318
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             320
-    0x85, 0x71,                    //  Report ID (113)                    322
-    0x09, 0x49,                    //  Usage (Vendor Usage 0x49)          324
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             326
-    0x85, 0x72,                    //  Report ID (114)                    328
-    0x09, 0x4a,                    //  Usage (Vendor Usage 0x4a)          330
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             332
-    0x85, 0x73,                    //  Report ID (115)                    334
-    0x09, 0x4b,                    //  Usage (Vendor Usage 0x4b)          336
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             338
-    0x85, 0x74,                    //  Report ID (116)                    340
-    0x09, 0x4c,                    //  Usage (Vendor Usage 0x4c)          342
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             344
-    0x85, 0x75,                    //  Report ID (117)                    346
-    0x09, 0x4d,                    //  Usage (Vendor Usage 0x4d)          348
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             350
-    0x85, 0x76,                    //  Report ID (118)                    352
-    0x09, 0x4e,                    //  Usage (Vendor Usage 0x4e)          354
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             356
-    0x85, 0x77,                    //  Report ID (119)                    358
-    0x09, 0x4f,                    //  Usage (Vendor Usage 0x4f)          360
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             362
-    0x85, 0x78,                    //  Report ID (120)                    364
-    0x09, 0x50,                    //  Usage (Vendor Usage 0x50)          366
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             368
-    0x85, 0x79,                    //  Report ID (121)                    370
-    0x09, 0x51,                    //  Usage (Vendor Usage 0x51)          372
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             374
-    0x85, 0x7a,                    //  Report ID (122)                    376
-    0x09, 0x52,                    //  Usage (Vendor Usage 0x52)          378
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             380
-    0x85, 0x7b,                    //  Report ID (123)                    382
-    0x09, 0x53,                    //  Usage (Vendor Usage 0x53)          384
-    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             386
-    0xc0,                          // End Collection                      388
+    0x05, 0x01, 0x09, 0x05, 0xA1, 0x01, 0x85, 0x01, 0x09, 0x30, 0x09, 0x31, 0x09, 0x32, 0x09, 0x35,
+    0x09, 0x33, 0x09, 0x34, 0x15, 0x00, 0x26, 0xFF, 0x00, 0x75, 0x08, 0x95, 0x06, 0x81, 0x02, 0x06,
+    0x00, 0xFF, 0x09, 0x20, 0x95, 0x01, 0x81, 0x02, 0x05, 0x01, 0x09, 0x39, 0x15, 0x00, 0x25, 0x07,
+    0x35, 0x00, 0x46, 0x3B, 0x01, 0x65, 0x14, 0x75, 0x04, 0x95, 0x01, 0x81, 0x42, 0x65, 0x00, 0x05,
+    0x09, 0x19, 0x01, 0x29, 0x0F, 0x15, 0x00, 0x25, 0x01, 0x75, 0x01, 0x95, 0x0F, 0x81, 0x02, 0x06,
+    0x00, 0xFF, 0x09, 0x21, 0x95, 0x0D, 0x81, 0x02, 0x06, 0x00, 0xFF, 0x09, 0x22, 0x15, 0x00, 0x26,
+    0xFF, 0x00, 0x75, 0x08, 0x95, 0x34, 0x81, 0x02, 0x85, 0x02, 0x09, 0x23, 0x95, 0x3F, 0x91, 0x02,
+    0x85, 0x05, 0x09, 0x33, 0x95, 0x28, 0xB1, 0x02, 0x85, 0x08, 0x09, 0x34, 0x95, 0x2F, 0xB1, 0x02,
+    0x85, 0x09, 0x09, 0x24, 0x95, 0x13, 0xB1, 0x02, 0x85, 0x0A, 0x09, 0x25, 0x95, 0x1A, 0xB1, 0x02,
+    0x85, 0x20, 0x09, 0x26, 0x95, 0x3F, 0xB1, 0x02, 0x85, 0x21, 0x09, 0x27, 0x95, 0x04, 0xB1, 0x02,
+    0x85, 0x22, 0x09, 0x40, 0x95, 0x3F, 0xB1, 0x02, 0x85, 0x80, 0x09, 0x28, 0x95, 0x3F, 0xB1, 0x02,
+    0x85, 0x81, 0x09, 0x29, 0x95, 0x3F, 0xB1, 0x02, 0x85, 0x82, 0x09, 0x2A, 0x95, 0x09, 0xB1, 0x02,
+    0x85, 0x83, 0x09, 0x2B, 0x95, 0x3F, 0xB1, 0x02, 0x85, 0x84, 0x09, 0x2C, 0x95, 0x3F, 0xB1, 0x02,
+    0x85, 0x85, 0x09, 0x2D, 0x95, 0x02, 0xB1, 0x02, 0x85, 0xA0, 0x09, 0x2E, 0x95, 0x01, 0xB1, 0x02,
+    0x85, 0xE0, 0x09, 0x2F, 0x95, 0x3F, 0xB1, 0x02, 0x85, 0xF0, 0x09, 0x30, 0x95, 0x3F, 0xB1, 0x02,
+    0x85, 0xF1, 0x09, 0x31, 0x95, 0x3F, 0xB1, 0x02, 0x85, 0xF2, 0x09, 0x32, 0x95, 0x34, 0xB1, 0x02,
+    0x85, 0xF4, 0x09, 0x35, 0x95, 0x3F, 0xB1, 0x02, 0x85, 0xF5, 0x09, 0x36, 0x95, 0x03, 0xB1, 0x02,
+    0x85, 0x60, 0x09, 0x41, 0x95, 0x3F, 0xB1, 0x02, 0x85, 0x61, 0x09, 0x42, 0xB1, 0x02, 0x85, 0x62,
+    0x09, 0x43, 0xB1, 0x02, 0x85, 0x63, 0x09, 0x44, 0xB1, 0x02, 0x85, 0x64, 0x09, 0x45, 0xB1, 0x02,
+    0x85, 0x65, 0x09, 0x46, 0xB1, 0x02, 0x85, 0x68, 0x09, 0x47, 0xB1, 0x02, 0x85, 0x70, 0x09, 0x48,
+    0xB1, 0x02, 0x85, 0x71, 0x09, 0x49, 0xB1, 0x02, 0x85, 0x72, 0x09, 0x4A, 0xB1, 0x02, 0x85, 0x73,
+    0x09, 0x4B, 0xB1, 0x02, 0x85, 0x74, 0x09, 0x4C, 0xB1, 0x02, 0x85, 0x75, 0x09, 0x4D, 0xB1, 0x02,
+    0x85, 0x76, 0x09, 0x4E, 0xB1, 0x02, 0x85, 0x77, 0x09, 0x4F, 0xB1, 0x02, 0x85, 0x78, 0x09, 0x50,
+    0xB1, 0x02, 0x85, 0x79, 0x09, 0x51, 0xB1, 0x02, 0x85, 0x7A, 0x09, 0x52, 0xB1, 0x02, 0x85, 0x7B,
+    0x09, 0x53, 0xB1, 0x02, 0xC0
 };
 
 static int uhid_write(int fd, const struct uhid_event *ev)
@@ -247,12 +69,12 @@ static int create(int fd)
 
 	memset(&ev, 0, sizeof(ev));
 	ev.type = UHID_CREATE;
-	strcpy((char*)ev.u.create.name, "Sony Interactive Entertainment DualSense Edge Wireless Controller");
+	strcpy((char*)ev.u.create.name, "Sony Corp. DualShock 4 [CUH-ZCT2x]");
 	ev.u.create.rd_data = rdesc;
 	ev.u.create.rd_size = sizeof(rdesc);
 	ev.u.create.bus = BUS_USB;
 	ev.u.create.vendor = 0x054C;
-	ev.u.create.product = 0x0DF2;
+	ev.u.create.product = 0x0df2;
 	ev.u.create.version = 0;
 	ev.u.create.country = 0;
 
@@ -269,32 +91,39 @@ static void destroy(int fd)
 	uhid_write(fd, &ev);
 }
 
-/* This parses raw output reports sent by the kernel to the device. A normal
- * uhid program shouldn't do this but instead just forward the raw report.
- * However, for ducomentational purposes, we try to detect LED events here and
- * print debug messages for it. */
-static void handle_output(struct uhid_event *ev)
+static void handle_output(struct uhid_event *ev, const logic_t *const logic)
 {
-	/* LED messages are adverised via OUTPUT reports; ignore the rest */
-	if (ev->u.output.rtype != UHID_OUTPUT_REPORT) {
-        
+	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
+	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
+        return;
+	
+	if (ev->u.output.size != 63) {
+        fprintf(stderr, "Invalid data length: got %d, expected 63\n", (int)ev->u.output.size);
 
         return;
     }
-		
-	/* LED reports have length 2 bytes */
-	if (ev->u.output.size != 2)
-		return;
-	/* first byte is report-id which is 0x02 for LEDs in our rdesc */
-	if (ev->u.output.data[0] != 0x2)
-		return;
 
-	/* print flags payload */
-	fprintf(stderr, "LED output report received with flags %x\n",
-		ev->u.output.data[1]);
+	// first byte is report-id which is 0x01
+	if (ev->u.output.data[0] != 0x05) {
+        fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev->u.output.data[0]);
+        return;
+    }
+	
+    const uint8_t valid_flag0 = ev->u.output.data[1];
+	const uint8_t valid_flag1 = ev->u.output.data[2];
+	const uint8_t reserved = ev->u.output.data[3];
+	const uint8_t motor_right = ev->u.output.data[4];
+	const uint8_t motor_left = ev->u.output.data[5];
+	const uint8_t lightbar_red = ev->u.output.data[6];
+	const uint8_t lightbar_green = ev->u.output.data[7];
+	const uint8_t lightbar_blue = ev->u.output.data[8];
+	const uint8_t lightbar_blink_on = ev->u.output.data[9];
+	const uint8_t lightbar_blink_off = ev->u.output.data[10];
+
+    // TODO dualsense logic
 }
 
-static int event(int fd)
+static int event(int fd, logic_t *const logic)
 {
 	struct uhid_event ev;
 	ssize_t ret;
@@ -317,106 +146,95 @@ static int event(int fd)
 
 	switch (ev.type) {
 	case UHID_START:
-		fprintf(stderr, "UHID_START from uhid-dev\n");
+#if defined(VIRT_DS5_DEBUG)
+		printf("UHID_START from uhid-dev\n");
+#endif
 		break;
 	case UHID_STOP:
-		fprintf(stderr, "UHID_STOP from uhid-dev\n");
-		break;
+#if defined(VIRT_DS5_DEBUG)
+        printf("UHID_STOP from uhid-dev\n");
+#endif
+        break;
 	case UHID_OPEN:
-		fprintf(stderr, "UHID_OPEN from uhid-dev\n");
+#if defined(VIRT_DS5_DEBUG)
+        printf("UHID_OPEN from uhid-dev\n");
+#endif
 		break;
 	case UHID_CLOSE:
-		fprintf(stderr, "UHID_CLOSE from uhid-dev\n");
+#if defined(VIRT_DS5_DEBUG)
+        printf(stderr, "UHID_CLOSE from uhid-dev\n");
+#endif
 		break;
 	case UHID_OUTPUT:
-		fprintf(stderr, "UHID_OUTPUT from uhid-dev\n");
-		handle_output(&ev);
+#if defined(VIRT_DS5_DEBUG)
+		printf("UHID_OUTPUT from uhid-dev\n");
+#endif
+		handle_output(&ev, logic);
 		break;
 	case UHID_OUTPUT_EV:
-		fprintf(stderr, "UHID_OUTPUT_EV from uhid-dev\n");
+#if defined(VIRT_DS5_DEBUG)
+		printf("UHID_OUTPUT_EV from uhid-dev\n");
+#endif
 		break;
     case UHID_GET_REPORT:
-        fprintf(stderr, "UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
-        if (ev.u.get_report.rnum == 18) {
+        //fprintf(stderr, "UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
+        if (ev.u.get_report.rnum == DS_FEATURE_REPORT_PAIRING_INFO) {
             const struct uhid_event mac_addr_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
-                        .size = 16,
+                        .size = 20,
                         .id = ev.u.get_report.id,
                         .err = 0,
                         .data = {
-                            0x12, 0xf2, 0xa5, 0x71, 0x68, 0xaf, 0xdc, 0x08,
-                            0x25, 0x00, 0x4c, 0x46, 0x49, 0x0e, 0x41, 0x00
+                            DS_FEATURE_REPORT_PAIRING_INFO,
+                            MAC_ADDR[0], MAC_ADDR[1], MAC_ADDR[2], MAC_ADDR[3], MAC_ADDR[4], MAC_ADDR[5],
+                            0x08,
+                            0x25, 0x00, 0x1e, 0x00, 0xee, 0x74, 0xd0, 0xbc,
+                            0x00, 0x00, 0x00, 0x00
                         }
                     }
                 }
             };
 
             uhid_write(fd, &mac_addr_response);
-        } else if (ev.u.get_report.rnum == 0xa3) {
+        } else if (ev.u.get_report.rnum == DS_FEATURE_REPORT_FIRMWARE_INFO) {
             const struct uhid_event firmware_info_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
-                        .size = 49,
+                        .size = DS_FEATURE_REPORT_FIRMWARE_INFO_SIZE,
                         .id = ev.u.get_report.id,
                         .err = 0,
                         .data = {
-                            0xa3, 0x53, 0x65, 0x70, 0x20, 0x32, 0x31, 0x20,
-                            0x32, 0x30, 0x31, 0x38, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x30, 0x34, 0x3a, 0x35, 0x30, 0x3a, 0x35,
-                            0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x01, 0x0c, 0xb4, 0x01, 0x00, 0x00,
-                            0x00, 0x0a, 0xa0, 0x10, 0x20, 0x00, 0xa0, 0x02,
-                            0x00
+                            DS_FEATURE_REPORT_FIRMWARE_INFO,
+                            0x4a, 0x75, 0x6e, 0x20, 0x31, 0x39, 0x20, 0x32, 0x30, 0x32, 0x33, 0x31, 0x34, 0x3a, 0x34,
+                            0x37, 0x3a, 0x33, 0x34, 0x03, 0x00, 0x44, 0x00, 0x08, 0x02, 0x00, 0x01, 0x36, 0x00, 0x00, 0x01,
+                            0xc1, 0xc8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x54, 0x01, 0x00, 0x00,
+                            0x14, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x01, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                         }
                     }
                 }
             };
 
             uhid_write(fd, &firmware_info_response);
-        } else if (ev.u.get_report.rnum == 0x02) { // dualshock4_get_calibration_data
+        } else if (ev.u.get_report.rnum == DS_FEATURE_REPORT_CALIBRATION) {
             struct uhid_event firmware_info_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
-                        .size = 37,
+                        .size = DS_FEATURE_REPORT_CALIBRATION_SIZE,
                         .id = ev.u.get_report.id,
                         .err = 0,
                         .data = {
-                            0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x06, 0x00,
-
+                            DS_FEATURE_REPORT_CALIBRATION,
+                            0xfe, 0xff, 0xfc, 0xff, 0xfe, 0xff, 0x83, 0x22, 0x78, 0xdd, 0x92, 0x22, 0x5f, 0xdd, 0x95,
+                            0x22, 0x6d, 0xdd, 0x1c, 0x02, 0x1c, 0x02, 0xf2, 0x1f, 0xed, 0xdf, 0xe3, 0x20, 0xda, 0xe0, 0xee,
+                            0x1f, 0xdf, 0xdf, 0x0b, 0x00, 0x00, 0x00, 0x00, 0x00,
                         }
                     }
                 }
             };
-
-            // bias in kernel is 0 (embedded constant)
-            // speed_2x = speed_2x*DS4_GYRO_RES_PER_DEG_S; calculated by the kernel will be 1080.
-            // As a consequence sens_numer (for every axis) is 1080*1024.
-            // that number will be 1105920
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[1], (const void*)&gyro_pitch_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[3], (const void*)&gyro_yaw_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[5], (const void*)&gyro_roll_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[7], (const void*)&gyro_pitch_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[9], (const void*)&gyro_pitch_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[11], (const void*)&gyro_yaw_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[13], (const void*)&gyro_yaw_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[15], (const void*)&gyro_roll_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[17], (const void*)&gyro_roll_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[19], (const void*)&gyro_speed_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[21], (const void*)&gyro_speed_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[23], (const void*)&acc_x_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[25], (const void*)&acc_x_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[27], (const void*)&acc_y_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[29], (const void*)&acc_y_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[31], (const void*)&acc_z_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[33], (const void*)&acc_z_minus, sizeof(int16_t));
 
             uhid_write(fd, &firmware_info_response);
         }
@@ -448,8 +266,8 @@ static uint8_t get_buttons_byte2_by_gs(const gamepad_status_t *const gs) {
     res |= gs->share ? 0x20 : 0x00;
     res |= gs->option ? 0x10 : 0x00;
 
-    //res |= gs->l2 ? 0x08 : 0x00;
-    //res |= gs->r2 ? 0x04 : 0x00;
+    res |= gs->r2_trigger > 200 ? 0x08 : 0x00;
+    res |= gs->l2_trigger > 200 ? 0x04 : 0x00;
     res |= gs->r1 ? 0x02 : 0x00;
     res |= gs->l1 ? 0x01 : 0x00;
 
@@ -500,9 +318,6 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
 }
 
 static int send_data(int fd, logic_t *const logic) {
-    struct timeval first_read_time;
-    static int first_read_time_arrived = 0;
-
     gamepad_status_t gs;
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
     if (gs_copy_res != 0) {
@@ -510,33 +325,45 @@ static int send_data(int fd, logic_t *const logic) {
         return gs_copy_res;
     }
 
-    if (first_read_time_arrived == 0) {
-        first_read_time = gs.last_motion_time;
-        first_read_time_arrived = 1;
+    const int64_t time_us = gs.last_gyro_motion_time.tv_sec * 1000000 + gs.last_gyro_motion_time.tv_usec;
+
+    static uint32_t empty_reports = 0;
+    static uint64_t last_time = 0;
+    const int delta_time = time_us - last_time;
+    last_time = time_us;
+
+    // find the average Δt in the last 30 non-zero inputs;
+    // this has to run thousands of times a second so i'm trying to do this as fast as possible
+    static uint32_t dt_buffer[30] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    static uint32_t dt_sum = 0;
+    static uint8_t dt_buffer_current = 0; 
+
+    if (delta_time == 0) {
+        empty_reports++;
+    } else if (delta_time < 1000000 && delta_time > 0 ) { // ignore outliers
+        dt_sum -= dt_buffer[dt_buffer_current];
+        dt_sum += delta_time;
+        dt_buffer[dt_buffer_current] = delta_time;
+
+        if (dt_buffer_current == 29) {
+            dt_buffer_current = 0;
+        } else {
+            dt_buffer_current++;
+        }
     }
 
-    // Calculate the time difference in microseconds
-    const int64_t dime_diff_us = (((int64_t)gs.last_motion_time.tv_sec - (int64_t)first_read_time.tv_sec) * (int64_t)1000000) +
-                                    ((int64_t)gs.last_motion_time.tv_usec - (int64_t)first_read_time.tv_usec);
+/*
+    static uint64_t sim_time = 0;
+    const double correction_factor = DS4_SPEC_DELTA_TIME / ((double)dt_sum / 30.f);
+    if (delta_time != 0) {
+        sim_time += (int)((double)delta_time * correction_factor);
+    }
 
-    // Calculate the time difference in multiples of 0.33 microseconds
-    const uint16_t timestamp = ((dime_diff_us * (int64_t)3) / (int64_t)16);
-
-    /*
-    Example data:
-        0000   c0 e3 af 02 ac 9c ff ff 43 01 84 08 05 00 2d 00
-        0010   93 7b 56 65 00 00 00 00 c2 aa 03 00 00 00 00 00
-        0020   40 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00
-        0030   04 00 00 00 00 00 00 00 04 02 00 00 00 00 00 00
-        // above is useless, just send what is below.
-        0040   01 80 7f 80 7e 08 00 5c 00 00 7e d4 06 3b fe 0c
-        0050   ff 8c fe 6a 05 4f 15 56 e8 00 00 00 00 00 1b 00
-        0060   00 00 00 80 00 00 00 80 00 00 00 00 80 00 00 00
-        0070   80 00 00 00 00 80 00 00 00 80 00 00 00 00 80 00
-    */
-
-    // see https://www.psdevwiki.com/ps4/DS4-USB
-   
+    const uint16_t timestamp = sim_time + (int)((double)empty_reports * DS4_SPEC_DELTA_TIME);
+*/
+    const uint16_t timestamp = 0;
+    
     // [12] battery level
     uint8_t buf[] = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -544,31 +371,6 @@ static int send_data(int fd, logic_t *const logic) {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     };
-
-    /*
-     * kernel will do:
-     * int calib_data = mult_frac(ds4->gyro_calib_data[i].sens_numer, raw_data, ds4->gyro_calib_data[i].sens_denom);
-     * input_report_abs(ds4->sensors, ds4->gyro_calib_data[i].abs_code, calib_data);
-     * 
-     * as we know sens_numer is 0, hence calib_data is zero.
-     */
-    /*
-    const int16_t g_x = ((gs.gyro[0]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t g_y = ((gs.gyro[1]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t g_z = ((gs.gyro[2]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t a_x = ((gs.accel[0]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    const int16_t a_y = ((gs.accel[1]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    const int16_t a_z = ((gs.accel[2]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    */
-
-    /*
-    const int16_t g_x = (gs.gyro[0]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t g_y = (gs.gyro[1]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t g_z = (gs.gyro[2]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t a_x = (gs.accel[0]) / LSB_PER_16G; // TODO: IDK how to test...
-    const int16_t a_y = (gs.accel[1]) / LSB_PER_16G; // TODO: IDK how to test...
-    const int16_t a_z = (gs.accel[2]) / LSB_PER_16G; // TODO: IDK how to test...
-    */
 
     const int16_t g_x = gs.raw_gyro[0];
     const int16_t g_y = (int16_t)(-1) * gs.raw_gyro[1];  // Swap Y and Z
@@ -617,7 +419,7 @@ static int send_data(int fd, logic_t *const logic) {
         .type = UHID_INPUT2,
         .u = {
             .input2 = {
-                .size = 64,
+                .size = DS_INPUT_REPORT_USB_SIZE,
             }
         }
     };
@@ -627,7 +429,12 @@ static int send_data(int fd, logic_t *const logic) {
     return uhid_write(fd, &l);
 }
 
-void *virt_ds4_thread_func(void *ptr) {
+/**
+ * Thread function emulating the DualSense controller at USB level using USB UHID ( https://www.kernel.org/doc/html/latest/hid/uhid.html ) kernel APIs.
+ *
+ * See https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/hid/uhid.txt?id=refs/tags/v4.10-rc3
+ */
+void *virt_ds5_thread_func(void *ptr) {
     logic_t *const logic = (logic_t*)ptr;
 
     fprintf(stderr, "Open uhid-cdev %s\n", path);
@@ -647,9 +454,9 @@ void *virt_ds4_thread_func(void *ptr) {
     for (;;) {
         usleep(1250);
         
-        event(fd);
+        event(fd, logic);
 
-        if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
+        if (logic->gamepad_output == GAMEPAD_OUTPUT_DS5) {
             const int res = send_data(fd, logic);
             if (res < 0) {
                 fprintf(stderr, "Error sending HID report: %d\n", res);

@@ -4,11 +4,17 @@
 #include <linux/uhid.h>
 #include <fcntl.h>
 #include <poll.h>
+#include <pthread.h>
 #include <stdint.h>
 
 #define DS4_GYRO_RES_PER_DEG_S	1024
 #define DS4_ACC_RES_PER_G       8192
 #define DS4_SPEC_DELTA_TIME     188.0f
+
+/* Flags for DualShock4 output report. */
+#define DS4_OUTPUT_VALID_FLAG0_MOTOR		0x01
+#define DS4_OUTPUT_VALID_FLAG0_LED		    0x02
+#define DS4_OUTPUT_VALID_FLAG0_LED_BLINK	0x04
 
 static const uint16_t gyro_pitch_bias  = 0xfff9;
 static const uint16_t gyro_yaw_bias    = 0x0009;
@@ -333,28 +339,91 @@ static void destroy(int fd)
  * uhid program shouldn't do this but instead just forward the raw report.
  * However, for ducomentational purposes, we try to detect LED events here and
  * print debug messages for it. */
-static void handle_output(struct uhid_event *ev)
+static void handle_output(struct uhid_event *ev, logic_t *const logic)
 {
-	/* LED messages are adverised via OUTPUT reports; ignore the rest */
-	if (ev->u.output.rtype != UHID_OUTPUT_REPORT) {
-        
+	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
+	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
+        return;
+
+    /*
+    if (ds4->update_rumble) {
+		* Select classic rumble style haptics and enable it. *
+		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_MOTOR;
+		common->motor_left = ds4->motor_left;
+		common->motor_right = ds4->motor_right;
+		ds4->update_rumble = false;
+	}
+
+	if (ds4->update_lightbar) {
+		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED;
+		* Comptabile behavior with hid-sony, which used a dummy global LED to
+		 * allow enabling/disabling the lightbar. The global LED maps to
+		 * lightbar_enabled.
+		 *
+		common->lightbar_red = ds4->lightbar_enabled ? ds4->lightbar_red : 0;
+		common->lightbar_green = ds4->lightbar_enabled ? ds4->lightbar_green : 0;
+		common->lightbar_blue = ds4->lightbar_enabled ? ds4->lightbar_blue : 0;
+		ds4->update_lightbar = false;
+	}
+
+	if (ds4->update_lightbar_blink) {
+		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED_BLINK;
+		common->lightbar_blink_on = ds4->lightbar_blink_on;
+		common->lightbar_blink_off = ds4->lightbar_blink_off;
+		ds4->update_lightbar_blink = false;
+	}
+    */
+	
+	if (ev->u.output.size != 32) {
+        fprintf(stderr, "Invalid data length: got %d, expected 32\n", (int)ev->u.output.size);
 
         return;
     }
-		
-	/* LED reports have length 2 bytes */
-	if (ev->u.output.size != 2)
-		return;
-	/* first byte is report-id which is 0x02 for LEDs in our rdesc */
-	if (ev->u.output.data[0] != 0x2)
-		return;
 
-	/* print flags payload */
-	fprintf(stderr, "LED output report received with flags %x\n",
-		ev->u.output.data[1]);
+	// first byte is report-id which is 0x01
+	if (ev->u.output.data[0] != 0x05) {
+        fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev->u.output.data[0]);
+        return;
+    }
+	
+    const uint8_t valid_flag0 = ev->u.output.data[1];
+	const uint8_t valid_flag1 = ev->u.output.data[2];
+	const uint8_t reserved = ev->u.output.data[3];
+	const uint8_t motor_right = ev->u.output.data[4];
+	const uint8_t motor_left = ev->u.output.data[5];
+	const uint8_t lightbar_red = ev->u.output.data[6];
+	const uint8_t lightbar_green = ev->u.output.data[7];
+	const uint8_t lightbar_blue = ev->u.output.data[8];
+	const uint8_t lightbar_blink_on = ev->u.output.data[9];
+	const uint8_t lightbar_blink_off = ev->u.output.data[10];
+
+    if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_MOTOR) && (logic->gamepad_output == LOGIC_FLAGS_VIRT_DS4_ENABLE)) {    
+        const int lock_res = pthread_mutex_lock(&logic->gamepad_mutex);
+        if (lock_res != 0) {
+            printf("Unable to lock gamepad mutex: %d, rumble will not be updated.\n", lock_res);
+
+            return;
+        }
+
+        logic->gamepad.motors_intensity[0] = motor_left;
+        logic->gamepad.motors_intensity[1] = motor_right;
+        ++logic->gamepad.rumble_events_count;
+
+        pthread_mutex_unlock(&logic->gamepad_mutex);
+
+#if defined(VIRT_DS4_DEBUG)
+        printf(
+            "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
+            motor_left,
+            motor_right,
+            valid_flag0,
+            valid_flag1
+        );
+#endif
+    }
 }
 
-static int event(int fd)
+static int event(int fd, logic_t *const logic)
 {
 	struct uhid_event ev;
 	ssize_t ret;
@@ -377,26 +446,38 @@ static int event(int fd)
 
 	switch (ev.type) {
 	case UHID_START:
-		fprintf(stderr, "UHID_START from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+		printf("UHID_START from uhid-dev\n");
+#endif
 		break;
 	case UHID_STOP:
-		fprintf(stderr, "UHID_STOP from uhid-dev\n");
-		break;
+#if defined(VIRT_DS4_DEBUG)
+        printf("UHID_STOP from uhid-dev\n");
+#endif
+        break;
 	case UHID_OPEN:
-		fprintf(stderr, "UHID_OPEN from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+        printf("UHID_OPEN from uhid-dev\n");
+#endif
 		break;
 	case UHID_CLOSE:
-		fprintf(stderr, "UHID_CLOSE from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+        printf(stderr, "UHID_CLOSE from uhid-dev\n");
+#endif
 		break;
 	case UHID_OUTPUT:
-		fprintf(stderr, "UHID_OUTPUT from uhid-dev\n");
-		handle_output(&ev);
+#if defined(VIRT_DS4_DEBUG)
+		printf("UHID_OUTPUT from uhid-dev\n");
+#endif
+		handle_output(&ev, logic);
 		break;
 	case UHID_OUTPUT_EV:
-		fprintf(stderr, "UHID_OUTPUT_EV from uhid-dev\n");
+#if defined(VIRT_DS4_DEBUG)
+		printf("UHID_OUTPUT_EV from uhid-dev\n");
+#endif
 		break;
     case UHID_GET_REPORT:
-        fprintf(stderr, "UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
+        //fprintf(stderr, "UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
         if (ev.u.get_report.rnum == 18) {
             const struct uhid_event mac_addr_response = {
                 .type = UHID_GET_REPORT_REPLY,
@@ -508,8 +589,8 @@ static uint8_t get_buttons_byte2_by_gs(const gamepad_status_t *const gs) {
     res |= gs->share ? 0x20 : 0x00;
     res |= gs->option ? 0x10 : 0x00;
 
-    //res |= gs->l2 ? 0x08 : 0x00;
-    //res |= gs->r2 ? 0x04 : 0x00;
+    res |= gs->r2_trigger > 200 ? 0x08 : 0x00;
+    res |= gs->l2_trigger > 200 ? 0x04 : 0x00;
     res |= gs->r1 ? 0x02 : 0x00;
     res |= gs->l1 ? 0x01 : 0x00;
 
@@ -559,6 +640,9 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
     return DPAD_RELEASED;
 }
 
+/**
+ * This function arranges HID packets as described on https://www.psdevwiki.com/ps4/DS4-USB
+ */
 static int send_data(int fd, logic_t *const logic) {
     gamepad_status_t gs;
     const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
@@ -567,7 +651,7 @@ static int send_data(int fd, logic_t *const logic) {
         return gs_copy_res;
     }
 
-    const int64_t time_us = gs.last_motion_time.tv_sec * 1000000 + gs.last_motion_time.tv_usec;
+    const int64_t time_us = gs.last_gyro_motion_time.tv_sec * 1000000 + gs.last_gyro_motion_time.tv_usec;
 
     static uint32_t empty_reports = 0;
     static uint64_t last_time = 0;
@@ -708,6 +792,11 @@ static int send_data(int fd, logic_t *const logic) {
     return uhid_write(fd, &l);
 }
 
+/**
+ * Thread function emulating the DualShock4 controller at USB level using USB UHID ( https://www.kernel.org/doc/html/latest/hid/uhid.html ) kernel APIs.
+ *
+ * See https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/hid/uhid.txt?id=refs/tags/v4.10-rc3
+ */
 void *virt_ds4_thread_func(void *ptr) {
     logic_t *const logic = (logic_t*)ptr;
 
@@ -728,7 +817,7 @@ void *virt_ds4_thread_func(void *ptr) {
     for (;;) {
         usleep(1250);
         
-        event(fd);
+        event(fd, logic);
 
         if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
             const int res = send_data(fd, logic);

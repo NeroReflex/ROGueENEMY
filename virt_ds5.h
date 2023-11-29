@@ -2,4 +2,6 @@
 
 #include "logic.h"
 
-void *virt_ds4_thread_func(void *ptr);
+#undef VIRT_DS5_DEBUG
+
+void *virt_ds5_thread_func(void *ptr);

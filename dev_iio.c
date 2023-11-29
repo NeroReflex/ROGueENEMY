@@ -217,13 +217,14 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     // ============================================= temp_scale =================================================
     {
-        // char* const accel_scale = read_file(iio->path, "/in_temp_scale");
-        char* const accel_scale = read_file(iio->path, "/in_anglvel_scale");
+        const char *scale_main_file = "/in_temp_scale";
+
+        char* const accel_scale = read_file(iio->path, scale_main_file);
         if (accel_scale != NULL) {
             iio->temp_scale = strtod(accel_scale, NULL);
             free((void*)accel_scale);
         } else {
-            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
+            fprintf(stderr, "Unable to read in_temp_scale file from path %s%s.\n", iio->path, scale_main_file);
 
             free(iio);
             iio = NULL;
@@ -232,20 +233,21 @@ dev_iio_t* dev_iio_create(const char* path) {
     }
     // ==========================================================================================================
 
-    // ============================================ sampling_rate ================================================
+    // ============================================ samplig_freq ================================================
     {
-        // char* const accel_scale = read_file(iio->path, "/in_temp_scale");
-        char* const accel_scale = read_file(iio->path, "/in_anglvel_scale");
+        const char* const preferred_samplig_freq = "800.000000";
+        const size_t preferred_samplig_freq_len = strlen(preferred_samplig_freq);
 
-        if (accel_scale != NULL) {
-            iio->temp_scale = strtod(accel_scale, NULL);
-            free((void*)accel_scale);
+        if (write_file(iio->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
+            printf("Accel sampling frequency changed to %s\n", preferred_samplig_freq);
         } else {
-            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
+            fprintf(stderr, "Could not change accel sampling frequency\n");
+        }
 
-            free(iio);
-            iio = NULL;
-            goto dev_iio_create_err;
+        if (write_file(iio->path, "/in_anglvel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
+            printf("Gyro sampling frequency changed to %s\n", preferred_samplig_freq);
+        } else {
+            fprintf(stderr, "Could not change gyro sampling frequency\n");
         }
     }
     // ==========================================================================================================
@@ -503,7 +505,10 @@ static void multiplyMatrixVector(const double matrix[3][3], const double vector[
 }
 
 int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
-    gettimeofday(&out->read_time, NULL);
+    struct timeval read_time;
+    gettimeofday(&read_time, NULL);
+
+    out->flags = 0x00000000U;
 
     char tmp[128];
 
@@ -520,6 +525,10 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->accel_x_raw = strtol(&tmp[0], NULL, 10);
             accel_in[0] = (double)out->accel_x_raw * iio->accel_scale_x;
+            if ((out->flags & IMU_MESSAGE_FLAGS_ACCEL) == 0) {
+                out->accel_read_time = read_time;
+                out->flags |= IMU_MESSAGE_FLAGS_ACCEL;
+            }
         } else {
             fprintf(stderr, "While reading accel(x): %d\n", tmp_read);
             return tmp_read;
@@ -533,6 +542,10 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->accel_y_raw = strtol(&tmp[0], NULL, 10);
             accel_in[1] = (double)out->accel_y_raw * iio->accel_scale_y;
+            if ((out->flags & IMU_MESSAGE_FLAGS_ACCEL) == 0) {
+                out->accel_read_time = read_time;
+                out->flags |= IMU_MESSAGE_FLAGS_ACCEL;
+            }
         } else {
             fprintf(stderr, "While reading accel(y): %d\n", tmp_read);
             return tmp_read;
@@ -546,6 +559,10 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->accel_z_raw = strtol(&tmp[0], NULL, 10);
             accel_in[2] = (double)out->accel_z_raw * iio->accel_scale_z;
+            if ((out->flags & IMU_MESSAGE_FLAGS_ACCEL) == 0) {
+                out->accel_read_time = read_time;
+                out->flags |= IMU_MESSAGE_FLAGS_ACCEL;
+            }
         } else {
             fprintf(stderr, "While reading accel(z): %d\n", tmp_read);
             return tmp_read;
@@ -559,6 +576,10 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_x_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[0] = (double)out->gyro_x_raw * iio->anglvel_scale_x;
+            if ((out->flags & IMU_MESSAGE_FLAGS_ANGLVEL) == 0) {
+                out->gyro_read_time = read_time;
+                out->flags |= IMU_MESSAGE_FLAGS_ANGLVEL;
+            }
         } else {
             fprintf(stderr, "While reading anglvel(x): %d \n", tmp_read);
             return tmp_read;
@@ -572,6 +593,10 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_y_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[1] = (double)out->gyro_y_raw *iio->anglvel_scale_y;
+            if ((out->flags & IMU_MESSAGE_FLAGS_ANGLVEL) == 0) {
+                out->gyro_read_time = read_time;
+                out->flags |= IMU_MESSAGE_FLAGS_ANGLVEL;
+            }
         } else {
             fprintf(stderr, "While reading anglvel(y): %d\n", tmp_read);
             return tmp_read;
@@ -585,6 +610,10 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
         if (tmp_read >= 0) {
             out->gyro_z_raw = strtol(&tmp[0], NULL, 10);
             gyro_in[2] = (double)out->gyro_z_raw *iio->anglvel_scale_z;
+            if ((out->flags & IMU_MESSAGE_FLAGS_ANGLVEL) == 0) {
+                out->gyro_read_time = read_time;
+                out->flags |= IMU_MESSAGE_FLAGS_ANGLVEL;
+            }
         } else {
             fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
             return tmp_read;

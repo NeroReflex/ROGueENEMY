@@ -7,8 +7,6 @@
 #undef INCLUDE_INPUT_DEBUG
 #undef IGNORE_INPUT_SCAN
 
-#define INPUT_DEV_CTRL_FLAG_EXIT 0x00000001U
-
 typedef uint32_t (*ev_input_filter_t)(struct input_event*, size_t*, uint32_t*, uint32_t*);
 
 typedef enum input_dev_type {
@@ -29,8 +27,6 @@ typedef struct input_dev {
 
     const uinput_filters_t* ev_filters;
     const iio_filters_t* iio_filters;
-
-    volatile uint32_t crtl_flags;
 
     ev_input_filter_t ev_input_filter_fn;
 
