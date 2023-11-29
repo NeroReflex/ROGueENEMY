@@ -14,6 +14,8 @@
 #define DS_INPUT_REPORT_USB         0x01
 #define DS_INPUT_REPORT_USB_SIZE    64
 
+#define DS5_SPEC_DELTA_TIME         188.0f
+
 static const char* path = "/dev/uhid";
 
 static const char* const MAC_ADDR_STR = "e8:47:3a:d6:e7:74";
@@ -354,16 +356,13 @@ static int send_data(int fd, logic_t *const logic) {
         }
     }
 
-/*
     static uint64_t sim_time = 0;
-    const double correction_factor = DS4_SPEC_DELTA_TIME / ((double)dt_sum / 30.f);
+    const double correction_factor = DS5_SPEC_DELTA_TIME / ((double)dt_sum / 30.f);
     if (delta_time != 0) {
         sim_time += (int)((double)delta_time * correction_factor);
     }
 
-    const uint16_t timestamp = sim_time + (int)((double)empty_reports * DS4_SPEC_DELTA_TIME);
-*/
-    const uint32_t timestamp = 0;
+    const uint32_t timestamp = sim_time + (int)((double)empty_reports * DS5_SPEC_DELTA_TIME);
     
     uint8_t buf[] = {
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -391,13 +390,13 @@ static int send_data(int fd, logic_t *const logic) {
     buf[8] = (gs.square ? 0x10 : 0x00) |
                 (gs.cross ? 0x20 : 0x00) |
                 (gs.circle ? 0x40 : 0x00) |
-                (gs.circle ? 0x80 : 0x00);
+                (gs.triangle ? 0x80 : 0x00);
     buf[9] = (gs.l1 ? 0x01 : 0x00) |
             (gs.r1 ? 0x02 : 0x00) |
             (gs.l2_trigger >= 200 ? 0x04 : 0x00) |
             (gs.r2_trigger >= 200 ? 0x08 : 0x00) |
-            (gs.share ? 0x10 : 0x00) |
-            (gs.option ? 0x20 : 0x00) |
+            (gs.option ? 0x10 : 0x00) |
+            (gs.share ? 0x20 : 0x00) |
             (gs.l3 ? 0x40 : 0x00) |
             (gs.r3 ? 0x80 : 0x00);
 
@@ -405,12 +404,12 @@ static int send_data(int fd, logic_t *const logic) {
     
     //buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
     memcpy(&buf[16], &g_x, sizeof(int16_t));
-    memcpy(&buf[20], &g_y, sizeof(int16_t));
-    memcpy(&buf[22], &g_z, sizeof(int16_t));
-    memcpy(&buf[24], &a_x, sizeof(int16_t));
-    memcpy(&buf[26], &a_y, sizeof(int16_t));
-    memcpy(&buf[28], &a_z, sizeof(int16_t));
-    memcpy(&buf[30], &timestamp, sizeof(timestamp));
+    memcpy(&buf[18], &g_y, sizeof(int16_t));
+    memcpy(&buf[20], &g_z, sizeof(int16_t));
+    memcpy(&buf[22], &a_x, sizeof(int16_t));
+    memcpy(&buf[24], &a_y, sizeof(int16_t));
+    memcpy(&buf[26], &a_z, sizeof(int16_t));
+    memcpy(&buf[28], &timestamp, sizeof(timestamp));
 
 /*
     buf[30] = 0x1b; // no headset attached
