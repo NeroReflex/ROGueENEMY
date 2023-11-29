@@ -24,6 +24,8 @@ int logic_create(logic_t *const logic) {
     logic->gamepad.center = 0;
     logic->gamepad.r4 = 0;
     logic->gamepad.l4 = 0;
+    logic->gamepad.r5 = 0;
+    logic->gamepad.l5 = 0;
     logic->gamepad.rumble_events_count = 0;
     memset(logic->gamepad.gyro, 0, sizeof(logic->gamepad.gyro));
     memset(logic->gamepad.accel, 0, sizeof(logic->gamepad.accel));
