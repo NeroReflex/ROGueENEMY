@@ -12,8 +12,12 @@ typedef uint32_t (*ev_input_filter_t)(struct input_event*, size_t*, uint32_t*, u
 typedef enum input_dev_type {
     input_dev_type_uinput,
     input_dev_type_iio,
+    input_dev_type_hidraw,
 } input_dev_type_t;
 
+typedef struct hidraw_filters {
+    const char* name;
+} hidraw_filters_t;
 typedef struct uinput_filters {
     const char* name;
 } uinput_filters_t;
@@ -27,6 +31,7 @@ typedef struct input_dev {
 
     const uinput_filters_t* ev_filters;
     const iio_filters_t* iio_filters;
+    const hidraw_filters_t* hidraw_filters;
 
     ev_input_filter_t ev_input_filter_fn;
 

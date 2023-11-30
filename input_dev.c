@@ -322,6 +322,22 @@ static void* input_read_thread_func(void* ptr) {
     return NULL;
 }
 
+static void input_hidraw(
+    input_dev_t *const in_dev,
+    struct input_ctx *const ctx
+) {
+    for(;;) {
+        if(logic_termination_requested(in_dev->logic)) {
+            break;
+        }
+        if (ctx->iio_dev != NULL) {
+            dev_iio_destroy(ctx->iio_dev);
+            ctx->dev = NULL;
+        }
+    }
+}
+
+
 static void input_iio(
     input_dev_t *const in_dev,
     struct input_ctx *const ctx
@@ -675,6 +691,8 @@ void *input_dev_thread_func(void *ptr) {
         }
 
         input_iio(in_dev, &ctx);
+    } else if (in_dev->dev_type == input_dev_type_hidraw) {
+        input_hidraw(in_dev, &ctx);
     }
     
     return NULL;
