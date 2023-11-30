@@ -14,6 +14,20 @@
             },
             "problemMatcher": [],
             "detail": "Custom build and run task in a subdirectory"
+        }, 
+        {
+            "label": "Build in Subdir",
+            "type": "shell",
+            "command": "make clean && cmake --build .",
+            "options": {
+                "cwd": "${workspaceFolder}/build"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "detail": "Custom build and run task in a subdirectory"
         }
     ]
 }
