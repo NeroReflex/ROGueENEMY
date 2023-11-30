@@ -145,8 +145,8 @@ static char* open_sysfs[] = {
 
 struct input_ctx {
     struct libevdev* dev;
-    dev_iio_t *iio_dev;
-    queue_t* queue;
+dev_iio_t *iio_dev;
+queue_t* queue;
     queue_t* rumble_queue;
     controller_settings_t* settings;
     uint32_t flags;
@@ -199,7 +199,9 @@ static void* iio_read_thread_func(void* ptr) {
         }
 
         // TODO: configure equal as sampling rate
-        usleep(1250);
+        // usleep(1250);
+        usleep(15000);
+
 
         // either way.... fill a new buffer on the next cycle
         msg = NULL;
@@ -325,20 +327,6 @@ static void* input_read_thread_func(void* ptr) {
     return NULL;
 }
 
-static void input_hidraw(
-    input_dev_t *const in_dev,
-    struct input_ctx *const ctx
-) {
-    for(;;) {
-        if(logic_termination_requested(in_dev->logic)) {
-            break;
-        }
-        if (ctx->iio_dev != NULL) {
-            dev_iio_destroy(ctx->iio_dev);
-            ctx->dev = NULL;
-        }
-    }
-}
 #define HIDRAW_BUFFER_SIZE 64
 typedef struct {
     unsigned char buffer[HIDRAW_BUFFER_SIZE];
@@ -383,32 +371,50 @@ void process_data(unsigned char* data, ssize_t size) {
         }
     }
 }
-void* hidraw_reading_thread(void* arg){
-    hidraw_buffer_t* shared_buffer = (hidraw_buffer_t*)arg;
-
-    int fd = open("/dev/hidraw1", O_RDONLY | O_NONBLOCK);
+void* hidraw_reading_thread(void* ptr){
+    struct input_ctx* ctx = (struct input_ctx*)ptr;
+    int fd = open("/dev/hidraw2", O_RDONLY | O_NONBLOCK);
     if (fd < 0) {
-        perror("Failed to open /dev/hidraw5");
+        perror("Failed to open /dev/hidraw2");
         return NULL;
     }
-    while(!shared_buffer->termination_condition) {   
-        unsigned char temp_buffer[HIDRAW_BUFFER_SIZE]; // Adjust the buffer size as needed
-        ssize_t bytes = read(fd, temp_buffer, sizeof(temp_buffer));
-        if(bytes > 0){
-            pthread_mutex_lock(&shared_buffer->mutex);
-            memcpy(shared_buffer->buffer,  temp_buffer, bytes);
-            shared_buffer->bytes_read = bytes;
-            pthread_mutex_unlock(&shared_buffer->mutex);
+    int termination_condition = 1;
+    // while(!ctx->termination_condition) {   
 
-            // printf("Read %zd bytes:",  bytes);
-            // for(ssize_t i = 0; i < bytes; ++i) {
-            //     printf("%02X", temp_buffer[i]);
-            // }
-            // printf("\n");
+    // message_t* msg = get_free_msg
+    message_t* msg = NULL;
+
+    unsigned char buffer[64];
+    ssize_t bytesRead;
+    while(termination_condition == 1) {  
+        
+        // Get a free message from your pool of messages
+        // for (int i = 0; i < MAX_MESSAGES_IN_FLIGHT; ++i) {
+        //     if (ctx->messages[i].flags & MESSAGE_FLAGS_HANDLE_DONE) {
+        //         msg = &ctx->messages[i];
+        //         break;
+        //     }
+        // }
+        
+        if(msg == NULL) {
+            usleep(10000);
+            printf("are we on");
+            continue;
         }
-        // usleep(10000); Match samplign rate
-        usleep(15000);
+        printf('we made it past the loop');
+        ssize_t bytes = read(fd, msg->data.hidraw.data, sizeof(msg->data.hidraw.data));
+        // bytesRead = read(fd, buffer, 64);
 
+
+        if (bytes == -1) {
+            if (errno != EAGAIN) {
+                perror("Read error");
+                break; // or handle error as needed
+            }
+        } else if (bytes > 0) {
+            // Process the read data
+        }
+        usleep(10000);
     }
     close(fd);
     return NULL;
@@ -425,6 +431,58 @@ size_t poll_hidraw_data(hidraw_buffer_t* shared_buffer, unsigned char* out_buffe
 
     return bytes_to_copy;
 }
+
+static void input_hidraw(
+    input_dev_t *const in_dev,
+    struct input_ctx *const ctx
+) {
+    static const char *hidraw_path = "/dev/hidraw2";
+
+    for (;;) {
+        if (logic_termination_requested(in_dev->logic)) {
+            // Break the loop if termination is requested
+            break;
+        }
+
+        // Lock the mutex for exclusive access to input resources
+        const int input_acquire_lock_result = pthread_mutex_lock(&input_acquire_mutex);
+        if (input_acquire_lock_result != 0) {
+            fprintf(stderr, "Cannot lock input mutex: %d, will retry later...\n", input_acquire_lock_result);
+            usleep(150000);
+            continue;
+        }
+
+        // Opening the HIDRAW device
+        int fd = open(hidraw_path, O_RDONLY | O_NONBLOCK);
+        if (fd < 0) {
+            fprintf(stderr, "Failed to open HIDRAW device at %s.\n", hidraw_path);
+            pthread_mutex_unlock(&input_acquire_mutex);
+            usleep(250000);  // Wait a bit before retrying
+            continue;
+        }
+        printf("Opened HIDRAW device at %s.\n", hidraw_path);
+
+        // Release the mutex after successfully opening the device
+        pthread_mutex_unlock(&input_acquire_mutex);
+
+        // Create and start the HIDRAW reading thread
+        pthread_t hidraw_thread;
+        int ret = pthread_create(&hidraw_thread, NULL, hidraw_reading_thread, ctx);
+        if (ret != 0) {
+            fprintf(stderr, "Failed to create HIDRAW reading thread.\n");
+            close(fd);
+            continue;
+        }
+
+        // Wait for the HIDRAW reading thread to finish
+        pthread_join(hidraw_thread, NULL);
+
+        // Close the HIDRAW device
+        close(fd);
+    }
+
+}
+
 static void input_iio(
     input_dev_t *const in_dev,
     struct input_ctx *const ctx
@@ -673,27 +731,9 @@ static void input_udev(
 
         const int timeout_ms = 1200;
 
-        hidraw_buffer_t shared_buffer;
-        init_hidraw_buffer(&shared_buffer);
-
-        //Create hidraw_thread
-        pthread_t hidraw_thread;
-        pthread_create(&hidraw_thread, NULL, hidraw_reading_thread, &shared_buffer);
-
-        // unsigned char main_loop_buffer[HIDRAW_BUFFER_SIZE];
-        // size_t bytes_read = poll_hidraw_data(&shared_buffer, main_loop_buffer, sizeof(main_loop_buffer));
-
-        // if(bytes_read > 0){
-        //     process_data(main_loop_buffer, bytes_read);
-        // }
-
-
         // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
-            // if (shared_buffer.bytes_read > 12){
-            //     printf(shared_buffer.buffer[12]);
-            // }
-            
+
             if (has_ff) {
                 
                 void* rmsg = NULL;
@@ -765,10 +805,6 @@ static void input_udev(
                 fprintf(stderr, "Error removing rumble effect: %d\n", effect_removal_res);
             }
         }
-        //Destory hidraw thread
-        shared_buffer.termination_condition = 1;
-        pthread_join(hidraw_thread, NULL);
-        destroy_hidraw_buffer(&shared_buffer);
 
         // wait for incoming events thread to totally stop 
         pthread_join(incoming_events_thread, NULL);
@@ -806,7 +842,12 @@ void *input_dev_thread_func(void *ptr) {
 
         input_iio(in_dev, &ctx);
     } else if (in_dev->dev_type == input_dev_type_hidraw) {
+        for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
+            ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
+            ctx.messages[h].type = MSG_TYPE_IMU;
+        }
         input_hidraw(in_dev, &ctx);
+
     }
     
     return NULL;

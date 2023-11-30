@@ -17,17 +17,16 @@ typedef struct ev_message {
     size_t ev_size;
 
 } ev_message_t;
-
+#define HIDRAW_DATA_SIZE 64
 typedef struct hidraw_message {
-    struct input_hidraw* hidraw;
-    uint32_t hidraw_flags;
-    uint32_t hidraw_count;
-    size_t hidraw_size;
-} hidraw_message;
+    unsigned char data[HIDRAW_DATA_SIZE];
+    ssize_t data_size;
+} hidraw_message_t;
 
 typedef enum message_type {
     MSG_TYPE_EV = 0,
     MSG_TYPE_IMU,
+    MSG_TYPE_HIDRAW,
 } message_type_t;
 
 #define INPUT_FILTER_FLAGS_NONE             0x00000000U
@@ -39,7 +38,7 @@ typedef struct message {
     union {
         imu_message_t imu;
         ev_message_t event;
-        hidraw_message hidraw;
+        hidraw_message_t hidraw;
     } data;
 
     volatile uint32_t flags;
