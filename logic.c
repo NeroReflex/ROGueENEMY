@@ -22,6 +22,9 @@ int logic_create(logic_t *const logic) {
     logic->gamepad.option = 0;
     logic->gamepad.share = 0;
     logic->gamepad.center = 0;
+    logic->gamepad.touchpad_press = 0;
+    logic->gamepad.touchpadX = 0;
+    logic->gamepad.touchpadY = 0;
     logic->gamepad.r4 = 0;
     logic->gamepad.l4 = 0;
     logic->gamepad.r5 = 0;

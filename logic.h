@@ -35,6 +35,10 @@ typedef struct gamepad_status {
     uint8_t option;
     uint8_t share;
     uint8_t center;
+    uint8_t touchpad_press;
+
+    uint8_t touchpadX;
+    uint8_t touchpadY;
 
     uint8_t l4;
     uint8_t r4;
