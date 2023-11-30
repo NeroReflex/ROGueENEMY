@@ -10,6 +10,8 @@ Tweak ff_rumble to a value between 0 and 100 to configure the strenght for rumbl
 
 Remember to look /etc/ROGueENEMY/config.cfg for additional configurations.
 
+__WARNING:__ If steam does not recognise a DualSense controller use the udev rule provided in this repo.
+
 ## Compilation
 To compile from source you need CMake and make. After the usual git clone and cd inside the cloned directory to use CMake do:
 
