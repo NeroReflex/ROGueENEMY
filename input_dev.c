@@ -17,6 +17,7 @@
 
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
+static const char *hidraw_path = "/dev/hidraw1";
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
 /*
@@ -218,6 +219,8 @@ static void* input_read_thread_func(void* ptr) {
     message_t* msg = NULL;
     
     do {
+        //I think this is the controls loop
+        
         if (msg == NULL) {
             for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
                 if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE) != 0) {
@@ -286,6 +289,7 @@ static void* input_read_thread_func(void* ptr) {
                     msg->data.event.ev[msg->data.event.ev_count] = read_ev;
                     ++msg->data.event.ev_count;
                 }
+                
             }
 
             if ((!has_syn) || ((has_syn) && (is_syn))) {
@@ -310,7 +314,6 @@ static void* input_read_thread_func(void* ptr) {
                     // flag the memory to be safe to reuse
                     msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
                 }
-
                 // either way.... fill a new buffer on the next cycle
                 msg = NULL;
             }
@@ -336,8 +339,92 @@ static void input_hidraw(
         }
     }
 }
+#define HIDRAW_BUFFER_SIZE 64
+typedef struct {
+    unsigned char buffer[HIDRAW_BUFFER_SIZE];
+    ssize_t bytes_read;
+    pthread_mutex_t mutex;
+    volatile int termination_condition;  // Make it volatile if changed by another thread
+} hidraw_buffer_t;
+// Define the pattern to match
+const unsigned char pattern[] = {0x19, 0x04, 0x01, 0x74};
+const size_t pattern_size = sizeof(pattern) / sizeof(pattern[0]);
+const size_t chunk_size = 64; // Adjust this to the size of each chunk you expect
 
+void init_hidraw_buffer(hidraw_buffer_t* buf) {
+    memset(buf->buffer, 0, sizeof(buf->buffer));
+    buf->bytes_read = 0;
+    pthread_mutex_init(&buf->mutex, NULL);
+}
+void destroy_hidraw_buffer(hidraw_buffer_t* buf) {
+    pthread_mutex_destroy(&buf->mutex);
+}
+void print_bytes(const unsigned char* buffer, size_t size) {
+    printf("Data (%zu bytes): ", size);
+    for (size_t i = 0; i < size; ++i) {
+        printf("%02X ", buffer[i]);
+    }
+    printf("\n");
+}
+void process_data(unsigned char* data, ssize_t size) {
+    // Iterate through the data buffer
+    for (ssize_t i = 0; i <= size - chunk_size; ++i) {
+        // Check if the pattern matches
+        if (memcmp(&data[i], pattern, pattern_size) == 0) {
+            // Found the pattern, process the next chunk_size bytes
+            printf("Matched pattern at index %zd: ", i);
+            for (size_t j = 0; j < chunk_size; ++j) {
+                printf("%02x ", data[i + j]);
+            }
+            printf("\n");
 
+            // Skip the processed chunk
+            i += chunk_size - 1;
+        }
+    }
+}
+void* hidraw_reading_thread(void* arg){
+    hidraw_buffer_t* shared_buffer = (hidraw_buffer_t*)arg;
+
+    int fd = open("/dev/hidraw1", O_RDONLY | O_NONBLOCK);
+    if (fd < 0) {
+        perror("Failed to open /dev/hidraw5");
+        return NULL;
+    }
+    while(!shared_buffer->termination_condition) {   
+        unsigned char temp_buffer[HIDRAW_BUFFER_SIZE]; // Adjust the buffer size as needed
+        ssize_t bytes = read(fd, temp_buffer, sizeof(temp_buffer));
+        if(bytes > 0){
+            pthread_mutex_lock(&shared_buffer->mutex);
+            memcpy(shared_buffer->buffer,  temp_buffer, bytes);
+            shared_buffer->bytes_read = bytes;
+            pthread_mutex_unlock(&shared_buffer->mutex);
+
+            // printf("Read %zd bytes:",  bytes);
+            // for(ssize_t i = 0; i < bytes; ++i) {
+            //     printf("%02X", temp_buffer[i]);
+            // }
+            // printf("\n");
+        }
+        // usleep(10000); Match samplign rate
+        usleep(15000);
+
+    }
+    close(fd);
+    return NULL;
+    //memory leak go brrrr
+}
+size_t poll_hidraw_data(hidraw_buffer_t* shared_buffer, unsigned char* out_buffer, size_t max_size) {
+    pthread_mutex_lock(&shared_buffer->mutex);
+    size_t bytes_to_copy = (shared_buffer->buffer, bytes_to_copy);
+    memcpy(out_buffer, shared_buffer->buffer, bytes_to_copy);
+    pthread_mutex_unlock(&shared_buffer->mutex);
+
+    // Print the size of data being copied
+    printf("Copying %zu bytes from shared buffer\n", bytes_to_copy);
+
+    return bytes_to_copy;
+}
 static void input_iio(
     input_dev_t *const in_dev,
     struct input_ctx *const ctx
@@ -586,9 +673,29 @@ static void input_udev(
 
         const int timeout_ms = 1200;
 
+        hidraw_buffer_t shared_buffer;
+        init_hidraw_buffer(&shared_buffer);
+
+        //Create hidraw_thread
+        pthread_t hidraw_thread;
+        pthread_create(&hidraw_thread, NULL, hidraw_reading_thread, &shared_buffer);
+
+        // unsigned char main_loop_buffer[HIDRAW_BUFFER_SIZE];
+        // size_t bytes_read = poll_hidraw_data(&shared_buffer, main_loop_buffer, sizeof(main_loop_buffer));
+
+        // if(bytes_read > 0){
+        //     process_data(main_loop_buffer, bytes_read);
+        // }
+
+
         // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
+            // if (shared_buffer.bytes_read > 12){
+            //     printf(shared_buffer.buffer[12]);
+            // }
+            
             if (has_ff) {
+                
                 void* rmsg = NULL;
 
                 const int rumble_msg_recv_res = queue_pop_timeout(ctx->rumble_queue, &rmsg, timeout_ms);
@@ -644,7 +751,10 @@ static void input_udev(
             } else {
                 usleep(timeout_ms * 1000);
             }
+
         }
+
+
 
         // stop any effect
         if ((has_ff) && (current_effect.id != -1)) {
@@ -655,8 +765,12 @@ static void input_udev(
                 fprintf(stderr, "Error removing rumble effect: %d\n", effect_removal_res);
             }
         }
+        //Destory hidraw thread
+        shared_buffer.termination_condition = 1;
+        pthread_join(hidraw_thread, NULL);
+        destroy_hidraw_buffer(&shared_buffer);
 
-        // wait for incoming events thread to totally stop
+        // wait for incoming events thread to totally stop 
         pthread_join(incoming_events_thread, NULL);
     }
 }

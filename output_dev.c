@@ -860,7 +860,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 			}
 
 #if defined(INCLUDE_OUTPUT_DEBUG)
-			printf("gyro_x: %d\t\t| gyro_y: %d\t\t| gyro_z: %d\t\t\n", (int)msg->data.imu.gyro_x_raw, (int)msg->data.imu.gyro_y_raw, (int)msg->data.imu.gyro_z_raw);
+			// printf("gyro_x: %d\t\t| gyro_y: %d\t\t| gyro_z: %d\t\t\n", (int)msg->data.imu.gyro_x_raw, (int)msg->data.imu.gyro_y_raw, (int)msg->data.imu.gyro_z_raw);
 #endif
 		} else {
 			fprintf(stderr, "[imu] Unable to begin the gamepad status update: %d\n", upd_beg_res);

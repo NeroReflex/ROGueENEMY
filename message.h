@@ -18,6 +18,13 @@ typedef struct ev_message {
 
 } ev_message_t;
 
+typedef struct hidraw_message {
+    struct input_hidraw* hidraw;
+    uint32_t hidraw_flags;
+    uint32_t hidraw_count;
+    size_t hidraw_size;
+} hidraw_message;
+
 typedef enum message_type {
     MSG_TYPE_EV = 0,
     MSG_TYPE_IMU,
@@ -32,6 +39,7 @@ typedef struct message {
     union {
         imu_message_t imu;
         ev_message_t event;
+        hidraw_message hidraw;
     } data;
 
     volatile uint32_t flags;
