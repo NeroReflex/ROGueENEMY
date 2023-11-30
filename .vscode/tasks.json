@@ -4,7 +4,7 @@
         {
             "label": "Build and Run in Subdir",
             "type": "shell",
-            "command": "make clean && cmake --build . && sudo ./ROGueENEMY",
+            "command": "make clean && cmake --build . && sudo ./rogue-enemy",
             "options": {
                 "cwd": "${workspaceFolder}/build"
             },

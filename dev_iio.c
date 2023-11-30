@@ -217,7 +217,7 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     // ============================================= temp_scale =================================================
     {
-        const char *scale_main_file = "/in_temp_scale";
+        const char *scale_main_file = "/in_anglvel_scale";
 
         char* const accel_scale = read_file(iio->path, scale_main_file);
         if (accel_scale != NULL) {
@@ -257,21 +257,21 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_accel_x_raw");
-    // strcat(tmp, "/in_anglvel_y_raw");
+    // strcat(tmp, "/in_accel_x_raw");
+    strcat(tmp, "/in_anglvel_y_raw");
     iio->accel_x_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_accel_y_raw");
-    // strcat(tmp, "/in_anglvel_x_raw");
+    // strcat(tmp, "/in_accel_y_raw");
+    strcat(tmp, "/in_anglvel_x_raw");
 
     iio->accel_y_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
-    strcat(tmp, "/in_accel_z_raw");
-    // strcat(tmp, "/in_anglvel_z_raw");
+    // strcat(tmp, "/in_accel_z_raw");
+    strcat(tmp, "/in_anglvel_z_raw");
     iio->accel_z_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);

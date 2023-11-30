@@ -14,7 +14,7 @@ static output_dev_t out_gamepadd_dev = {
 };
 
 static iio_filters_t in_iio_filters = {
-  // .name = "bmi323",
+  // .name = "accel_3d",
   .name = "gyro_3d",
 };
 
@@ -134,7 +134,7 @@ int main(int argc, char ** argv) {
   int ret = 0;
 
   pthread_t gamepad_thread;
-  pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread, iio_thread, iio2_thread;
+  pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread, iio_thread;
   
   const int gamepad_thread_creation = pthread_create(&gamepad_thread, NULL, output_dev_thread_func, (void*)(&out_gamepadd_dev));
   if (gamepad_thread_creation != 0) {
