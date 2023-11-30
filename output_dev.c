@@ -865,6 +865,8 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 		} else {
 			fprintf(stderr, "[imu] Unable to begin the gamepad status update: %d\n", upd_beg_res);
 		}
+	} else if (msg->type == MSG_TYPE_HIDRAW) {
+		printf("We got some mail");
 	}
 }
 

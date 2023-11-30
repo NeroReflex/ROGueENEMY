@@ -429,10 +429,20 @@ void* hidraw_reading_thread(void* ptr){
         if(rc == 0){
             msg->type = MSG_TYPE_HIDRAW;
             msg->flags = 0; //Reset
+
+            // print_hex(msg->data.hidraw.data, msg->data.hidraw.data_size);
+            unsigned char backButtonbyte = msg->data.hidraw.data[20];
+            unsigned char LegionButtonbyte = msg->data.hidraw.data[18];
+
+            printf("Back buttons: %02X\tLegion buttons: %02X\n", backButtonbyte, LegionButtonbyte);
             if(queue_push(ctx->queue, (void*)msg)!=0){
                 fprintf(stderr, "Error pushing HIDRAW event\n");
             }
             msg=NULL;
+        } else if (rc == -1) {
+            perror("Read error");
+            msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
+            msg = NULL;
         } else {
             msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
             msg = NULL;
