@@ -221,7 +221,6 @@ static void* input_read_thread_func(void* ptr) {
     message_t* msg = NULL;
     
     do {
-        //I think this is the controls loop
         
         if (msg == NULL) {
             for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
@@ -371,55 +370,88 @@ void process_data(unsigned char* data, ssize_t size) {
         }
     }
 }
+typedef struct {
+    int fd; // File descriptor for the HIDRAW device
+    // Add other members as needed for the specific device
+} dev_hidraw_t;
+int dev_hidraw_read(int  fd, hidraw_message_t *const out){
+    if(fd < 0 || out == NULL) {
+        return -1; //invalid args
+    }
+    ssize_t bytes = read(fd, out->data, HIDRAW_DATA_SIZE);
+    if(bytes > 0){
+        // if (bytes == HIDRAW_DATA_SIZE) {
+
+        // }
+        out->data_size = bytes;
+        // print_bytes(bytes, HIDRAW_DATA_SIZE);
+        return 0;//Sucess
+    } else  if (bytes == 1 && errno != EAGAIN){
+        perror("Read error");
+        return -errno;
+    }
+    return 0; //No data read, but no error
+}
 void* hidraw_reading_thread(void* ptr){
     struct input_ctx* ctx = (struct input_ctx*)ptr;
+    // printf("Thread started, ctx: %p\n", ctx);
+    if (!ctx) {
+        fprintf(stderr, "Context is NULL\n");
+        return NULL;
+    }
+
     int fd = open("/dev/hidraw2", O_RDONLY | O_NONBLOCK);
     if (fd < 0) {
         perror("Failed to open /dev/hidraw2");
         return NULL;
     }
+
+    int rc;
     int termination_condition = 1;
     // while(!ctx->termination_condition) {   
-
-    // message_t* msg = get_free_msg
     message_t* msg = NULL;
-
-    unsigned char buffer[64];
-    ssize_t bytesRead;
+    // message_t* msg = get_free_msg
     while(termination_condition == 1) {  
-        
-        // Get a free message from your pool of messages
-        // for (int i = 0; i < MAX_MESSAGES_IN_FLIGHT; ++i) {
-        //     if (ctx->messages[i].flags & MESSAGE_FLAGS_HANDLE_DONE) {
-        //         msg = &ctx->messages[i];
-        //         break;
-        //     }
-        // }
-        
-        if(msg == NULL) {
-            usleep(10000);
-            printf("are we on");
+        if (msg == NULL) {
+            for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
+                if ((ctx->messages[h].flags & MESSAGE_FLAGS_HANDLE_DONE)) {
+                    msg = &ctx->messages[h];
+                    break;
+                }
+            }
+        }
+        if (msg == NULL) {
+            usleep(10000); // Wait a bit before retrying
             continue;
         }
-        printf('we made it past the loop');
-        ssize_t bytes = read(fd, msg->data.hidraw.data, sizeof(msg->data.hidraw.data));
-        // bytesRead = read(fd, buffer, 64);
 
-
-        if (bytes == -1) {
-            if (errno != EAGAIN) {
-                perror("Read error");
-                break; // or handle error as needed
+        int  rc = dev_hidraw_read(fd, &msg->data.hidraw);
+        if(rc == 0){
+            msg->type = MSG_TYPE_HIDRAW;
+            msg->flags = 0; //Reset
+            if(queue_push(ctx->queue, (void*)msg)!=0){
+                fprintf(stderr, "Error pushing HIDRAW event\n");
             }
-        } else if (bytes > 0) {
-            // Process the read data
+            msg=NULL;
+        } else {
+            msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
+            msg = NULL;
         }
-        usleep(10000);
+        usleep(15000);
     }
+    
     close(fd);
     return NULL;
     //memory leak go brrrr
 }
+void print_hex(const unsigned char *data, ssize_t size) {
+    printf("Data (%zd bytes): ", size);
+    for (ssize_t i = 0; i < size; i++) {
+        printf("%02X ", data[i]);
+    }
+    printf("\n");
+}
+
 size_t poll_hidraw_data(hidraw_buffer_t* shared_buffer, unsigned char* out_buffer, size_t max_size) {
     pthread_mutex_lock(&shared_buffer->mutex);
     size_t bytes_to_copy = (shared_buffer->buffer, bytes_to_copy);
@@ -460,7 +492,7 @@ static void input_hidraw(
             usleep(250000);  // Wait a bit before retrying
             continue;
         }
-        printf("Opened HIDRAW device at %s.\n", hidraw_path);
+        // printf("Opened HIDRAW device at %s.\n", hidraw_path);
 
         // Release the mutex after successfully opening the device
         pthread_mutex_unlock(&input_acquire_mutex);
