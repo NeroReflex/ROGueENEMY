@@ -17,7 +17,7 @@
 
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
-static const char *hidraw_path = "/dev/hidraw1";
+static const char *hidraw_path;
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
 /*
@@ -431,10 +431,7 @@ void* hidraw_reading_thread(void* ptr){
             msg->flags = 0; //Reset
 
             // print_hex(msg->data.hidraw.data, msg->data.hidraw.data_size);
-            unsigned char backButtonbyte = msg->data.hidraw.data[20];
-            unsigned char LegionButtonbyte = msg->data.hidraw.data[18];
-
-            printf("Back buttons: %02X\tLegion buttons: %02X\n", backButtonbyte, LegionButtonbyte);
+            
             if(queue_push(ctx->queue, (void*)msg)!=0){
                 fprintf(stderr, "Error pushing HIDRAW event\n");
             }
@@ -473,13 +470,79 @@ size_t poll_hidraw_data(hidraw_buffer_t* shared_buffer, unsigned char* out_buffe
 
     return bytes_to_copy;
 }
+// Function to check if the device's uevent file contains a specific string
+int check_uevent(const char* device_path, const char* target_string) {
+    char uevent_path[256];
+    snprintf(uevent_path, sizeof(uevent_path), "%s/device/uevent", device_path);
 
+    FILE* file = fopen(uevent_path, "r");
+    if (!file) {
+        perror("fopen");
+        return 0;
+    }
+
+    char buffer[64];
+    while (fgets(buffer, 64, file)) {
+        if (strstr(buffer, target_string)) {
+            fclose(file);
+            return 1;
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
+char* find_active_hidraw_device() {
+    DIR* dir = opendir("/sys/class/hidraw");
+    if(!dir){
+        perror("opendir");
+        return NULL;
+    }
+    struct dirent* entry;
+    while((entry = readdir(dir))){
+        char device_path[256];
+        snprintf(device_path, sizeof(device_path),"/sys/class/hidraw/%s", entry->d_name);
+        printf("Checking device: %s\n", device_path);
+        if (check_uevent(device_path, "Legion Controller for Windows")) {
+            printf("Device matches criteria: %s\n", device_path);
+            char* dev_path = malloc(256);
+            snprintf(dev_path, 256, "/dev/%s", entry->d_name);
+            // Test the device
+            int fd = open(dev_path, O_RDONLY);
+            if (fd < 0) {
+                perror("open");
+                free(dev_path);
+                continue;
+            }
+            char read_buffer[64];
+            ssize_t bytes_read = read(fd, read_buffer, 64);
+            close(fd);
+            if (bytes_read == 64) {
+                    closedir(dir);
+                    return dev_path; // Correct device found
+                }
+
+            free(dev_path);
+        } else {
+            printf("Device does not match: %s\n", device_path);
+
+        }
+    }
+    closedir(dir);
+    return NULL;
+}
 static void input_hidraw(
     input_dev_t *const in_dev,
     struct input_ctx *const ctx
 ) {
-    static const char *hidraw_path = "/dev/hidraw2";
-
+    char *hidraw_path =NULL;
+    hidraw_path = find_active_hidraw_device();
+    if (hidraw_path) {
+        printf("Found device: %s\n", hidraw_path);
+    } else {
+        printf("No suitable device found.\n");
+    }
+    
     for (;;) {
         if (logic_termination_requested(in_dev->logic)) {
             // Break the loop if termination is requested

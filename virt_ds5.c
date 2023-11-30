@@ -451,6 +451,7 @@ static int send_data(int fd, logic_t *const logic) {
             (gs.r5 ? 0x80 : 0x00) |
             (gs.l4 ? 0x10 : 0x00) |
             (gs.r4 ? 0x20 : 0x00) |
+            (gs.touchpad_press ? 0x02 : 0x00) |
             (gs.center ? 0x01 : 0x00);
     //buf[11] = ;
     
@@ -465,7 +466,12 @@ static int send_data(int fd, logic_t *const logic) {
 
 /*
     buf[30] = 0x1b; // no headset attached
-*/
+*/  
+
+    //Trackpad stuff
+    buf[39] = gs.touchpadX;
+    buf[40] = gs.touchpadY;
+    buf[41] = gs.touchpadY;
     buf[62] = 0x80; // IDK... it seems constant...
     buf[57] = 0x80; // IDK... it seems constant...
     buf[53] = 0x80; // IDK... it seems constant...

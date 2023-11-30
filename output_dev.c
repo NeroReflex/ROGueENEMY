@@ -687,7 +687,121 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
         }
     }
 }
+int swapLegionButtons = 0;
+void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
+    // Assuming your HIDRAW data is in msg->data.hidraw.data
+    // and the size of the data is in msg->data.hidraw.data_size
 
+    // Check for sufficient data size
+    // if (msg->data.hidraw.data_size < 64) {
+    //     fprintf(stderr, "Insufficient HIDRAW data size\n");
+    //     return;
+    // }
+
+    // Decode each control from the HIDRAW data
+    // This is highly dependent on how your specific HID device maps data
+    // Here are some hypothetical examples:
+
+    // Example: Decode a button press
+    // Let's assume the first byte corresponds to a button's state
+	unsigned char backButtonbyte = msg->data.hidraw.data[20];
+	unsigned char legionButtonbyte = msg->data.hidraw.data[18];
+
+	gamepad->l4 = (backButtonbyte & 0x80) ? 1 : 0; // L4 button
+    gamepad->l5 = (backButtonbyte & 0x40) ? 1 : 0; // L5 button
+    gamepad->r4 = (backButtonbyte & 0x20) ? 1 : 0; // R4 button
+    gamepad->r5 = (backButtonbyte & 0x04) ? 1 : 0; // R5 button
+	gamepad->touchpad_press = (backButtonbyte & 0x08) ? 1 : 0; //M2 button
+	if (swapLegionButtons == 0) {
+		// Swap the share and option buttons with Legion buttons
+        gamepad->share = (legionButtonbyte & 0x40) ? 1 : 0;
+        gamepad->option = (legionButtonbyte & 0x80) ? 1 : 0;
+		gamepad->center = (backButtonbyte & 0x01) ? 1 : 0;
+		//QAM contraption using hidraw BUG: SENDS AND EXTRA X
+		static int wasSpecialComboPressed  = 0;
+		if((backButtonbyte & 0x02) != 0){
+			gamepad->center = 1;
+			gamepad->cross = 1;
+			wasSpecialComboPressed = 1;
+		} else {
+			if(wasSpecialComboPressed){
+				gamepad->center = 0;
+				gamepad->cross =0;
+				wasSpecialComboPressed = 0;
+			} else {
+				gamepad->center = (backButtonbyte & 0x01) ? 1 : 0; // Center button
+			}
+		}
+    
+	} else {
+		// Original position
+		gamepad->share = (backButtonbyte & 0x01) ? 1 : 0;
+        gamepad->option = (backButtonbyte & 0x02) ? 1 : 0;
+		//QAM contraption using hidraw BUG: SENDS AND EXTRA X
+		static int wasSpecialComboPressed  = 0;
+		if((legionButtonbyte & 0x40) != 0){
+			gamepad->center = 1;
+			gamepad->cross = 1;
+			wasSpecialComboPressed = 1;
+		} else {
+			if(wasSpecialComboPressed){
+				gamepad->center = 0;
+				gamepad->cross =0;
+				wasSpecialComboPressed = 0;
+			} else {
+				gamepad->center = (legionButtonbyte & 0x80) ? 1 : 0; // Center button
+			}
+		}
+    // Special handling for the combination of Center + Cross
+	}
+	
+	//Currently not working
+	unsigned char trackpadDataX = msg->data.hidraw.data[27]; //X axis
+	unsigned char trackpadDataY = msg->data.hidraw.data[29]; //Y axis
+
+	gamepad->touchpadX = trackpadDataX;
+	gamepad->touchpadY = trackpadDataY;
+
+	unsigned char abxybyte = msg->data.hidraw.data[19];
+
+
+
+	printf(msg->data.hidraw.data);
+	
+	
+
+	
+
+	
+    // Example: Decode joystick values
+    // Let's assume bytes 1 and 2 correspond to joystick X and Y axis
+    // gamepad->joystick_x = msg->data.hidraw.data[1];
+    // gamepad->joystick_y = msg->data.hidraw.data[2];
+
+    // Continue for other controls...
+
+    // Handle other buttons, triggers, D-pad, etc., based on your HIDRAW data mapping
+    // ...
+
+    // After processing, your gamepad_status_t should reflect the state of the HIDRAW input
+}
+void update_gs_from_hidraw(gamepad_status_t *gs, const message_t *msg) {
+    // Decode the HIDRAW data to gamepad inputs
+    decode_hidraw_to_gamepad(gs, msg);
+
+    // After calling decode_hidraw_to_gamepad, the gamepad status gs should now be updated
+    // Here, you can add any additional logic required for your gamepad status
+    // For example, handling special buttons, macros, or other complex inputs
+    // ...
+
+    // Example: Let's assume your gamepad has a special combo button feature
+    // if (gs->button_x && gs->button_y) {
+    //     // Perform some action when both X and Y buttons are pressed
+    // }
+
+    // Handle other special cases or additional logic as needed
+    // ...
+}
 static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg, controller_settings_t *const settings) {
 	if ( // this is what happens at release of the left-screen button of the ROG Ally
 		(msg->data.event.ev_count == 2) &&
@@ -763,10 +877,10 @@ static void update_gs_from_ev(gamepad_status_t *const gs, message_t *const msg, 
 				} else {
 					gs->triangle = msg->data.event.ev[i].value;
 				}
-			} else if (msg->data.event.ev[i].code == BTN_SELECT) {
-				gs->option = msg->data.event.ev[i].value;
-			} else if (msg->data.event.ev[i].code == BTN_START) {
-				gs->share = msg->data.event.ev[i].value;
+			// } else if (msg->data.event.ev[i].code == BTN_SELECT) {
+			// 	gs->option = msg->data.event.ev[i].value;
+			// } else if (msg->data.event.ev[i].code == BTN_START) {
+			// 	gs->share = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_TR) {
 				gs->r1 = msg->data.event.ev[i].value;
 			} else if (msg->data.event.ev[i].code == BTN_TL) {
@@ -866,7 +980,28 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 			fprintf(stderr, "[imu] Unable to begin the gamepad status update: %d\n", upd_beg_res);
 		}
 	} else if (msg->type == MSG_TYPE_HIDRAW) {
-		printf("We got some mail");
+
+		printf("HIDRAW Data (%zd bytes): ", msg->data.hidraw.data_size);
+		for (ssize_t i = 0; i < msg->data.hidraw.data_size; ++i) {
+			printf("%02X ", msg->data.hidraw.data[i]);
+		}
+		printf("\n");
+
+
+		decode_hidraw_to_gamepad(&out_dev->logic->gamepad, msg);
+		//Begin updating gamepad status
+		const int upd_hidraw_res = logic_begin_status_update(out_dev->logic);
+		if(upd_hidraw_res == 0){
+			update_gs_from_hidraw(&out_dev->logic->gamepad,msg);
+
+			logic_end_status_update(out_dev->logic);
+		} else {
+			fprintf(stderr, "[hidraw] Unable to begin the gamepad status update: %d\n", upd_hidraw_res);
+		}
+		if (out_dev->logic->gamepad_output == GAMEPAD_OUTPUT_EVDEV) {
+			emit_ev(out_dev, msg);
+		}
+		
 	}
 }
 
