@@ -86,19 +86,19 @@ static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters
 
     int fd = open(sysfs_entry, O_RDWR);
     if (fd < 0) {
-        //fprintf(stderr, "Cannot open %s, device skipped.\n", sysfs_entry);
+        fprintf(stderr, "Cannot open %s, device skipped.\n", sysfs_entry);
         return NULL;
     }
 
     if (libevdev_new_from_fd(fd, &dev) != 0) {
-        //fprintf(stderr, "Cannot initialize libevdev from this device (%s): skipping.\n", sysfs_entry);
+        fprintf(stderr, "Cannot initialize libevdev from this device (%s): skipping.\n", sysfs_entry);
         close(fd);
         return NULL;
     }
 
     const char* name = libevdev_get_name(dev);
     if ((name != NULL) && (strcmp(name, filters->name) != 0)) {
-        //fprintf(stderr, "The device name (%s) for device %s does not matches the expected one %s.\n", name, sysfs_entry, filters->name);
+        fprintf(stderr, "The device name (%s) for device %s does not matches the expected one %s.\n", name, sysfs_entry, filters->name);
         libevdev_free(dev);
         close(fd);
         return NULL;
@@ -107,8 +107,8 @@ static struct libevdev* ev_matches(const char* sysfs_entry, const uinput_filters
     const int grab_res = libevdev_grab(dev, LIBEVDEV_GRAB);
     if (grab_res != 0) {
         fprintf(stderr, "Unable to grab the device (%s): %d.\n", sysfs_entry, grab_res);
-        //libevdev_free(dev);
-        //close(fd);
+        libevdev_free(dev);
+        close(fd);
         return dev;
     }
 
@@ -756,18 +756,18 @@ static void input_udev(
         }
 
         const int fd = libevdev_get_fd(ctx->dev);
-
+        //Ally derived effect was not working on the Legion Go. Modifying the length
         struct ff_effect current_effect = {
             .type = FF_RUMBLE,
             .id = -1,
             .replay = {
                 .delay = 0,
-                .length = 5000,
+                .length = 250, //This value determines the length of the rumble (250 is a nice value)
             },
             .u = {
                 .rumble = {
-                    .strong_magnitude = 0x0000,
-                    .weak_magnitude = 0x0000,
+                    .strong_magnitude = 0xFFFF,
+                    .weak_magnitude = 0xFFFF,
                 }
             }
         };
@@ -781,33 +781,34 @@ static void input_udev(
         }
 
         const int has_ff = libevdev_has_event_type(ctx->dev, EV_FF);
+        
+        // Not the same controller as the Ally crashes the rumble (WIP)
+        // if (has_ff) {
+        //     const struct input_event gain = {
+        //         .type = EV_FF,
+        //         .code = 0x60,
+        //         .value = 0x7f,
+        //         // .value = ctx->settings->ff_gain,
+        //     };
 
-        if (has_ff) {
-            const struct input_event gain = {
-                .type = EV_FF,
-                .code = FF_GAIN,
-                .value = ctx->settings->ff_gain,
-            };
+        //     const int gain_set_res = write(fd, (const void*)&gain, sizeof(gain));
+        //     if (gain_set_res != sizeof(gain)) {
+        //         fprintf(stderr, "Unable to adjust gain for force-feedback: %d\n", gain_set_res);
+        //     } else {
+        //         printf("Gain for force-feedback set to %u\n", gain.value);
+        //     }
+        // }
 
-            const int gain_set_res = write(fd, (const void*)&gain, sizeof(gain));
-            if (gain_set_res != sizeof(gain)) {
-                fprintf(stderr, "Unable to adjust gain for force-feedback: %d\n", gain_set_res);
-            } else {
-                printf("Gain for force-feedback set to %u\n", gain.value);
-            }
-        }
-
-        // const int timeout_ms = 1200; 40% usage
-        const int timeout_ms = 5000; //Reduced from 1200 same functionality but cpu usage reduced by ~20%, any higher yield no sig results
+        const int timeout_ms = 1200; 
+        // const int timeout_ms = 5000; 
 
         // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
 
             if (has_ff) {
                 usleep(1000); 
-                //(debounce)  Also reduces the amount of extra reporting done when a button is pressed, currently set at 1ms. Which matches hardware.
+                //(debounce)  Also reduces the amount of extra reporting done when a button is pressed, currently set at 1ms
                 void* rmsg = NULL;
-
                 const int rumble_msg_recv_res = queue_pop_timeout(ctx->rumble_queue, &rmsg, timeout_ms);
                 if (rumble_msg_recv_res == 0) {
                     rumble_message_t *const rumble_msg = (rumble_message_t*)rmsg;
