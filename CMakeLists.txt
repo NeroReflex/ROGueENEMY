@@ -20,3 +20,5 @@ add_executable(${EXECUTABLE_NAME} dev_iio.c input_dev.c logic.c main.c output_de
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -lconfig)
 
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)

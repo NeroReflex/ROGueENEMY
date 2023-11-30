@@ -14,6 +14,11 @@
 #define DS_INPUT_REPORT_USB         0x01
 #define DS_INPUT_REPORT_USB_SIZE    64
 
+#define DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT    0x02
+
+#define DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2 0x04
+#define DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION  0x01
+
 #define DS5_SPEC_DELTA_TIME         188.0f
 
 static const char* path = "/dev/uhid";
@@ -94,36 +99,74 @@ static void destroy(int fd)
 	uhid_write(fd, &ev);
 }
 
-static void handle_output(struct uhid_event *ev, const logic_t *const logic)
+static void handle_output(struct uhid_event *ev, logic_t *const logic)
 {
 	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
 	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
         return;
 	
-	if (ev->u.output.size != 63) {
-        fprintf(stderr, "Invalid data length: got %d, expected 63\n", (int)ev->u.output.size);
+	if (ev->u.output.size != 48) {
+        fprintf(stderr, "Invalid data length: got %d, expected 48\n", (int)ev->u.output.size);
 
         return;
     }
 
 	// first byte is report-id which is 0x01
-	if (ev->u.output.data[0] != 0x05) {
-        fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev->u.output.data[0]);
+	if (ev->u.output.data[0] != 0x02) {
+        fprintf(stderr, "Unrecognised report-id: got 0x%x expected 0x02\n", (int)ev->u.output.data[0]);
         return;
     }
 	
     const uint8_t valid_flag0 = ev->u.output.data[1];
 	const uint8_t valid_flag1 = ev->u.output.data[2];
-	const uint8_t reserved = ev->u.output.data[3];
-	const uint8_t motor_right = ev->u.output.data[4];
-	const uint8_t motor_left = ev->u.output.data[5];
-	const uint8_t lightbar_red = ev->u.output.data[6];
-	const uint8_t lightbar_green = ev->u.output.data[7];
-	const uint8_t lightbar_blue = ev->u.output.data[8];
-	const uint8_t lightbar_blink_on = ev->u.output.data[9];
-	const uint8_t lightbar_blink_off = ev->u.output.data[10];
+	// For DualShock 4 compatibility mode.
+	const uint8_t motor_right = ev->u.output.data[3];
+	const uint8_t motor_left = ev->u.output.data[4];
 
-    // TODO dualsense logic
+	// Audio controls
+	const uint8_t reserved[4] = { ev->u.output.data[5], ev->u.output.data[6], ev->u.output.data[7], ev->u.output.data[8]};
+	const uint8_t mute_button_led = ev->u.output.data[9];
+
+	uint8_t power_save_control = ev->u.output.data[10];
+	uint8_t reserved2[28];
+
+	// LEDs and lightbar
+	uint8_t valid_flag2 = ev->u.output.data[39];
+	uint8_t reserved3[2] = {ev->u.output.data[40], ev->u.output.data[41]};
+	uint8_t lightbar_setup = ev->u.output.data[42];
+	uint8_t led_brightness = ev->u.output.data[43];
+	uint8_t player_leds = ev->u.output.data[44];
+	uint8_t lightbar_red = ev->u.output.data[45];
+	uint8_t lightbar_green = ev->u.output.data[46];
+	uint8_t lightbar_blue = ev->u.output.data[47];
+
+    if ((valid_flag0 & DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT) && (logic->gamepad_output == LOGIC_FLAGS_VIRT_DS5_ENABLE)) {
+        if ((valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) || (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
+
+            const int lock_res = pthread_mutex_lock(&logic->gamepad_mutex);
+            if (lock_res != 0) {
+                printf("Unable to lock gamepad mutex: %d, rumble will not be updated.\n", lock_res);
+
+                return;
+            }
+
+            logic->gamepad.motors_intensity[0] = motor_left;
+            logic->gamepad.motors_intensity[1] = motor_right;
+            ++logic->gamepad.rumble_events_count;
+
+            pthread_mutex_unlock(&logic->gamepad_mutex);
+
+#if defined(VIRT_DS5_DEBUG)
+            printf(
+                "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
+                motor_left,
+                motor_right,
+                valid_flag0,
+                valid_flag1
+            );
+#endif
+        }
+    }
 }
 
 static int event(int fd, logic_t *const logic)
@@ -328,6 +371,8 @@ static int send_data(int fd, logic_t *const logic) {
         return gs_copy_res;
     }
 
+    static uint8_t seq_num = 0x00;
+
     const int64_t time_us = gs.last_gyro_motion_time.tv_sec * 1000000 + gs.last_gyro_motion_time.tv_usec;
 
     static uint32_t empty_reports = 0;
@@ -386,7 +431,7 @@ static int send_data(int fd, logic_t *const logic) {
     buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
     buf[5] = gs.l2_trigger; // Z
     buf[6] = gs.r2_trigger; // RZ
-    buf[7] = 0x00; // seq_number
+    buf[7] = seq_num++; // seq_number
     buf[8] = (gs.square ? 0x10 : 0x00) |
                 (gs.cross ? 0x20 : 0x00) |
                 (gs.circle ? 0x40 : 0x00) |
