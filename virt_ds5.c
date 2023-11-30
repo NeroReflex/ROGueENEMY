@@ -112,8 +112,8 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
     }
 
 	// first byte is report-id which is 0x01
-	if (ev->u.output.data[0] != 0x05) {
-        fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev->u.output.data[0]);
+	if (ev->u.output.data[0] != 0x02) {
+        fprintf(stderr, "Unrecognised report-id: got 0x%x expected 0x02\n", (int)ev->u.output.data[0]);
         return;
     }
 	
@@ -156,7 +156,7 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
 
             pthread_mutex_unlock(&logic->gamepad_mutex);
 
-#if defined(VIRT_DS4_DEBUG)
+#if defined(VIRT_DS5_DEBUG)
             printf(
                 "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
                 motor_left,
