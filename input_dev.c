@@ -17,7 +17,11 @@
 
 static const char *input_path = "/dev/input/";
 static const char *iio_path = "/sys/bus/iio/devices/";
-static const char *hidraw_path;
+
+#define DATA_LENGTH 64
+#define READ_TIMEOUT 1 // Timeout in seconds
+#define DEVICE_CHECK_INTERVAL 5
+
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags) {
 /*
@@ -346,30 +350,60 @@ void init_hidraw_buffer(hidraw_buffer_t* buf) {
 void destroy_hidraw_buffer(hidraw_buffer_t* buf) {
     pthread_mutex_destroy(&buf->mutex);
 }
-void print_bytes(const unsigned char* buffer, size_t size) {
-    printf("Data (%zu bytes): ", size);
-    for (size_t i = 0; i < size; ++i) {
-        printf("%02X ", buffer[i]);
-    }
-    printf("\n");
-}
-void process_data(unsigned char* data, ssize_t size) {
-    // Iterate through the data buffer
-    for (ssize_t i = 0; i <= size - chunk_size; ++i) {
-        // Check if the pattern matches
-        if (memcmp(&data[i], pattern, pattern_size) == 0) {
-            // Found the pattern, process the next chunk_size bytes
-            printf("Matched pattern at index %zd: ", i);
-            for (size_t j = 0; j < chunk_size; ++j) {
-                printf("%02x ", data[i + j]);
-            }
-            printf("\n");
 
-            // Skip the processed chunk
-            i += chunk_size - 1;
+int check_device_match(const char *device_path) {
+    char uevent_path[256];
+    snprintf(uevent_path, sizeof(uevent_path), "%s/device/uevent", device_path);
+
+    FILE *file = fopen(uevent_path, "r");
+    if (!file) {
+        perror("fopen");
+        return 0;
+    }
+
+    char line[256];
+    int match = 0;
+
+    while (fgets(line, sizeof(line), file)) {
+        if (strstr(line, "HID_ID=0003:000017EF:00006182") || strstr(line, "HID_ID=0003:000017EF:00006183")) {
+            match = 1;
+            break;
         }
     }
+
+    fclose(file);
+    return match;
 }
+
+int test_device_data_length(const char *dev_path) {
+    int fd = open(dev_path, O_RDONLY | O_NONBLOCK);
+    if (fd < 0) {
+        perror("open");
+        return 0;
+    }
+
+    fd_set fds;
+    FD_ZERO(&fds);
+    FD_SET(fd, &fds);
+
+    struct timeval timeout;
+    timeout.tv_sec = READ_TIMEOUT;
+    timeout.tv_usec = 0;
+
+    char buffer[DATA_LENGTH];
+    int data_available = 0;
+
+    if (select(fd + 1, &fds, NULL, NULL, &timeout) > 0) {
+        ssize_t bytes_read = read(fd, buffer, DATA_LENGTH);
+        if (bytes_read == DATA_LENGTH) {
+            data_available = 1;
+        }
+    }
+
+    close(fd);
+    return data_available;
+}
+
 typedef struct {
     int fd; // File descriptor for the HIDRAW device
     // Add other members as needed for the specific device
@@ -380,17 +414,59 @@ int dev_hidraw_read(int  fd, hidraw_message_t *const out){
     }
     ssize_t bytes = read(fd, out->data, HIDRAW_DATA_SIZE);
     if(bytes > 0){
-        // if (bytes == HIDRAW_DATA_SIZE) {
-
-        // }
         out->data_size = bytes;
-        // print_bytes(bytes, HIDRAW_DATA_SIZE);
+        // printf("read good");
+        // printf("Read %zd bytes.\n", bytes);
         return 0;//Sucess
-    } else  if (bytes == 1 && errno != EAGAIN){
-        perror("Read error");
+    } else if (bytes == 1 && errno == ENODEV){
+        // perror("Disconnect");
         return -errno;
-    }
+    } else if (bytes == -1 && errno != EAGAIN){ //Mode switch controller
+        return 99;
+    } 
     return 0; //No data read, but no error
+}
+
+char* find_matching_hidraw_devices() {
+    while (1) {
+        DIR *dir = opendir("/sys/class/hidraw");
+        if (!dir) {
+            perror("opendir");
+            sleep(DEVICE_CHECK_INTERVAL);
+            continue;
+        }
+
+        struct dirent *entry;
+        while ((entry = readdir(dir))) {
+            if (entry->d_name[0] == '.') continue;
+
+            char sysfs_device_path[256];
+            snprintf(sysfs_device_path, sizeof(sysfs_device_path), "/sys/class/hidraw/%s", entry->d_name);
+
+            if (check_device_match(sysfs_device_path)) {
+                printf("Matching device found: %s\n", sysfs_device_path);
+                char *dev_path = malloc(256);
+                if(!dev_path) {
+                    perror("malloc failed");
+                    continue;
+                }
+
+                snprintf(dev_path, 256, "/dev/%s", entry->d_name);
+
+                if (test_device_data_length(dev_path)) {
+                    printf("Device %s has 64 bytes of data available.\n", dev_path);
+                    // read_and_print_data(dev_path);
+                    closedir(dir);
+                    return dev_path;
+                } else {
+                    printf("Device %s does not have data available or not 64 bytes.\n", dev_path);
+                }
+            }
+        }
+
+        closedir(dir);
+        sleep(DEVICE_CHECK_INTERVAL);
+    }
 }
 void* hidraw_reading_thread(void* ptr){
     struct input_ctx* ctx = (struct input_ctx*)ptr;
@@ -399,10 +475,10 @@ void* hidraw_reading_thread(void* ptr){
         fprintf(stderr, "Context is NULL\n");
         return NULL;
     }
-
-    int fd = open("/dev/hidraw2", O_RDONLY | O_NONBLOCK);
+    char* device = find_matching_hidraw_devices();
+    int fd = open(device, O_RDONLY | O_NONBLOCK);
     if (fd < 0) {
-        perror("Failed to open /dev/hidraw2");
+        perror("Failed to open device");
         return NULL;
     }
 
@@ -424,14 +500,22 @@ void* hidraw_reading_thread(void* ptr){
             usleep(10000); // Wait a bit before retrying
             continue;
         }
-
-        int  rc = dev_hidraw_read(fd, &msg->data.hidraw);
+        
+        int rc = dev_hidraw_read(fd, &msg->data.hidraw);
+        //Handle the Legion Gocontroller mode switch, wait for controller to reinit hidraw.
+        if(rc == 99){
+            sleep(3);
+            printf("Lost device i/o error");
+            device = find_matching_hidraw_devices();
+            fd = open(device, O_RDONLY | O_NONBLOCK);
+            if (fd < 0) {
+                perror("Failed to open device");
+                return NULL;
+            }
+        }
         if(rc == 0){
             msg->type = MSG_TYPE_HIDRAW;
-            msg->flags = 0; //Reset
-
-            // print_hex(msg->data.hidraw.data, msg->data.hidraw.data_size);
-            
+            msg->flags = 0; //Reset            
             if(queue_push(ctx->queue, (void*)msg)!=0){
                 fprintf(stderr, "Error pushing HIDRAW event\n");
             }
@@ -451,139 +535,23 @@ void* hidraw_reading_thread(void* ptr){
     return NULL;
     //memory leak go brrrr
 }
-void print_hex(const unsigned char *data, ssize_t size) {
-    printf("Data (%zd bytes): ", size);
-    for (ssize_t i = 0; i < size; i++) {
-        printf("%02X ", data[i]);
-    }
-    printf("\n");
-}
 
-size_t poll_hidraw_data(hidraw_buffer_t* shared_buffer, unsigned char* out_buffer, size_t max_size) {
-    pthread_mutex_lock(&shared_buffer->mutex);
-    size_t bytes_to_copy = (shared_buffer->buffer, bytes_to_copy);
-    memcpy(out_buffer, shared_buffer->buffer, bytes_to_copy);
-    pthread_mutex_unlock(&shared_buffer->mutex);
-
-    // Print the size of data being copied
-    printf("Copying %zu bytes from shared buffer\n", bytes_to_copy);
-
-    return bytes_to_copy;
-}
-// Function to check if the device's uevent file contains a specific string
-int check_uevent(const char* device_path, const char* target_string) {
-    char uevent_path[256];
-    snprintf(uevent_path, sizeof(uevent_path), "%s/device/uevent", device_path);
-
-    FILE* file = fopen(uevent_path, "r");
-    if (!file) {
-        perror("fopen");
-        return 0;
-    }
-
-    char buffer[64];
-    while (fgets(buffer, 64, file)) {
-        if (strstr(buffer, target_string)) {
-            fclose(file);
-            return 1;
-        }
-    }
-
-    fclose(file);
-    return 0;
-}
-char* find_active_hidraw_device() {
-    DIR* dir = opendir("/sys/class/hidraw");
-    if(!dir){
-        perror("opendir");
-        return NULL;
-    }
-    struct dirent* entry;
-    while((entry = readdir(dir))){
-        char device_path[256];
-        snprintf(device_path, sizeof(device_path),"/sys/class/hidraw/%s", entry->d_name);
-        printf("Checking device: %s\n", device_path);
-        if (check_uevent(device_path, "Legion Controller for Windows")) {
-            printf("Device matches criteria: %s\n", device_path);
-            char* dev_path = malloc(256);
-            snprintf(dev_path, 256, "/dev/%s", entry->d_name);
-            // Test the device
-            int fd = open(dev_path, O_RDONLY);
-            if (fd < 0) {
-                perror("open");
-                free(dev_path);
-                continue;
-            }
-            char read_buffer[64];
-            ssize_t bytes_read = read(fd, read_buffer, 64);
-            close(fd);
-            if (bytes_read == 64) {
-                    closedir(dir);
-                    return dev_path; // Correct device found
-                }
-
-            free(dev_path);
-        } else {
-            printf("Device does not match: %s\n", device_path);
-
-        }
-    }
-    closedir(dir);
-    return NULL;
-}
 static void input_hidraw(
     input_dev_t *const in_dev,
     struct input_ctx *const ctx
 ) {
-    char *hidraw_path =NULL;
-    hidraw_path = find_active_hidraw_device();
-    if (hidraw_path) {
-        printf("Found device: %s\n", hidraw_path);
-    } else {
-        printf("No suitable device found.\n");
-    }
-    
     for (;;) {
         if (logic_termination_requested(in_dev->logic)) {
             // Break the loop if termination is requested
             break;
         }
-
-        // Lock the mutex for exclusive access to input resources
-        const int input_acquire_lock_result = pthread_mutex_lock(&input_acquire_mutex);
-        if (input_acquire_lock_result != 0) {
-            fprintf(stderr, "Cannot lock input mutex: %d, will retry later...\n", input_acquire_lock_result);
-            usleep(150000);
-            continue;
-        }
-
-        // Opening the HIDRAW device
-        int fd = open(hidraw_path, O_RDONLY | O_NONBLOCK);
-        if (fd < 0) {
-            fprintf(stderr, "Failed to open HIDRAW device at %s.\n", hidraw_path);
-            pthread_mutex_unlock(&input_acquire_mutex);
-            usleep(250000);  // Wait a bit before retrying
-            continue;
-        }
-        // printf("Opened HIDRAW device at %s.\n", hidraw_path);
-
-        // Release the mutex after successfully opening the device
-        pthread_mutex_unlock(&input_acquire_mutex);
-
         // Create and start the HIDRAW reading thread
         pthread_t hidraw_thread;
         int ret = pthread_create(&hidraw_thread, NULL, hidraw_reading_thread, ctx);
-        if (ret != 0) {
-            fprintf(stderr, "Failed to create HIDRAW reading thread.\n");
-            close(fd);
-            continue;
-        }
 
         // Wait for the HIDRAW reading thread to finish
         pthread_join(hidraw_thread, NULL);
 
-        // Close the HIDRAW device
-        close(fd);
     }
 
 }

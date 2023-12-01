@@ -764,14 +764,6 @@ void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
 
 	unsigned char abxybyte = msg->data.hidraw.data[19];
 
-
-
-	printf(msg->data.hidraw.data);
-	
-	
-
-	
-
 	
     // Example: Decode joystick values
     // Let's assume bytes 1 and 2 correspond to joystick X and Y axis
@@ -981,11 +973,11 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 		}
 	} else if (msg->type == MSG_TYPE_HIDRAW) {
 
-		printf("HIDRAW Data (%zd bytes): ", msg->data.hidraw.data_size);
-		for (ssize_t i = 0; i < msg->data.hidraw.data_size; ++i) {
-			printf("%02X ", msg->data.hidraw.data[i]);
-		}
-		printf("\n");
+		// printf("HIDRAW Data (%zd bytes): ", msg->data.hidraw.data_size);
+		// for (ssize_t i = 0; i < msg->data.hidraw.data_size; ++i) {
+		// 	printf("%02X ", msg->data.hidraw.data[i]);
+		// }
+		// printf("\n");
 
 
 		decode_hidraw_to_gamepad(&out_dev->logic->gamepad, msg);
