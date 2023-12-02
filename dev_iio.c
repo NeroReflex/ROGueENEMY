@@ -258,13 +258,13 @@ dev_iio_t* dev_iio_create(const char* path) {
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
     // strcat(tmp, "/in_accel_x_raw");
-    strcat(tmp, "/in_anglvel_y_raw");
+    strcat(tmp, "/in_anglvel_x_raw");
     iio->accel_x_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
     strcat(tmp, iio->path);
     // strcat(tmp, "/in_accel_y_raw");
-    strcat(tmp, "/in_anglvel_x_raw");
+    strcat(tmp, "/in_anglvel_y_raw");
 
     iio->accel_y_fd = fopen(tmp, "r");
 
