@@ -688,6 +688,18 @@ static void decode_ev(output_dev_t *const out_dev, message_t *const msg) {
     }
 }
 int swapLegionButtons = 0;
+int crossButtonDelayCounter = 0;
+int crossButtonHoldCounter = 0;
+int centerButtonHoldCounter = 0;
+
+
+int buttonState = 0;
+const int INITIAL_DELAY = 15; // Delay before pressing the cross button
+const int PRESS_DURATION = 5;  // Duration to hold both buttons down
+const int CROSS_RELEASE_DELAY = 7; // Delay before releasing cross button
+const int CENTER_RELEASE_DELAY = 10; // Delay before releasing center button after cross is released
+
+
 void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
     // Assuming your HIDRAW data is in msg->data.hidraw.data
     // and the size of the data is in msg->data.hidraw.data_size
@@ -716,23 +728,53 @@ void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
 		// Swap the share and option buttons with Legion buttons
         gamepad->share = (legionButtonbyte & 0x40) ? 1 : 0;
         gamepad->option = (legionButtonbyte & 0x80) ? 1 : 0;
-		gamepad->center = (backButtonbyte & 0x01) ? 1 : 0;
+		// gamepad->center = (backButtonbyte & 0x01) ? 1 : 0;
 		//QAM contraption using hidraw BUG: SENDS AND EXTRA X
 		static int wasSpecialComboPressed  = 0;
-		if((backButtonbyte & 0x02) != 0){
-			gamepad->center = 1;
-			gamepad->cross = 1;
-			wasSpecialComboPressed = 1;
-		} else {
-			if(wasSpecialComboPressed){
-				gamepad->center = 0;
-				gamepad->cross =0;
-				wasSpecialComboPressed = 0;
-			} else {
-				gamepad->center = (backButtonbyte & 0x01) ? 1 : 0; // Center button
+		
+			if ((backButtonbyte & 0x02) != 0 && buttonState == 0) {
+				// Start the sequence: Press the center button
+				gamepad->center = 1;
+				gamepad->cross = 0; // Initially, cross button is not pressed
+				buttonState = 1; // Move to next state
+			} 
+			// Regular center button press
+			if (!(backButtonbyte & 0x02)) {
+				gamepad->center = (backButtonbyte & 0x01) ? 1 : 0;
+				if (buttonState > 0) {
+					// Reset the state if the special combo is no longer being pressed
+					buttonState = 0;
+				}
+}
+
+			if (buttonState > 0) {
+				buttonState++; // Increment state counter
 			}
-		}
-    
+
+			// Handle state transitions
+			if (buttonState == INITIAL_DELAY) {
+				// Now press the cross button after initial delay
+				gamepad->cross = 1;
+			}
+
+			if (buttonState == INITIAL_DELAY + PRESS_DURATION) {
+				// Time to release the cross button
+				gamepad->cross = 0;
+			}
+
+			if (buttonState >= INITIAL_DELAY + PRESS_DURATION + CROSS_RELEASE_DELAY && buttonState < INITIAL_DELAY + PRESS_DURATION + CROSS_RELEASE_DELAY + CENTER_RELEASE_DELAY) {
+				// Keep the center button pressed for a while after releasing cross
+				gamepad->center = 1;
+			}
+
+			if (buttonState >= INITIAL_DELAY + PRESS_DURATION + CROSS_RELEASE_DELAY + CENTER_RELEASE_DELAY) {
+				// Finally, release the center button
+				gamepad->center = 0;
+				buttonState = 0; // Reset state for next press
+			}
+
+
+
 	} else {
 		// Original position
 		gamepad->share = (backButtonbyte & 0x01) ? 1 : 0;
@@ -755,27 +797,13 @@ void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
     // Special handling for the combination of Center + Cross
 	}
 	
-	//Currently not working
-	unsigned char trackpadDataX = msg->data.hidraw.data[27]; //X axis
-	unsigned char trackpadDataY = msg->data.hidraw.data[29]; //Y axis
+	//Toucpad mapping
+	// Disabled; not finished
+	// unsigned char trackpadDataX = msg->data.hidraw.data[27]; //X axis
+	// unsigned char trackpadDataY = msg->data.hidraw.data[29]; //Y axis	
+	// gamepad->touchpadX = trackpadDataX;
+	// gamepad->touchpadY = trackpadDataY;
 
-	gamepad->touchpadX = trackpadDataX;
-	gamepad->touchpadY = trackpadDataY;
-
-	unsigned char abxybyte = msg->data.hidraw.data[19];
-
-	
-    // Example: Decode joystick values
-    // Let's assume bytes 1 and 2 correspond to joystick X and Y axis
-    // gamepad->joystick_x = msg->data.hidraw.data[1];
-    // gamepad->joystick_y = msg->data.hidraw.data[2];
-
-    // Continue for other controls...
-
-    // Handle other buttons, triggers, D-pad, etc., based on your HIDRAW data mapping
-    // ...
-
-    // After processing, your gamepad_status_t should reflect the state of the HIDRAW input
 }
 void update_gs_from_hidraw(gamepad_status_t *gs, const message_t *msg) {
     // Decode the HIDRAW data to gamepad inputs
