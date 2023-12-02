@@ -415,13 +415,8 @@ int dev_hidraw_read(int  fd, hidraw_message_t *const out){
     ssize_t bytes = read(fd, out->data, HIDRAW_DATA_SIZE);
     if(bytes > 0){
         out->data_size = bytes;
-        // printf("read good");
-        // printf("Read %zd bytes.\n", bytes);
         return 0;//Sucess
-    } else if (bytes == 1 && errno == ENODEV){
-        // perror("Disconnect");
-        return -errno;
-    } else if (bytes == -1 && errno != EAGAIN){ //Mode switch controller
+    } else if (bytes == -1 && errno != EAGAIN){ //Mode switch 
         return 99;
     } 
     return 0; //No data read, but no error
@@ -435,7 +430,7 @@ char* find_matching_hidraw_devices() {
             sleep(DEVICE_CHECK_INTERVAL);
             continue;
         }
-
+        
         struct dirent *entry;
         while ((entry = readdir(dir))) {
             if (entry->d_name[0] == '.') continue;
@@ -470,23 +465,20 @@ char* find_matching_hidraw_devices() {
 }
 void* hidraw_reading_thread(void* ptr){
     struct input_ctx* ctx = (struct input_ctx*)ptr;
-    // printf("Thread started, ctx: %p\n", ctx);
     if (!ctx) {
         fprintf(stderr, "Context is NULL\n");
         return NULL;
     }
     char* device = find_matching_hidraw_devices();
-    int fd = open(device, O_RDONLY | O_NONBLOCK);
+    int fd = open(device, O_RDONLY);
     if (fd < 0) {
         perror("Failed to open device");
+        close(fd);
         return NULL;
     }
-
     int rc;
-    int termination_condition = 1;
-    // while(!ctx->termination_condition) {   
+    int termination_condition = 1; 
     message_t* msg = NULL;
-    // message_t* msg = get_free_msg
     while(termination_condition == 1) {  
         if (msg == NULL) {
             for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
@@ -497,21 +489,23 @@ void* hidraw_reading_thread(void* ptr){
             }
         }
         if (msg == NULL) {
-            usleep(10000); // Wait a bit before retrying
+            usleep(30000); // Wait a bit before retrying
             continue;
         }
         
         int rc = dev_hidraw_read(fd, &msg->data.hidraw);
-        //Handle the Legion Gocontroller mode switch, wait for controller to reinit hidraw.
-        if(rc == 99){
+        if(rc == 99){  // Handle Legion L + R1 hold
+            close(fd); //Close the descriptor
             sleep(3);
             printf("Lost device i/o error");
             device = find_matching_hidraw_devices();
             fd = open(device, O_RDONLY | O_NONBLOCK);
+            
             if (fd < 0) {
-                perror("Failed to open device");
+                free(device);
                 return NULL;
             }
+            
         }
         if(rc == 0){
             msg->type = MSG_TYPE_HIDRAW;
@@ -528,12 +522,11 @@ void* hidraw_reading_thread(void* ptr){
             msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
             msg = NULL;
         }
-        usleep(15000);
+        usleep(20000);
     }
-    
-    close(fd);
+    if(fd>=0) close(fd);
+    free(device);
     return NULL;
-    //memory leak go brrrr
 }
 
 static void input_hidraw(
@@ -545,14 +538,16 @@ static void input_hidraw(
             // Break the loop if termination is requested
             break;
         }
+
         // Create and start the HIDRAW reading thread
         pthread_t hidraw_thread;
-        int ret = pthread_create(&hidraw_thread, NULL, hidraw_reading_thread, ctx);
+        int hidraw_thread_creation = pthread_create(&hidraw_thread, NULL, hidraw_reading_thread, ctx);
 
         // Wait for the HIDRAW reading thread to finish
         pthread_join(hidraw_thread, NULL);
-
+        
     }
+    
 
 }
 
@@ -906,7 +901,8 @@ void *input_dev_thread_func(void *ptr) {
         }
 
         input_udev(in_dev, &ctx);
-    } else if (in_dev->dev_type == input_dev_type_iio) {
+    } 
+    else if (in_dev->dev_type == input_dev_type_iio) {
         // prepare space and empty messages
         for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
             ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
@@ -914,13 +910,13 @@ void *input_dev_thread_func(void *ptr) {
         }
 
         input_iio(in_dev, &ctx);
-    } else if (in_dev->dev_type == input_dev_type_hidraw) {
+    } 
+    else if (in_dev->dev_type == input_dev_type_hidraw) {
         for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
             ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
             ctx.messages[h].type = MSG_TYPE_IMU;
         }
         input_hidraw(in_dev, &ctx);
-
     }
     
     return NULL;
