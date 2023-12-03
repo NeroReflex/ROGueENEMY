@@ -6,40 +6,49 @@
 
 static const char* const platform_input_path = "/sys/devices/platform/asus-mcu.0/input/mode";
 
-static int find_device(struct udev *udev) {
+static struct udev_device* find_device(struct udev *udev) {
     struct udev_enumerate *const enumerate = udev_enumerate_new(udev);
     if (enumerate == NULL) {
         fprintf(stderr, "Error in udev_enumerate_new: mode switch will not be available.\n");
-        return -ENOENT;
+        return NULL;
     }
 
     const int add_match_subsystem_res = udev_enumerate_add_match_subsystem(enumerate, "hid");
     if (add_match_subsystem_res != 0) {
         fprintf(stderr, "Error in udev_enumerate_add_match_subsystem: %d\n", add_match_subsystem_res);
-        return -ENOENT;
+        return NULL;
     }
 
     const int add_match_sysattr_res = udev_enumerate_add_match_sysattr(enumerate, "gamepad_mode", NULL);
     if (add_match_sysattr_res != 0) {
         fprintf(stderr, "Error in udev_enumerate_add_match_sysattr: %d\n", add_match_sysattr_res);
-        return -ENOENT;
+        return NULL;
     }
 
     const int enumerate_scan_devices_res = udev_enumerate_scan_devices(enumerate);
     if (enumerate_scan_devices_res != 0) {
         fprintf(stderr, "Error in udev_enumerate_scan_devices: %d\n", enumerate_scan_devices_res);
-        return -ENOENT;
+        return NULL;
     }
 
-    struct udev_list_entry *udev_lst = udev_enumerate_get_list_entry(enumerate);
+    struct udev_list_entry *const udev_lst_frst = udev_enumerate_get_list_entry(enumerate);
 
-    while (udev_lst != NULL) {
-        printf("UDEV: %s\n", udev_list_entry_get_name(udev_lst));
+    struct udev_list_entry *list_entry = NULL;
+    udev_list_entry_foreach(list_entry, udev_lst_frst) {
+        const char* const name = udev_list_entry_get_name(list_entry);
 
-        udev_lst = udev_list_entry_get_next(udev_lst);
+        printf("Opening udev device %s...\n", name);
+
+        struct udev_device *const device = udev_device_new_from_syspath(udev, name);
+        if (device == NULL) {
+            fprintf(stderr, "Could not open %s\n", name);
+            continue;
+        }
+
+        // TODO: uncomment this when the rest is ready return device;
     }
-    
-    return -ENOENT;
+
+    return NULL;
 }
 
 int init_platform(rc71l_platform_t *const platform) {
