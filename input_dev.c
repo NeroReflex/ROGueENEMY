@@ -667,6 +667,12 @@ void *input_dev_thread_func(void *ptr) {
         }
 
         input_udev(in_dev, &ctx);
+
+        // free memory
+        for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
+            free(ctx.messages[h].data.event.ev);
+            ctx.messages[h].data.event.ev_size = 0;
+        }
     } else if (in_dev->dev_type == input_dev_type_iio) {
         // prepare space and empty messages
         for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
