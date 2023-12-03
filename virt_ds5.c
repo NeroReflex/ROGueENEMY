@@ -490,6 +490,10 @@ static int send_data(int fd, logic_t *const logic) {
     // buf[39] = gs.touchpadY;
     // buf[40] = gs.touchpadX;
     // buf[41] = ;;
+    // # Trackpad touch 1: id, active, x, y
+    //         buf[35] & 0x7f, (buf[35] >> 7) == 0,
+    //         ((buf[37] & 0x0f) << 8) | buf[36],
+    //         buf[38] << 4 | ((buf[37] & 0xf0) >> 4),
 
     // buf[48] = 0x00;
     // buf[49] = 0x00;
