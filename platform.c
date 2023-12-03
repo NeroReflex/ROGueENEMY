@@ -12,10 +12,18 @@ static int find_device(struct udev *udev) {
         fprintf(stderr, "Error in udev_enumerate_new: mode switch will not be available.\n");
         return -ENOENT;
     }
-    
-    const int enumerate_scan_devices_res = udev_enumerate_scan_devices(enumerate);
 
-    const int enumerate_scan_subsystems_res = udev_enumerate_scan_subsystems(enumerate);
+    const int add_match_subsystem_res = udev_enumerate_add_match_subsystem(enumerate, "hid");
+    if (add_match_subsystem_res != 0) {
+        fprintf(stderr, "Error in udev_enumerate_add_match_subsystem: %d", add_match_subsystem_res);
+        return -ENOENT;
+    }
+
+    const int enumerate_scan_devices_res = udev_enumerate_scan_devices(enumerate);
+    if (enumerate_scan_devices_res != 0) {
+        fprintf(stderr, "Error in udev_enumerate_scan_devices: %d", enumerate_scan_devices_res);
+        return -ENOENT;
+    }
 
     struct udev_list_entry *udev_lst = udev_enumerate_get_list_entry(enumerate);
 
