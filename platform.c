@@ -1,13 +1,56 @@
 #include <asm-generic/errno-base.h>
 #include <stdlib.h>
-#define PLATFORM_FILE
+#include <libudev.h>
+
 #include "platform.h"
 
 static const char* const platform_input_path = "/sys/devices/platform/asus-mcu.0/input/mode";
 
+static int find_device(struct udev *udev) {
+    struct udev_enumerate *const enumerate = udev_enumerate_new(udev);
+    if (enumerate == NULL) {
+        fprintf(stderr, "Error in udev_enumerate_new: mode switch will not be available.\n");
+        return -ENOENT;
+    }
+    
+    const int enumerate_scan_devices_res = udev_enumerate_scan_devices(enumerate);
+
+    const int enumerate_scan_subsystems_res = udev_enumerate_scan_subsystems(enumerate);
+
+    struct udev_list_entry *udev_lst = udev_enumerate_get_list_entry(enumerate);
+
+    while (udev_lst != NULL) {
+        printf("UDEV: %s\n", udev_list_entry_get_name(udev_lst));
+
+        udev_lst = udev_list_entry_get_next(udev_lst);
+    }
+    
+    return -ENOENT;
+}
+
 int init_platform(rc71l_platform_t *const platform) {
+    platform->udev = NULL;
+
     if (access(platform_input_path, F_OK) != 0) {
-        fprintf(stderr, "Unable to find the MCU platform mode file %s: modes cannot be switched.\n", platform_input_path);
+        fprintf(stderr, "Unable to find the MCU platform mode file %s: asus-mcu not found.\n", platform_input_path);
+
+        /* create udev object */
+        platform->udev = udev_new();
+        if (platform->udev == NULL) {
+            fprintf(stderr, "Cannot create udev context: mode switch will not be available.\n");
+            return -ENOENT;
+        }
+
+        if (find_device(platform->udev) != 0) {
+            fprintf(stderr, "Cannot locate asus-mcu device: mode switch will not be available.\n");
+            return -ENOENT;
+        } else {
+            // TODO: populate the following
+            platform->modes_count = 0;
+            platform->mode = 0;
+            return 0;
+        }
+
         return -ENOENT;
     }
 

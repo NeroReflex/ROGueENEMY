@@ -3,6 +3,8 @@
 #include "rogue_enemy.h"
 
 typedef struct rc71l_platform {
+    struct udev *udev;
+    
     unsigned long mode;
     unsigned int modes_count;
 } rc71l_platform_t;
