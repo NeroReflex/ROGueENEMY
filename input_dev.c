@@ -804,7 +804,8 @@ static void input_udev(
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
 
             if (has_ff) {
-                
+                usleep(1000); 
+                //(debounce)  Also reduces the amount of extra reporting done when a button is pressed, currently set at 1ms. Which matches hardware.
                 void* rmsg = NULL;
 
                 const int rumble_msg_recv_res = queue_pop_timeout(ctx->rumble_queue, &rmsg, timeout_ms);
@@ -921,6 +922,6 @@ void *input_dev_thread_func(void *ptr) {
         //Disabling had no effect on CPU usage
         input_hidraw(in_dev, &ctx);
     }
-    
+    free(ctx.messages);
     return NULL;
 }
