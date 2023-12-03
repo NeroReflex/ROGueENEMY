@@ -887,8 +887,8 @@ void *output_dev_rumble_thread_func(void* ptr) {
 	const int timeout_ms = 40;
 
     for (;;) {
-		// sleep for about 4ms: this is an aggressive polling for rumble.
-		usleep(4000);
+		// sleep for about 16ms: this is an aggressive polling for rumble
+		usleep(16000);
 
 		// here transmit the rumble request to the input-device-handling components
 		pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
@@ -951,7 +951,7 @@ void *output_dev_thread_func(void *ptr) {
 
     for (;;) {
 		void *raw_ev;
-		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1000);
+		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 5000);
 		if (pop_res == 0) {
 			message_t *const msg = (message_t*)raw_ev;
 			handle_msg(out_dev, msg);
