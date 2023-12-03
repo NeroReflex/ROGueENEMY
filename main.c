@@ -63,7 +63,6 @@ static input_dev_t in_asus_kb_3_dev = {
 };
 
 static uinput_filters_t in_xbox_filters = {
-  // .name = "Microsoft X-Box 360 pad",
   .name = "Generic X-Box pad",
 };
 
@@ -127,6 +126,9 @@ int main(int argc, char ** argv) {
   pthread_t gamepad_thread;
   pthread_t xbox_thread, asus_kb_1_thread, asus_kb_2_thread, asus_kb_3_thread, iio_thread, hidraw_thread;
   
+  
+  //Added 1ms intial "input delay" to match hardware controller delay. Updated to 1.5ms, seems good so far. 
+  //Reduced cpu usage by ~12%
   const int gamepad_thread_creation = pthread_create(&gamepad_thread, NULL, output_dev_thread_func, (void*)(&out_gamepadd_dev));
   if (gamepad_thread_creation != 0) {
     fprintf(stderr, "Error creating gamepad output thread: %d\n", gamepad_thread_creation);
@@ -134,7 +136,8 @@ int main(int argc, char ** argv) {
     logic_request_termination(&global_logic);
     goto gamepad_thread_err;
   }
-
+  //Using 30% cpu usage for some reason
+  //Updated sleep to 5K -> reduced cpu usage by ~20%
   const int xbox_thread_creation = pthread_create(&xbox_thread, NULL, input_dev_thread_func, (void*)(&in_xbox_dev));
   if (xbox_thread_creation != 0) {
     fprintf(stderr, "Error creating xbox input thread: %d\n", xbox_thread_creation);
@@ -142,30 +145,31 @@ int main(int argc, char ** argv) {
     logic_request_termination(&global_logic);
     goto xbox_drv_thread_err;
   }
+  /* Disabling had no effect on CPU usage avg
+  // const int asus_kb_1_thread_creation = pthread_create(&asus_kb_1_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_1_dev));
+  // if (asus_kb_1_thread_creation != 0) {
+  //   fprintf(stderr, "Error creating asus keyboard (1) input thread: %d\n", asus_kb_1_thread_creation);
+  //   ret = -1;
+  //   logic_request_termination(&global_logic);
+  //   goto asus_kb_1_thread_err;
+  // }
 
-  const int asus_kb_1_thread_creation = pthread_create(&asus_kb_1_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_1_dev));
-  if (asus_kb_1_thread_creation != 0) {
-    fprintf(stderr, "Error creating asus keyboard (1) input thread: %d\n", asus_kb_1_thread_creation);
-    ret = -1;
-    logic_request_termination(&global_logic);
-    goto asus_kb_1_thread_err;
-  }
+  // const int asus_kb_2_thread_creation = pthread_create(&asus_kb_2_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_2_dev));
+  // if (asus_kb_2_thread_creation != 0) {
+  //   fprintf(stderr, "Error creating asus keyboard (2) input thread: %d\n", asus_kb_2_thread_creation);
+  //   ret = -1;
+  //   logic_request_termination(&global_logic);
+  //   goto asus_kb_2_thread_err;
+  // }
 
-  const int asus_kb_2_thread_creation = pthread_create(&asus_kb_2_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_2_dev));
-  if (asus_kb_2_thread_creation != 0) {
-    fprintf(stderr, "Error creating asus keyboard (2) input thread: %d\n", asus_kb_2_thread_creation);
-    ret = -1;
-    logic_request_termination(&global_logic);
-    goto asus_kb_2_thread_err;
-  }
-
-  const int asus_kb_3_thread_creation = pthread_create(&asus_kb_3_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_3_dev));
-  if (asus_kb_3_thread_creation != 0) {
-    fprintf(stderr, "Error creating asus keyboard (3) input thread: %d\n", asus_kb_3_thread_creation);
-    ret = -1;
-    logic_request_termination(&global_logic);
-    goto asus_kb_3_thread_err;
-  }
+  // const int asus_kb_3_thread_creation = pthread_create(&asus_kb_3_thread, NULL, input_dev_thread_func, (void*)(&in_asus_kb_3_dev));
+  // if (asus_kb_3_thread_creation != 0) {
+  //   fprintf(stderr, "Error creating asus keyboard (3) input thread: %d\n", asus_kb_3_thread_creation);
+  //   ret = -1;
+  //   logic_request_termination(&global_logic);
+  //   goto asus_kb_3_thread_err;
+  // }
+  */
 
   const int iio_thread_creation = pthread_create(&iio_thread, NULL, input_dev_thread_func, (void*)(&in_iio_dev));
   if (iio_thread_creation != 0) {
@@ -174,6 +178,7 @@ int main(int argc, char ** argv) {
     logic_request_termination(&global_logic);
     goto iio_thread_err;
   }
+  // Disabling had no signification effect avg CPU usage
   const int hidraw_thread_creation = pthread_create(&hidraw_thread, NULL, input_dev_thread_func, (void*)(&in_hidraw_dev));
   if (hidraw_thread_creation != 0) {
     fprintf(stderr, "Error creating iio input thread: %d\n", hidraw_thread_creation);

@@ -803,6 +803,7 @@ void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
 	// unsigned char trackpadDataY = msg->data.hidraw.data[29]; //Y axis	
 	// gamepad->touchpadX = trackpadDataX;
 	// gamepad->touchpadY = trackpadDataY;
+	// printf("Touchpad data: X:%d Y:%d\n", trackpadDataX, trackpadDataY);
 
 }
 void update_gs_from_hidraw(gamepad_status_t *gs, const message_t *msg) {
@@ -995,7 +996,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 			}
 
 #if defined(INCLUDE_OUTPUT_DEBUG)
-			printf("gyro_x: %d\t\t| gyro_y: %d\t\t| gyro_z: %d\t\t\n", (int)out_dev->logic->gamepad.raw_gyro[0], (int)out_dev->logic->gamepad.raw_gyro[1], (int)out_dev->logic->gamepad.raw_gyro[2]);
+			// printf("gyro_x: %d\t\t| gyro_y: %d\t\t| gyro_z: %d\t\t\n", (int)out_dev->logic->gamepad.raw_gyro[0], (int)out_dev->logic->gamepad.raw_gyro[1], (int)out_dev->logic->gamepad.raw_gyro[2]);
 #endif
 		} else {
 			fprintf(stderr, "[imu] Unable to begin the gamepad status update: %d\n", upd_beg_res);
@@ -1007,7 +1008,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 		// 	printf("%02X ", msg->data.hidraw.data[i]);
 		// }
 		// printf("\n");
-
+		
 
 		decode_hidraw_to_gamepad(&out_dev->logic->gamepad, msg);
 		//Begin updating gamepad status
@@ -1126,6 +1127,7 @@ void *output_dev_thread_func(void *ptr) {
 		if (logic_termination_requested(out_dev->logic)) {
             break;
         }
+		usleep(1500); //DS5 controller hardware input delay is  3.5ms, we will assume that game have limitations to match the hardware. 
     }
 
 	pthread_join(rumble_thread, NULL);

@@ -657,7 +657,7 @@ static void input_iio(
         }
     }
 }
-
+// Debug function to reduce CPU usage
 static void input_udev(
     input_dev_t *const in_dev,
     struct input_ctx *const ctx
@@ -797,7 +797,8 @@ static void input_udev(
             }
         }
 
-        const int timeout_ms = 1200;
+        // const int timeout_ms = 1200; 40% usage
+        const int timeout_ms = 5000; //Reduced from 1200 same functionality but cpu usage reduced by ~20%, any higher yield no sig results
 
         // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
@@ -857,6 +858,7 @@ static void input_udev(
                     free(rumble_msg);
                 }
             } else {
+                //Sleep while there is no inputs
                 usleep(timeout_ms * 1000);
             }
 
@@ -908,7 +910,7 @@ void *input_dev_thread_func(void *ptr) {
             ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
             ctx.messages[h].type = MSG_TYPE_IMU;
         }
-
+        //Disabling had no effect on CPU usage 12.3 vs 12.6
         input_iio(in_dev, &ctx);
     } 
     else if (in_dev->dev_type == input_dev_type_hidraw) {
@@ -916,6 +918,7 @@ void *input_dev_thread_func(void *ptr) {
             ctx.messages[h].flags = MESSAGE_FLAGS_HANDLE_DONE;
             ctx.messages[h].type = MSG_TYPE_IMU;
         }
+        //Disabling had no effect on CPU usage
         input_hidraw(in_dev, &ctx);
     }
     
