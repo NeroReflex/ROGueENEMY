@@ -971,7 +971,7 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 		}
 	} else if (msg->type == MSG_TYPE_IMU) {
 		const int upd_beg_res = logic_begin_status_update(out_dev->logic);
-		const scaleFactor = 200;
+		const scaleFactor = 20;
 		if (upd_beg_res == 0) {
 			if (msg->data.imu.flags & IMU_MESSAGE_FLAGS_ANGLVEL) {
 				out_dev->logic->gamepad.last_gyro_motion_time = msg->data.imu.gyro_read_time;
@@ -1087,7 +1087,7 @@ void *output_dev_rumble_thread_func(void* ptr) {
             break;
         }
     }
-
+	
     return NULL;
 }
 
