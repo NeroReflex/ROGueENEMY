@@ -951,7 +951,7 @@ void *output_dev_thread_func(void *ptr) {
 
     for (;;) {
 		void *raw_ev;
-		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1800);
+		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1000);
 		if (pop_res == 0) {
 			message_t *const msg = (message_t*)raw_ev;
 			handle_msg(out_dev, msg);

@@ -568,8 +568,7 @@ static void input_udev(
             }
         }
 
-        // const int timeout_ms = 1200; 40% usage
-        const int timeout_ms = 5000; //Reduced from 1200 same functionality but cpu usage reduced by ~20%, any higher yield no sig results
+        const int timeout_ms = 1200;
 
         // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
@@ -668,12 +667,6 @@ void *input_dev_thread_func(void *ptr) {
         }
 
         input_udev(in_dev, &ctx);
-
-        // free memory
-        for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
-            free(ctx.messages[h].data.event.ev);
-            ctx.messages[h].data.event.ev_size = 0;
-        }
     } else if (in_dev->dev_type == input_dev_type_iio) {
         // prepare space and empty messages
         for (int h = 0; h < MAX_MESSAGES_IN_FLIGHT; ++h) {
