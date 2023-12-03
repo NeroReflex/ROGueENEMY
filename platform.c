@@ -15,13 +15,19 @@ static int find_device(struct udev *udev) {
 
     const int add_match_subsystem_res = udev_enumerate_add_match_subsystem(enumerate, "hid");
     if (add_match_subsystem_res != 0) {
-        fprintf(stderr, "Error in udev_enumerate_add_match_subsystem: %d", add_match_subsystem_res);
+        fprintf(stderr, "Error in udev_enumerate_add_match_subsystem: %d\n", add_match_subsystem_res);
+        return -ENOENT;
+    }
+
+    const int add_match_sysattr_res = udev_enumerate_add_match_sysattr(enumerate, "gamepad_mode", NULL);
+    if (add_match_sysattr_res != 0) {
+        fprintf(stderr, "Error in udev_enumerate_add_match_sysattr: %d\n", add_match_sysattr_res);
         return -ENOENT;
     }
 
     const int enumerate_scan_devices_res = udev_enumerate_scan_devices(enumerate);
     if (enumerate_scan_devices_res != 0) {
-        fprintf(stderr, "Error in udev_enumerate_scan_devices: %d", enumerate_scan_devices_res);
+        fprintf(stderr, "Error in udev_enumerate_scan_devices: %d\n", enumerate_scan_devices_res);
         return -ENOENT;
     }
 
