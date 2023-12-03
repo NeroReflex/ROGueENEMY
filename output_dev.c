@@ -731,49 +731,18 @@ void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
 		// gamepad->center = (backButtonbyte & 0x01) ? 1 : 0;
 		//QAM contraption using hidraw BUG: SENDS AND EXTRA X
 		static int wasSpecialComboPressed  = 0;
-		
-			if ((backButtonbyte & 0x02) != 0 && buttonState == 0) {
-				// Start the sequence: Press the center button
-				gamepad->center = 1;
-				gamepad->cross = 0; // Initially, cross button is not pressed
-				buttonState = 1; // Move to next state
+		// gamepad->center = (backButtonbyte & 0x01) ? 1 : 0; // Center button
+		if(gamepad->flags == 0){
+			gamepad->center = (backButtonbyte & 0x01) ? 1 : 0; // Center button
+		}
+		if((backButtonbyte & 0x02) != 0){
+			wasSpecialComboPressed = 1;
+		} else {
+			if(wasSpecialComboPressed){
+				gamepad->flags |= GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
+				wasSpecialComboPressed = 0;
 			} 
-			// Regular center button press
-			if (!(backButtonbyte & 0x02)) {
-				gamepad->center = (backButtonbyte & 0x01) ? 1 : 0;
-				if (buttonState > 0) {
-					// Reset the state if the special combo is no longer being pressed
-					buttonState = 0;
-				}
-}
-
-			if (buttonState > 0) {
-				buttonState++; // Increment state counter
-			}
-
-			// Handle state transitions
-			if (buttonState == INITIAL_DELAY) {
-				// Now press the cross button after initial delay
-				gamepad->cross = 1;
-			}
-
-			if (buttonState == INITIAL_DELAY + PRESS_DURATION) {
-				// Time to release the cross button
-				gamepad->cross = 0;
-			}
-
-			if (buttonState >= INITIAL_DELAY + PRESS_DURATION + CROSS_RELEASE_DELAY && buttonState < INITIAL_DELAY + PRESS_DURATION + CROSS_RELEASE_DELAY + CENTER_RELEASE_DELAY) {
-				// Keep the center button pressed for a while after releasing cross
-				gamepad->center = 1;
-			}
-
-			if (buttonState >= INITIAL_DELAY + PRESS_DURATION + CROSS_RELEASE_DELAY + CENTER_RELEASE_DELAY) {
-				// Finally, release the center button
-				gamepad->center = 0;
-				buttonState = 0; // Reset state for next press
-			}
-
-
+		}
 
 	} else {
 		// Original position
@@ -781,18 +750,16 @@ void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
         gamepad->option = (backButtonbyte & 0x02) ? 1 : 0;
 		//QAM contraption using hidraw BUG: SENDS AND EXTRA X
 		static int wasSpecialComboPressed  = 0;
+		if(gamepad->flags == 0){
+			gamepad->center = (legionButtonbyte & 0x80) ? 1 : 0; // Center button
+		}
 		if((legionButtonbyte & 0x40) != 0){
-			gamepad->center = 1;
-			gamepad->cross = 1;
 			wasSpecialComboPressed = 1;
 		} else {
 			if(wasSpecialComboPressed){
-				gamepad->center = 0;
-				gamepad->cross =0;
+				gamepad->flags |= GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
 				wasSpecialComboPressed = 0;
-			} else {
-				gamepad->center = (legionButtonbyte & 0x80) ? 1 : 0; // Center button
-			}
+			} 
 		}
     // Special handling for the combination of Center + Cross
 	}
@@ -1127,7 +1094,7 @@ void *output_dev_thread_func(void *ptr) {
 		if (logic_termination_requested(out_dev->logic)) {
             break;
         }
-		usleep(1500); //DS5 controller hardware input delay is  3.5ms, we will assume that game have limitations to match the hardware. 
+		usleep(1500); //Usage 2.7%
     }
 
 	pthread_join(rumble_thread, NULL);

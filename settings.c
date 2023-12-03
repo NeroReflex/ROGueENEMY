@@ -4,7 +4,7 @@
 
 void init_config(controller_settings_t *const conf) {
     conf->ff_gain = 100;
-    conf->enable_qam = 0;
+    conf->enable_qam = 1;
     conf->nintendo_layout = 0;
 }
 
