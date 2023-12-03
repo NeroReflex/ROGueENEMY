@@ -804,6 +804,7 @@ void *virt_ds4_thread_func(void *ptr) {
         if (logic->gamepad_output != GAMEPAD_OUTPUT_DS4) {
             // sleep for 500ms before re-checking
             usleep(500000);
+            continue;
         }
 
         fprintf(stderr, "Open uhid-cdev %s\n", path);

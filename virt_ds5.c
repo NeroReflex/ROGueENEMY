@@ -499,6 +499,7 @@ void *virt_ds5_thread_func(void *ptr) {
         if (logic->gamepad_output != GAMEPAD_OUTPUT_DS5) {
             // sleep for 500ms before re-checking
             usleep(500000);
+            continue;
         }
 
         fprintf(stderr, "Open uhid-cdev %s\n", path);
