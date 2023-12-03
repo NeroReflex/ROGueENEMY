@@ -568,7 +568,8 @@ static void input_udev(
             }
         }
 
-        const int timeout_ms = 1200;
+        // const int timeout_ms = 1200; 40% usage
+        const int timeout_ms = 5000; //Reduced from 1200 same functionality but cpu usage reduced by ~20%, any higher yield no sig results
 
         // while the incoming events thread run...
         while ((ctx->flags & INPUT_CTX_FLAGS_READ_TERMINATED) == 0) {
