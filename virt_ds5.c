@@ -19,7 +19,7 @@
 #define DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2 0x04
 #define DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION  0x01
 
-#define DS5_SPEC_DELTA_TIME         188.0f
+#define DS5_SPEC_DELTA_TIME         4096.0f
 
 static const char* path = "/dev/uhid";
 
