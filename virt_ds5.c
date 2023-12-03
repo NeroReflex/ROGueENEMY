@@ -456,28 +456,49 @@ static int send_data(int fd, logic_t *const logic) {
     //buf[11] = ;
     
     //buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
-    memcpy(&buf[16], &g_x, sizeof(int16_t));
-    memcpy(&buf[18], &g_y, sizeof(int16_t));
-    memcpy(&buf[20], &g_z, sizeof(int16_t));
-    memcpy(&buf[22], &a_x, sizeof(int16_t));
-    memcpy(&buf[24], &a_y, sizeof(int16_t));
-    memcpy(&buf[26], &a_z, sizeof(int16_t));
-    memcpy(&buf[28], &timestamp, sizeof(timestamp));
+    memcpy(&buf[16], &g_x, sizeof(int16_t)); //Acceleration X
+    memcpy(&buf[18], &g_y, sizeof(int16_t)); //Acceleration Y
+    memcpy(&buf[20], &g_z, sizeof(int16_t)); //Acceleration Z
+    memcpy(&buf[22], &a_x, sizeof(int16_t)); //Gyro roll
+    memcpy(&buf[24], &a_y, sizeof(int16_t)); //Gyro Yaw
+    memcpy(&buf[26], &a_z, sizeof(int16_t)); //Gyro pitch
+    memcpy(&buf[28], &timestamp, sizeof(timestamp)); //4 bytes? ...[32]
 
 /*
     buf[30] = 0x1b; // no headset attached
 */  
+    buf[35] = 0x80; // IDK... it seems constant...
 
     //Trackpad stuff
-    buf[39] = gs.touchpadX;
-    buf[40] = gs.touchpadY;
-    buf[41] = gs.touchpadY;
-    buf[62] = 0x80; // IDK... it seems constant...
-    buf[57] = 0x80; // IDK... it seems constant...
-    buf[53] = 0x80; // IDK... it seems constant...
-    buf[48] = 0x80; // IDK... it seems constant...
-    buf[35] = 0x80; // IDK... it seems constant...
-    buf[44] = 0x80; // IDK... it seems constant...
+    //Example packets
+// 0x04,                        buf[36]
+// 0x01,                        buf[37]
+// 0x04, 0x69, 0x91, 0x1a,      buf[38]buf[39]buf[40]buf[41]
+// 0x06, 0x15, 0x45, 0x1a,
+// 0x05,
+// 0x04, 0x66, 0x11, 0x1a,
+// 0x06, 0x10, 0x15, 0x1a,
+// 0x0a,
+// 0x04, 0x63, 0x81, 0x19,
+// 0x06, 0x0c, 0xe5, 0x19,
+// 0x0f,
+// 0x04, 0x5f, 0xf1, 0x18,
+// 0x06, 0x08, 0xc5, 0x19
+    // buf[36] = 0x01; //Num of finger 0x00->0x04
+    // buf[37] = 0x01; //Packet counter
+    // buf[38] = 0x00; //Active low?
+    // buf[39] = gs.touchpadY;
+    // buf[40] = gs.touchpadX;
+    // buf[41] = ;;
+
+    // buf[48] = 0x00;
+    // buf[49] = 0x00;
+    // buf[50] = 0x00;
+    //buf[62] = 0x80; // IDK... it seems constant...
+    //buf[57] = 0x80; // IDK... it seems constant...
+    //buf[53] = 0x80; // IDK... it seems constant...
+    // buf[48] = 0x80; // IDK... it seems constant...
+    //buf[44] = 0x80; // IDK... it seems constant...
 
     struct uhid_event l = {
         .type = UHID_INPUT2,
