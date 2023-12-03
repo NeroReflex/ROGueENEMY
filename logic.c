@@ -82,6 +82,7 @@ int logic_create(logic_t *const logic) {
         printf("Gamepad output is %d\n", (int)logic->gamepad_output);
     } else {
         fprintf(stderr, "Unable to initialize Asus RC71L MCU: %d\n", init_platform_res);
+        logic->gamepad_output = (logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) ? GAMEPAD_OUTPUT_DS4 : GAMEPAD_OUTPUT_EVDEV;
     }
 
     queue_init(&logic->rumble_events_queue, 1);
