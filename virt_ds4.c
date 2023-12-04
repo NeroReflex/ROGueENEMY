@@ -800,12 +800,12 @@ static int send_data(int fd, logic_t *const logic) {
 void *virt_ds4_thread_func(void *ptr) {
     logic_t *const logic = (logic_t*)ptr;
 
-    int disable = 0;
-    if (disable){
+    
     for (;;) {
         if (logic->gamepad_output != GAMEPAD_OUTPUT_DS4) {
             // sleep for 500ms before re-checking
             usleep(5000000); //5 seconds check (LLG has no use mode switch (yet))
+            continue;
         }
 
         fprintf(stderr, "Open uhid-cdev %s\n", path);
@@ -841,6 +841,6 @@ void *virt_ds4_thread_func(void *ptr) {
         virt_ds4_thread_func_reset:
             destroy(fd);
     }
-    }
+    
     return NULL;
 }
