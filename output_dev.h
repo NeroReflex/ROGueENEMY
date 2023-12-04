@@ -4,10 +4,10 @@
 #include "logic.h"
 
 // // Emulates a "Generic" controller:
-#define OUTPUT_DEV_NAME             "ROGueENEMY"
-#define OUTPUT_DEV_VENDOR_ID        0x108c
-#define OUTPUT_DEV_PRODUCT_ID       0x0323
-#define OUTPUT_DEV_VERSION          0x0111
+// #define OUTPUT_DEV_NAME             "ROGueENEMY"
+// #define OUTPUT_DEV_VENDOR_ID        0x108c
+// #define OUTPUT_DEV_PRODUCT_ID       0x0323
+// #define OUTPUT_DEV_VERSION          0x0111
 
 
 // Emulates a steam controller
@@ -36,11 +36,11 @@
 
 
 // Emulates a DUALSENSE EDGE controller
-// #define OUTPUT_DEV_NAME             "Sony Interactive Entertainment DualSense Edge Wireless Controller"
-// #define OUTPUT_DEV_VENDOR_ID        0x054c
-// #define OUTPUT_DEV_PRODUCT_ID       0x0df2
-// #define OUTPUT_DEV_VERSION          0x8111
-// #define OUTPUT_DEV_BUS_TYPE         BUS_USB
+#define OUTPUT_DEV_NAME             "Sony Interactive Entertainment DualSense Edge Wireless Controller"
+#define OUTPUT_DEV_VENDOR_ID        0x054c
+#define OUTPUT_DEV_PRODUCT_ID       0x0df2
+#define OUTPUT_DEV_VERSION          0x8111
+#define OUTPUT_DEV_BUS_TYPE         BUS_USB
 
 
 
