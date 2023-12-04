@@ -100,7 +100,7 @@ int init_platform(rc71l_platform_t *const platform) {
             platform->mode = -1;
             return -ENOENT;
         } else {
-            printf("Asus MCU over hidraw: mode will be reset\n");
+            printf("Asus MCU over hidraw: %s -- mode will be reset\n", dev_name);
 
             platform->platform_mode = rc71l_platform_mode_hidraw;
             platform->modes_count = 3;
