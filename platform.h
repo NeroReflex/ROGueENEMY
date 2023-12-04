@@ -2,8 +2,15 @@
 
 #include "rogue_enemy.h"
 
+typedef enum rc71l_platform_mode {
+    rc71l_platform_mode_hidraw,
+    rc71l_platform_mode_asus_mcu,
+} rc71l_platform_mode_t;
+
 typedef struct rc71l_platform {
     struct udev *udev;
+
+    rc71l_platform_mode_t platform_mode;
     
     unsigned long mode;
     unsigned int modes_count;
