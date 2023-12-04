@@ -105,8 +105,8 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
 	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
         return;
 	
-	if (ev->u.output.size != 48) {
-        fprintf(stderr, "Invalid data length: got %d, expected 48\n", (int)ev->u.output.size);
+	if (ev->u.output.size != 64) {
+        fprintf(stderr, "Invalid data length: got %d, expected 64\n", (int)ev->u.output.size);
 
         return;
     }
