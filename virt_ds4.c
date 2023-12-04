@@ -800,34 +800,47 @@ static int send_data(int fd, logic_t *const logic) {
 void *virt_ds4_thread_func(void *ptr) {
     logic_t *const logic = (logic_t*)ptr;
 
-    fprintf(stderr, "Open uhid-cdev %s\n", path);
-	int fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
-	if (fd < 0) {
-		fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, fd);
-		return NULL;
-	}
-
-	fprintf(stderr, "Create uhid device\n");
-	int ret = create(fd);
-	if (ret) {
-		close(fd);
-		return NULL;
-	}
-
+    int disable = 0;
+    if (disable){
     for (;;) {
-        usleep(1250);
-        
-        event(fd, logic);
+        if (logic->gamepad_output != GAMEPAD_OUTPUT_DS4) {
+            // sleep for 500ms before re-checking
+            usleep(5000000); //5 seconds check (LLG has no use mode switch (yet))
+        }
 
-        if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
-            const int res = send_data(fd, logic);
-            if (res < 0) {
-                fprintf(stderr, "Error sending HID report: %d\n", res);
+        fprintf(stderr, "Open uhid-cdev %s\n", path);
+        int fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
+        if (fd < 0) {
+            fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, fd);
+            continue;
+        }
+
+        fprintf(stderr, "Create uhid device\n");
+        int ret = create(fd);
+        if (ret) {
+            close(fd);
+            continue;
+        }
+
+        for (;;) {
+            usleep(1250);
+        
+            event(fd, logic);
+
+            if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
+                const int res = send_data(fd, logic);
+                if (res < 0) {
+                    fprintf(stderr, "Error sending HID report: %d\n", res);
+                }
+            } else {
+                printf("DualShock has been terminated: closing the device.\n");
+                goto virt_ds4_thread_func_reset;
             }
         }
+        
+        virt_ds4_thread_func_reset:
+            destroy(fd);
     }
-
-    destroy(fd);
-
+    }
     return NULL;
 }
