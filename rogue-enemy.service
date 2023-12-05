@@ -1,0 +1,13 @@
+[Unit]
+Description=ROGueENEMY service
+
+[Service]
+Type=simple
+Nice = -15
+Restart=always
+RestartSec=5
+WorkingDirectory=/usr/bin
+ExecStart=/usr/bin/rogue-enemy
+
+[Install]
+WantedBy=multi-user.target
