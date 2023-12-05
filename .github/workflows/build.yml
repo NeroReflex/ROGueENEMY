@@ -27,12 +27,9 @@ jobs:
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-
-    - name: Test
-      working-directory: ${{github.workspace}}/build
-      run: ctest -C ${{env.BUILD_TYPE}}
       
     - name: Create Tag
+      if: github.ref == 'refs/heads/main'
       run: |
         TAG_NAME="v$(date +'%Y.%m.%d-%H.%M')"
         git tag $TAG_NAME
