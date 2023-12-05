@@ -32,6 +32,14 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: ctest -C ${{env.BUILD_TYPE}}
       
+    - name: Create Tag
+      run: |
+        TAG_NAME="v$(date +'%Y.%m.%d-%H.%M')"
+        git tag $TAG_NAME
+        git push origin $TAG_NAME
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -39,7 +47,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        release_name: legion go pre-built
         draft: false
         prerelease: false
 
@@ -51,4 +59,4 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./build/rogue-enemy
         asset_name: rogue-enemy
-        asset_content_type: application/zip
+        asset_content_type: application/octet-stream
