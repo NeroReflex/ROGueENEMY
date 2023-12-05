@@ -12,7 +12,7 @@ static const char* const platform_input_path = "/sys/devices/platform/asus-mcu.0
  * USB buffers to be used in a control transfer to make the joystick change buttons mode and scancodes
  * 0 is default (game_mode with back buttons sending F17 and F18 instead of F15 for both as when unconfigured)
  * 1 is mouse mode: back buttons still are F17 and F18
- * 2 is macro mode
+ * 2 is macro mode: the default when back paddles are chords. to be avoided as pressing those will break others buttons status.
  */
 static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 	{
@@ -591,7 +591,7 @@ int init_platform(rc71l_platform_t *const platform) {
             printf("Asus MCU over hidraw: %s -- mode will be reset\n", dev_name);
 
             platform->platform_mode = rc71l_platform_mode_hidraw;
-            platform->modes_count = 3;
+            platform->modes_count = 2;
             platform->mode = 0;
 
             // reset to mode 0: game mode
@@ -634,7 +634,7 @@ int init_platform(rc71l_platform_t *const platform) {
     fclose(mode_file);
 
     printf("Asus MCU platform found: current mode %lu\n", platform->mode);
-    platform->modes_count = 3;
+    platform->modes_count = 2;
 
     platform->platform_mode = rc71l_platform_mode_asus_mcu;
 
