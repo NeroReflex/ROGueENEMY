@@ -449,13 +449,13 @@ void *virt_evdev_thread_func(void *ptr) {
     devices_status_t *const stats = (devices_status_t*)ptr;
 
     const int gamepad_fd = create_gamepad_uinput();
-    if (gamepad_fd != 0) {
+    if (gamepad_fd < 0) {
         fprintf(stderr, "Unable to create the virtual evdev gamepad device: %d\n", gamepad_fd);
         return NULL;
     }
 
     const int imu_fd = create_imu_uinput();
-    if (gamepad_fd != 0) {
+    if (imu_fd < 0) {
         fprintf(stderr, "Unable to create the virtual evdev imu device: %d\n", gamepad_fd);
         return NULL;
     }

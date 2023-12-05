@@ -86,7 +86,7 @@ void *virt_mouse_kbd_thread_func(void *ptr) {
     devices_status_t *const stats = (devices_status_t*)ptr;
 
     const int mouse_fd = create_mouse_uinput();
-    if (mouse_fd != 0) {
+    if (mouse_fd < 0) {
         fprintf(stderr, "Unable to create the mouse virtual evdev: %d\n", mouse_fd);
         return NULL;
     }
