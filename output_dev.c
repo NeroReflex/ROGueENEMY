@@ -49,7 +49,7 @@ int create_output_dev(const char* uinput_path, output_dev_type_t type) {
 		case output_dev_imu: {
 #if defined(UI_SET_PHYS_STR)
 			ioctl(fd, UI_SET_PHYS_STR(18), PHYS_STR);
-#els
+#else
 			fprintf(stderr, "UI_SET_PHYS_STR unavailable.\n");
 #endif
 
