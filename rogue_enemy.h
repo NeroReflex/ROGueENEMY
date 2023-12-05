@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <time.h>
 #include <stdatomic.h>
 #include <inttypes.h>
 #include <fcntl.h>
-#include <time.h>
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>

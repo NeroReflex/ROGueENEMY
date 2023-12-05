@@ -6,6 +6,7 @@ void init_config(controller_settings_t *const conf) {
     conf->ff_gain = 100;
     conf->enable_qam = 0;
     conf->nintendo_layout = 0;
+    conf->gamepad_output_device = 1;
 }
 
 int fill_config(controller_settings_t *const conf, const char* file) {
@@ -44,6 +45,13 @@ int fill_config(controller_settings_t *const conf, const char* file) {
         conf->nintendo_layout = nintendo_layout;
     } else {
         fprintf(stderr, "nintendo_layout (bool) configuration not found. Default value will be used.\n");
+    }
+
+    int gamepad_output_device;
+    if (config_lookup_int(&cfg, "gamepad_output_device", &gamepad_output_device) != CONFIG_FALSE) {
+        conf->gamepad_output_device = gamepad_output_device;
+    } else {
+        fprintf(stderr, "gamepad_output_device (int) configuration not found. Default value will be used.\n");
     }
 
     config_destroy(&cfg);

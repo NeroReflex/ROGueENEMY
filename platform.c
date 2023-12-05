@@ -643,7 +643,7 @@ int init_platform(rc71l_platform_t *const platform) {
 
 int cycle_mode(rc71l_platform_t *const platform) {
     if (platform == NULL) {
-        return -1;
+        return -ENOENT;
     }
 
     char new_mode_str[] = { 
@@ -659,7 +659,7 @@ int cycle_mode(rc71l_platform_t *const platform) {
         char *const dev_name = find_device(platform->udev);
         if (dev_name == NULL) {
             fprintf(stderr, "Unable to locate Asus MCU hidraw to mode-switch. Mode will not be switched.\n");
-            return platform->mode;
+            return -ENOENT;
         }
 
         const int next_mode = (platform->mode + 1) % platform->modes_count;
@@ -667,13 +667,11 @@ int cycle_mode(rc71l_platform_t *const platform) {
         const int reset_res = hidraw_cycle_to_mode(dev_name, next_mode);
         if (reset_res != 0) {
             fprintf(stderr, "Unable to change mode of Asus MCU over hidraw: %d.\n", reset_res);
-            
-            free(dev_name);
+		}
 
-            return platform->mode;
-        }
+		free(dev_name);
 
-        platform->mode = next_mode;
+        return reset_res;
     } else if (platform->platform_mode == rc71l_platform_mode_asus_mcu) {
         FILE* mode_file = fopen(platform_input_path, "w");
         if (mode_file == NULL) {
@@ -685,7 +683,7 @@ int cycle_mode(rc71l_platform_t *const platform) {
         const int write_bytes = fwrite((void*)&new_mode_str[0], 1, len, mode_file);
         if (write_bytes < len) {
             fprintf(stderr, "Error writing new mode: expected to write %d bytes, %d written.\n", (int)len, (int)write_bytes);
-            return -2;
+            return -EIO;
         }
 
         platform->mode = new_mode;
@@ -693,17 +691,9 @@ int cycle_mode(rc71l_platform_t *const platform) {
         fclose(mode_file);
     }
 
-    return platform->mode;
-}
-
-int is_gamepad_mode(rc71l_platform_t *const platform) {
-    return platform != NULL ? platform->mode == 0 : 0;
+    return -ENOENT;
 }
 
 int is_mouse_mode(rc71l_platform_t *const platform) {
     return platform != NULL ? platform->mode == 1 : 0;
-}
-
-int is_macro_mode(rc71l_platform_t *const platform) {
-    return platform != NULL ? platform->mode == 2 : 0;
 }

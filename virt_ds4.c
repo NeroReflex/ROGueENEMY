@@ -339,7 +339,7 @@ static void destroy(int fd)
  * uhid program shouldn't do this but instead just forward the raw report.
  * However, for ducomentational purposes, we try to detect LED events here and
  * print debug messages for it. */
-static void handle_output(struct uhid_event *ev, logic_t *const logic)
+static void handle_output(struct uhid_event *ev, gamepad_status_t *const gamepad_stats)
 {
 	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
 	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
@@ -397,19 +397,10 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
 	const uint8_t lightbar_blink_on = ev->u.output.data[9];
 	const uint8_t lightbar_blink_off = ev->u.output.data[10];
 
-    if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_MOTOR) && (logic->gamepad_output == LOGIC_FLAGS_VIRT_DS4_ENABLE)) {    
-        const int lock_res = pthread_mutex_lock(&logic->gamepad_mutex);
-        if (lock_res != 0) {
-            printf("Unable to lock gamepad mutex: %d, rumble will not be updated.\n", lock_res);
-
-            return;
-        }
-
-        logic->gamepad.motors_intensity[0] = motor_left;
-        logic->gamepad.motors_intensity[1] = motor_right;
-        ++logic->gamepad.rumble_events_count;
-
-        pthread_mutex_unlock(&logic->gamepad_mutex);
+    if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_MOTOR)) {    
+        gamepad_stats->motors_intensity[0] = motor_left;
+        gamepad_stats->motors_intensity[1] = motor_right;
+        ++gamepad_stats->rumble_events_count;
 
 #if defined(VIRT_DS4_DEBUG)
         printf(
@@ -423,7 +414,7 @@ static void handle_output(struct uhid_event *ev, logic_t *const logic)
     }
 }
 
-static int event(int fd, logic_t *const logic)
+static int event(int fd, gamepad_status_t *const gamepad_stats)
 {
 	struct uhid_event ev;
 	ssize_t ret;
@@ -469,7 +460,7 @@ static int event(int fd, logic_t *const logic)
 #if defined(VIRT_DS4_DEBUG)
 		printf("UHID_OUTPUT from uhid-dev\n");
 #endif
-		handle_output(&ev, logic);
+		handle_output(&ev, gamepad_stats);
 		break;
 	case UHID_OUTPUT_EV:
 #if defined(VIRT_DS4_DEBUG)
@@ -570,42 +561,6 @@ static int event(int fd, logic_t *const logic)
 	return 0;
 }
 
-static uint8_t get_buttons_byte_by_gs(const gamepad_status_t *const gs) {
-    uint8_t res = 0;
-
-    res |= gs->triangle ? 0x80 : 0x00;
-    res |= gs->circle ? 0x40 : 0x00;
-    res |= gs->cross ? 0x20 : 0x00;
-    res |= gs->square ? 0x10 : 0x00;
-
-    return res;
-}
-
-static uint8_t get_buttons_byte2_by_gs(const gamepad_status_t *const gs) {
-    uint8_t res = 0;
-
-    res |= gs->r3 ? 0x80 : 0x00;
-    res |= gs->l3 ? 0x40 : 0x00;
-    res |= gs->share ? 0x20 : 0x00;
-    res |= gs->option ? 0x10 : 0x00;
-
-    res |= gs->r2_trigger > 200 ? 0x08 : 0x00;
-    res |= gs->l2_trigger > 200 ? 0x04 : 0x00;
-    res |= gs->r1 ? 0x02 : 0x00;
-    res |= gs->l1 ? 0x01 : 0x00;
-
-    return res;
-}
-
-
-static uint8_t get_buttons_byte3_by_gs(const gamepad_status_t *const gs) {
-    uint8_t res = 0;
-
-    res |= gs->center ? 0x01 : 0x00;
-
-    return res;
-}
-
 typedef enum ds4_dpad_status {
     DPAD_N        = 0,
     DPAD_NE       = 1,
@@ -643,13 +598,8 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
 /**
  * This function arranges HID packets as described on https://www.psdevwiki.com/ps4/DS4-USB
  */
-static int send_data(int fd, logic_t *const logic) {
-    gamepad_status_t gs;
-    const int gs_copy_res = logic_copy_gamepad_status(logic, &gs);
-    if (gs_copy_res != 0) {
-        fprintf(stderr, "Unable to copy the gamepad status: %d\n", gs_copy_res);
-        return gs_copy_res;
-    }
+static void compose_hid_report_buffer(int fd, gamepad_status_t *const gamepad_stats, uint8_t buf[64]) {
+    gamepad_status_t gs = *gamepad_stats;
 
     const int64_t time_us = gs.last_gyro_motion_time.tv_sec * 1000000 + gs.last_gyro_motion_time.tv_usec;
 
@@ -702,13 +652,7 @@ static int send_data(int fd, logic_t *const logic) {
 
     // see https://www.psdevwiki.com/ps4/DS4-USB
    
-    // [12] battery level
-    uint8_t buf[] = {
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    };
+    // buf[12] battery level
 
     /*
      * kernel will do:
@@ -742,21 +686,33 @@ static int send_data(int fd, logic_t *const logic) {
     const int16_t a_y = (int16_t)(-1) * gs.raw_accel[1];  // Swap Y and Z
     const int16_t a_z = (int16_t)(-1) * gs.raw_accel[2];  // Swap Y and Z
 
-
     buf[0] = 0x01;  // [00] report ID (0x01)
     buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
     buf[2] = ((uint64_t)((int64_t)gs.joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
     buf[3] = ((uint64_t)((int64_t)gs.joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
     buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
-    buf[5] = get_buttons_byte_by_gs(&gs) | (uint8_t)ds4_dpad_from_gamepad(gs.dpad);
-    buf[6] = get_buttons_byte2_by_gs(&gs);
+    buf[5] =
+        (gs.triangle ? 0x80 : 0x00) |
+        (gs.circle ? 0x40 : 0x00) |
+        (gs.cross ? 0x20 : 0x00) |
+        (gs.square ? 0x10 : 0x00) |
+        (uint8_t)ds4_dpad_from_gamepad(gs.dpad);
+    buf[6] =
+        (gs.r3 ? 0x80 : 0x00) |
+        (gs.l3 ? 0x40 : 0x00) | 
+        (gs.share ? 0x20 : 0x00) |
+        (gs.option ? 0x10 : 0x00) | 
+        (gs.r2_trigger > 200 ? 0x08 : 0x00) |
+        (gs.l2_trigger > 200 ? 0x04 : 0x00) |
+        (gs.r1 ? 0x02 : 0x00) |
+        (gs.l1 ? 0x01 : 0x00);
     
     /*
     static uint8_t counter = 0;
     buf[7] = (((counter++) % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
     */
-
-    buf[7] = get_buttons_byte3_by_gs(&gs);
+    
+    buf[7] = gs.center ? 0x01 : 0x00;
 
     buf[8] = gs.l2_trigger;
     buf[9] = gs.r2_trigger;
@@ -777,19 +733,6 @@ static int send_data(int fd, logic_t *const logic) {
     buf[48] = 0x80; // IDK... it seems constant...
     buf[35] = 0x80; // IDK... it seems constant...
     buf[44] = 0x80; // IDK... it seems constant...
-
-    struct uhid_event l = {
-        .type = UHID_INPUT2,
-        .u = {
-            .input2 = {
-                .size = 64,
-            }
-        }
-    };
-
-    memcpy(&l.u.input2.data[0], &buf[0], l.u.input2.size);
-
-    return uhid_write(fd, &l);
 }
 
 /**
@@ -798,48 +741,64 @@ static int send_data(int fd, logic_t *const logic) {
  * See https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/hid/uhid.txt?id=refs/tags/v4.10-rc3
  */
 void *virt_ds4_thread_func(void *ptr) {
-    logic_t *const logic = (logic_t*)ptr;
+    devices_status_t *const stats = (devices_status_t*)ptr;
+
+    fprintf(stderr, "Open uhid-cdev %s\n", path);
+    int fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
+    if (fd < 0) {
+        fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, fd);
+        return NULL;
+    }
+
+    fprintf(stderr, "Create uhid device\n");
+    int ret = create(fd);
+    if (ret) {
+        close(fd);
+        return NULL;
+    }
+
+    uint8_t buf[64];
 
     for (;;) {
-        if (logic->gamepad_output != GAMEPAD_OUTPUT_DS4) {
-            // sleep for 500ms before re-checking
-            usleep(500000);
+        usleep(1250);
+        memset(buf, 0, sizeof(buf));
+    
+        const int lock_res = pthread_mutex_lock(&stats->mutex);
+        if (lock_res != 0) {
+            printf("Unable to lock gamepad mutex: %d\n", lock_res);
+
             continue;
         }
 
-        fprintf(stderr, "Open uhid-cdev %s\n", path);
-        int fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
-        if (fd < 0) {
-            fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, fd);
-            continue;
-        }
+        // main virtual device logic
+        {
+            event(fd, &stats->gamepad);
 
-        fprintf(stderr, "Create uhid device\n");
-        int ret = create(fd);
-        if (ret) {
-            close(fd);
-            continue;
-        }
-
-        for (;;) {
-            usleep(1250);
-        
-            event(fd, logic);
-
-            if (logic->gamepad_output == GAMEPAD_OUTPUT_DS4) {
-                const int res = send_data(fd, logic);
-                if (res < 0) {
-                    fprintf(stderr, "Error sending HID report: %d\n", res);
-                }
+            if (stats->gamepad.connected) {
+                compose_hid_report_buffer(fd, &stats->gamepad, buf);
             } else {
                 printf("DualShock has been terminated: closing the device.\n");
-                goto virt_ds4_thread_func_reset;
+                break;
             }
         }
-        
-virt_ds4_thread_func_reset:
-        destroy(fd);
+
+        pthread_mutex_unlock(&stats->mutex);
+
+        struct uhid_event l = {
+            .type = UHID_INPUT2,
+            .u = {
+                .input2 = {
+                    .size = 64,
+                }
+            }
+        };
+
+        memcpy(&l.u.input2.data[0], &buf[0], l.u.input2.size);
+
+        uhid_write(fd, &l);
     }
+    
+    destroy(fd);
 
     return NULL;
 }

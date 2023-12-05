@@ -3,6 +3,7 @@
 #include "platform.h"
 #include "queue.h"
 #include "settings.h"
+#include "devices_status.h"
 
 #define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS     80
 #define PRESS_TIME_BEFORE_CROSS_BUTTON_MS                   250
@@ -12,62 +13,8 @@
 #define GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER  0x00000001U
 #define GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM             0x00000002U
 
-typedef struct gamepad_status {
-
-    int32_t joystick_positions[2][2]; // [0 left | 1 right][x axis | y axis]
-
-    uint8_t dpad; // 0x00 x - | 0x01 x -> | 0x02 x <- | 0x00 y - | 0x10 y ^ | 0x10 y . | 
-
-    uint8_t l2_trigger;
-    uint8_t r2_trigger;
-
-    uint8_t triangle;
-    uint8_t circle;
-    uint8_t cross;
-    uint8_t square;
-
-    uint8_t l1;
-    uint8_t r1;
-
-    uint8_t r3;
-    uint8_t l3;
-
-    uint8_t option;
-    uint8_t share;
-    uint8_t center;
-
-    uint8_t l4;
-    uint8_t r4;
-    
-    uint8_t l5;
-    uint8_t r5;
-
-    struct timeval last_gyro_motion_time;
-    struct timeval last_accel_motion_time;
-
-    double gyro[3]; // | x, y, z| right-hand-rules -- in rad/s
-    double accel[3]; // | x, y, z| positive: right, up, towards player -- in m/s^2
-
-    int16_t raw_gyro[3];
-    int16_t raw_accel[3];
-
-    uint64_t rumble_events_count;
-    uint8_t motors_intensity[2]; // 0 = left, 1 = right
-
-    volatile uint32_t flags;
-
-} gamepad_status_t;
-
-#define LOGIC_FLAGS_VIRT_DS4_ENABLE         0x00000001U
-#define LOGIC_FLAGS_VIRT_DS5_ENABLE         0x00000002U
 #define LOGIC_FLAGS_PLATFORM_ENABLE         0x00000010U
 #define LOGIC_FLAGS_TERMINATION_REQUESTED   0x80000000U
-
-typedef enum gamepad_output {
-    GAMEPAD_OUTPUT_EVDEV = 0,
-    GAMEPAD_OUTPUT_DS4,
-    GAMEPAD_OUTPUT_DS5,
-} gamepad_output_t;
 
 typedef struct rumble_message {
     uint16_t strong_magnitude;
@@ -78,20 +25,14 @@ typedef struct logic {
 
     rc71l_platform_t platform;
 
-    pthread_mutex_t gamepad_mutex;
-    gamepad_status_t gamepad;
+    devices_status_t dev_stats;
 
     queue_t input_queue;
 
-    pthread_t virt_ds4_thread;
-
-    pthread_t virt_ds5_thread;
+    pthread_t virt_dev_thread;
+    bool virt_dev_thread_running;
 
     volatile uint32_t flags;
-
-    // the mutex is not needed if only one thread is writing this and others are checking with equality
-    //pthread_mutex_t gamepad_output_mutex;
-    gamepad_output_t gamepad_output;
 
     queue_t rumble_events_queue;
 
@@ -103,12 +44,38 @@ int logic_create(logic_t *const logic);
 
 int is_rc71l_ready(const logic_t *const logic);
 
+void logic_request_termination(logic_t *const logic);
+
+int logic_termination_requested(logic_t *const logic);
+
+/**
+ * This function starts the output thread for the user-chosed gamepad.
+ *
+ * Before starting the thread this function will also modify the status of "connected"
+ * so that the started thread won't exit immediatly.
+ * This function can only be called when the mutex is not needed:
+ *     in practice this is true when no output thread is active
+ */
+int logic_start_output_dev_thread(logic_t *const logic);
+
+/**
+ * This function starts the output thread for the keyboard&mouse.
+ *
+ * Before starting the thread this function will also modify the status of "connected"
+ * so that the started thread won't exit immediatly.
+ * 
+ * This function can only be called when the mutex is not needed:
+ *     in practice this is true when no output thread is active
+ */
+int logic_start_output_mouse_kbd_thread(logic_t *const logic);
+
+void logic_terminate_output_thread(logic_t *const logic);
+
+/*
 int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out);
 
 int logic_begin_status_update(logic_t *const logic);
 
 void logic_end_status_update(logic_t *const logic);
+*/
 
-void logic_request_termination(logic_t *const logic);
-
-int logic_termination_requested(logic_t *const logic);

@@ -21,8 +21,3 @@ int init_platform(rc71l_platform_t *const platform);
 int cycle_mode(rc71l_platform_t *const platform);
 
 int is_mouse_mode(rc71l_platform_t *const platform);
-
-int is_gamepad_mode(rc71l_platform_t *const platform);
-
-int is_macro_mode(rc71l_platform_t *const platform);
-

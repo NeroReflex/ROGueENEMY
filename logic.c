@@ -3,67 +3,44 @@
 #include "queue.h"
 #include "virt_ds4.h"
 #include "virt_ds5.h"
+#include "virt_evdev.h"
+#include "virt_mouse_kbd.h"
 
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 
 int logic_create(logic_t *const logic) {
+    int ret = 0;
+
     logic->flags = 0x00000000U;
 
-    memset(logic->gamepad.joystick_positions, 0, sizeof(logic->gamepad.joystick_positions));
-    logic->gamepad.dpad = 0x00;
-    logic->gamepad.l2_trigger = 0;
-    logic->gamepad.r2_trigger = 0;
-    logic->gamepad.triangle = 0;
-    logic->gamepad.circle = 0;
-    logic->gamepad.cross = 0;
-    logic->gamepad.square = 0;
-    logic->gamepad.r3 = 0;
-    logic->gamepad.r3 = 0;
-    logic->gamepad.option = 0;
-    logic->gamepad.share = 0;
-    logic->gamepad.center = 0;
-    logic->gamepad.r4 = 0;
-    logic->gamepad.l4 = 0;
-    logic->gamepad.r5 = 0;
-    logic->gamepad.l5 = 0;
-    logic->gamepad.rumble_events_count = 0;
-    memset(logic->gamepad.gyro, 0, sizeof(logic->gamepad.gyro));
-    memset(logic->gamepad.accel, 0, sizeof(logic->gamepad.accel));
-    logic->gamepad.flags = 0;
+    init_config(&logic->controller_settings);
+    const int fill_config_res = fill_config(&logic->controller_settings, configuration_file);
+    if (fill_config_res != 0) {
+        fprintf(stderr, "Unable to fill configuration from file %s -- defaults will be used\n", configuration_file);
+    }
 
-    const int mutex_creation_res = pthread_mutex_init(&logic->gamepad_mutex, NULL);
-    if (mutex_creation_res != 0) {
-        fprintf(stderr, "Unable to create mutex: %d\n", mutex_creation_res);
-        return mutex_creation_res;
+    devices_status_init(&logic->dev_stats);
+
+    ret = queue_init(&logic->rumble_events_queue, 1);
+    if (ret != 0) {
+        fprintf(stderr, "Unable to create the rumble events queue: %d\n", ret);
+        goto logic_create_err;
+    }
+
+    ret = pthread_mutex_init(&logic->dev_stats.mutex, NULL);
+    if (ret != 0) {
+        fprintf(stderr, "Unable to create mutex: %d\n", ret);
+        goto logic_create_err;
     }
 
     const int queue_init_res = queue_init(&logic->input_queue, 128);
-    
-    const int virt_ds4_thread_creation = pthread_create(&logic->virt_ds4_thread, NULL, virt_ds4_thread_func, (void*)(logic));
-	if (virt_ds4_thread_creation != 0) {
-		fprintf(stderr, "Error creating virtual DualShock4 thread: %d. Will use evdev as output.\n", virt_ds4_thread_creation);
-
-        logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
-	} else {
-        printf("Creation of virtual DualShock4 succeeded: using it as the defaut output.\n");
-        logic->flags |= LOGIC_FLAGS_VIRT_DS4_ENABLE;
-        logic->gamepad_output = GAMEPAD_OUTPUT_DS4;
-    }
-
-    const int virt_ds5_thread_creation = pthread_create(&logic->virt_ds5_thread, NULL, virt_ds5_thread_func, (void*)(logic));
-	if (virt_ds4_thread_creation != 0) {
-		fprintf(stderr, "Error creating virtual DualSense thread: %d.\n", virt_ds5_thread_creation);
-	} else {
-        printf("Creation of virtual DualShock4 succeeded: using it as the defaut output.\n");
-        logic->flags |= LOGIC_FLAGS_VIRT_DS5_ENABLE;
-        logic->gamepad_output = GAMEPAD_OUTPUT_DS5;
-    }
 
     if (queue_init_res < 0) {
         fprintf(stderr, "Unable to create queue: %d\n", queue_init_res);
         return queue_init_res;
     }
 
+    bool lizard_thread_started = false;
     const int init_platform_res = init_platform(&logic->platform);
     if (init_platform_res == 0) {
         printf("RC71L platform correctly initialized\n");
@@ -71,35 +48,74 @@ int logic_create(logic_t *const logic) {
         logic->flags |= LOGIC_FLAGS_PLATFORM_ENABLE;
 
         if (is_mouse_mode(&logic->platform)) {
-            printf("Gamepad output will default to evdev when the controller is set in mouse mode.\n");
-            logic->gamepad_output = GAMEPAD_OUTPUT_EVDEV;
-        } else if (is_gamepad_mode(&logic->platform)) {
-            logic->gamepad_output = (logic->flags & LOGIC_FLAGS_VIRT_DS5_ENABLE) ? GAMEPAD_OUTPUT_DS5 : ((logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) ? GAMEPAD_OUTPUT_DS4: GAMEPAD_OUTPUT_EVDEV);
-        } else if (is_macro_mode(&logic->platform)) {
-            logic->gamepad_output = (logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) ? GAMEPAD_OUTPUT_DS4 : GAMEPAD_OUTPUT_EVDEV;
-        }
+            printf("Device is in lizard mode\n");
+            // TODO: start the appropriate output thread
 
-        printf("Gamepad output is %d\n", (int)logic->gamepad_output);
+            lizard_thread_started = true;
+        }
     } else {
         fprintf(stderr, "Unable to initialize Asus RC71L MCU: %d\n", init_platform_res);
-        logic->gamepad_output = (logic->flags & LOGIC_FLAGS_VIRT_DS4_ENABLE) ? GAMEPAD_OUTPUT_DS4 : GAMEPAD_OUTPUT_EVDEV;
     }
 
-    queue_init(&logic->rumble_events_queue, 1);
-
-    init_config(&logic->controller_settings);
-    const int fill_config_res = fill_config(&logic->controller_settings, configuration_file);
-    if (fill_config_res != 0) {
-        fprintf(stderr, "Unable to fill configuration from file %s\n", configuration_file);
+    if (!lizard_thread_started) {
+        logic_start_output_dev_thread(logic);
     }
 
-    return 0;
+logic_create_err:
+    return ret;
 }
 
 int is_rc71l_ready(const logic_t *const logic) {
     return logic->flags & LOGIC_FLAGS_PLATFORM_ENABLE;
 }
 
+void logic_terminate_output_thread(logic_t *const logic) {
+    if (logic->virt_dev_thread_running) {
+        void* thread_return = NULL;
+        pthread_join(logic->virt_dev_thread, &thread_return);
+    }
+}
+
+int logic_start_output_mouse_kbd_thread(logic_t *const logic) {
+    // TODO: logic->dev_stats.mouse_kbd.connected = true;
+    const int ret = pthread_create(&logic->virt_dev_thread, NULL, virt_mouse_kbd_thread_func, (void*)(&logic->dev_stats));
+
+    logic->virt_dev_thread_running = ret == 0;
+
+    return ret;
+}
+
+int logic_start_output_dev_thread(logic_t *const logic) {
+    logic->dev_stats.gamepad.connected = true;
+
+    int ret = -EINVAL;
+    switch (logic->controller_settings.gamepad_output_device) {
+        
+    case 0:
+        ret = pthread_create(&logic->virt_dev_thread, NULL, virt_evdev_thread_func, (void*)(&logic->dev_stats));
+        break;
+
+    case 1:
+        ret = pthread_create(&logic->virt_dev_thread, NULL, virt_ds5_thread_func, (void*)(&logic->dev_stats));
+        break;
+
+    case 2:
+        ret = pthread_create(&logic->virt_dev_thread, NULL, virt_ds4_thread_func, (void*)(&logic->dev_stats));
+        break;
+    
+    default:
+        fprintf(stderr, "Invalid output device specified\n");
+        ret = -EINVAL;
+        break;
+
+    }
+
+    logic->virt_dev_thread_running = ret == 0;
+
+    return ret;
+}
+
+/*
 int logic_copy_gamepad_status(logic_t *const logic, gamepad_status_t *const out) {
     int res = 0;
 
@@ -172,7 +188,6 @@ logic_copy_gamepad_status_err:
     return res;
 }
 
-
 int logic_begin_status_update(logic_t *const logic) {
     int res = 0;
 
@@ -188,6 +203,7 @@ logic_begin_status_update_err:
 void logic_end_status_update(logic_t *const logic) {
     pthread_mutex_unlock(&logic->gamepad_mutex);
 }
+*/
 
 void logic_request_termination(logic_t *const logic) {
     logic->flags |= LOGIC_FLAGS_TERMINATION_REQUESTED;
