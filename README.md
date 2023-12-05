@@ -5,7 +5,7 @@ Collects Legion Go input events to a single (active) virtual controller in linux
 * Legion L/R remapping - Switches Legion L/R to Start/Select location, helps muscle memory for conventional controller layout. 
 * Back buttons - Supports Legion Go back buttons, to include the M2 key.
 * Gyro - Supports gyro from the main unit, providing support for steam-input gyro features i.e. "Hold R to activate gyro", "Joystick emulation", etc.
-* Rumble - Initial support, current works until controller is detached, (WIP) _requires a restart of rogue-enemy to bring back_
+* Rumble - Initial support, currently works until controller is detached, (WIP) _requires a restart of rogue-enemy to bring back_
 * Trackpad - Not implemented (yet)
 
 ## Usage
