@@ -39,7 +39,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ env.TAG_NAME }}
-          release_name: legion go pre-built
+          release_name: LLG rogue-enemy
           draft: false
           prerelease: false
       - name: Upload Release Asset
