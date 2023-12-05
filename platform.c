@@ -438,9 +438,10 @@ static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 };
 
 static int hidraw_cycle_to_mode(const char* const path, int controller_mode) {
-    int res = -EINVAL;
+    int res = 0;
 
     if ((controller_mode < 0) || (controller_mode > 2)) {
+        res = -EINVAL;
         goto hidraw_cycle_to_mode_err_mode; 
     }
 
@@ -470,6 +471,32 @@ static int hidraw_cycle_to_mode(const char* const path, int controller_mode) {
             strcat(hidraw_path, "/dev");
 
             printf("Using hidraw located at: %s\n", hidraw_path);
+
+            int fd = open(hidraw_path, O_RDWR);
+            if (fd == -1) {
+                fprintf(stderr, "Error opening hidraw device\n");
+
+                res = -EIO;
+
+                goto hidraw_cycle_to_mode_err;
+            }
+
+            for (int i = 0; i < 23; ++i) {
+                const int write_res = write(fd, &rc71l_mode_switch_commands[controller_mode][i][0], 64);
+                if (write_res != 64) {
+                    fprintf(stderr, "Error writing packet %d/23: %d bytes sent, 64 expected\n", i, write_res);
+                    break;
+                }
+            }
+
+            close(fd);
+
+            if (res == 0) {
+                printf("Control messages sent successfully.\n");
+            } else {
+                goto hidraw_cycle_to_mode_err;
+            }
+            
         }
     }
 

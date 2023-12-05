@@ -15,7 +15,8 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/stat.h>
-
+#include <sys/ioctl.h>
+#include <linux/hidraw.h>
 
 #include <linux/uinput.h>
 #include <linux/input.h>
