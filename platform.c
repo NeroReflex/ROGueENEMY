@@ -467,8 +467,12 @@ static int hidraw_cycle_to_mode(const char* const path, int controller_mode) {
                 continue;
             }
 
+            memset(hidraw_path, 0, len + 1);
+            strcat(hidraw_path, "/dev/");
             strcat(hidraw_path, dir->d_name);
-            strcat(hidraw_path, "/dev");
+
+            //strcat(hidraw_path, dir->d_name);
+            //strcat(hidraw_path, "/dev");
 
             printf("Using hidraw located at: %s\n", hidraw_path);
 
