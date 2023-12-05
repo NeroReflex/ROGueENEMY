@@ -478,7 +478,7 @@ static int hidraw_cycle_to_mode(const char* const path, int controller_mode) {
 
             int fd = open(hidraw_path, O_RDWR);
             if (fd == -1) {
-                fprintf(stderr, "Error opening hidraw device\n");
+                fprintf(stderr, "Error opening hidraw device %s\n", hidraw_path);
 
                 res = -EIO;
 
