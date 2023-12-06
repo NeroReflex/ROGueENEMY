@@ -46,8 +46,8 @@ jobs:
         run: ls -la
       - name: Check Git Configuration
         run: |
-          git status
-          git config --list
+          git -C /__w/ROGueENEMY/ROGueENEMY status
+          git -C /__w/ROGueENEMY/ROGueENEMY config --list
         working-directory: /github/workspace
       - name: Create Tag
         run: |
