@@ -458,6 +458,8 @@ void *virt_ds5_thread_func(void *ptr) {
             if (stats->gamepad.connected) {
                 compose_hid_report_buffer(fd, &stats->gamepad, buf);
             } else {
+                pthread_mutex_unlock(&stats->mutex);
+                
                 printf("DualSense has been terminated: closing the device.\n");
                 break;
             }

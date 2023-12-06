@@ -77,7 +77,8 @@ void logic_terminate_output_thread(logic_t *const logic) {
 }
 
 int logic_start_output_mouse_kbd_thread(logic_t *const logic) {
-    // TODO: logic->dev_stats.mouse_kbd.connected = true;
+    logic->dev_stats.kbd.connected = true;
+
     const int ret = pthread_create(&logic->virt_dev_thread, NULL, virt_mouse_kbd_thread_func, (void*)(&logic->dev_stats));
 
     logic->virt_dev_thread_running = ret == 0;

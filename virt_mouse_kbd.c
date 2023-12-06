@@ -111,6 +111,8 @@ void *virt_mouse_kbd_thread_func(void *ptr) {
             if (stats->kbd.connected) {
                 // TODO: do whatever it takes...
             } else {
+                pthread_mutex_unlock(&stats->mutex);
+                
                 printf("kbd&mouse has been terminated: closing the device.\n");
                 break;
             }
