@@ -15,6 +15,15 @@ jobs:
     container: fedora:latest
     steps:
       - uses: actions/checkout@v3
+      - name: Create Tag
+        if: github.ref == 'refs/heads/main'
+        run: |
+          TAG_NAME="v$(date +'%Y.%m.%d-%H.%M')"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install dependencies
         run: |
           dnf update -y
@@ -35,15 +44,6 @@ jobs:
         run: pwd
       - name: List contents
         run: ls -la
-      - name: Create Tag
-        if: github.ref == 'refs/heads/main'
-        run: |
-          TAG_NAME="v$(date +'%Y.%m.%d-%H.%M')"
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
