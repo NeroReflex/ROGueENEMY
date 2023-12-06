@@ -20,6 +20,9 @@ systemctl stop rogue-enemy.service
 systemctl disable rogue-enemy.service
 rm -f "$SYSTEMD_DIR/rogue-enemy.service"
 
+echo "Enabling handycon..."
+systemctl enable --now handycon.service
+
 # Remove the executable
 echo "Removing the executable..."
 rm -f "$INSTALL_DIR/rogue-enemy"
