@@ -1,24 +1,20 @@
 name: CMake on a single platform
-
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-
 env:
   BUILD_TYPE: Release
-
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: fedora:latest
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
-          dnf update -y
-          dnf install -y git cmake gcc-c++ make libconfig-devel libevdev-devel
+          sudo apt-get update -y
+          sudo apt-get install -y git cmake g++ make libconfig-dev libevdev-dev
       - name: Create build dir
         run: |
           mkdir build
@@ -31,32 +27,19 @@ jobs:
         run: | 
           cd build
           cmake --build .
-      # - name: Create Tag
-      #   if: github.ref == 'refs/heads/main'
-      #   run: |
-      #     TAG_NAME="v$(date +'%Y.%m.%d-%H.%M')"
-      #     echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-      #     git tag $TAG_NAME
-      #     git push origin $TAG_NAME
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Tag
+        if: github.ref == 'refs/heads/main'
+        run: |
+          TAG_NAME="v$(date +'%Y.%m.%d-%H.%M')"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Check current directory
         run: pwd
       - name: List contents
         run: ls -la
-      # - name: Check Git Configuration
-      #   run: |
-      #     git -C /__w/ROGueENEMY/ROGueENEMY status
-      #     git -C /__w/ROGueENEMY/ROGueENEMY config --list
-      #   working-directory: /github/workspace
-      - name: Create Tag
-        run: |
-          TAG_NAME="v$(date +'%Y.%m.%d-%H.%M')"
-          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
-          git -C /__w/ROGueENEMY/ROGueENEMY tag $TAG_NAME
-          git -C /__w/ROGueENEMY/ROGueENEMY push origin $TAG_NAME
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
