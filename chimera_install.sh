@@ -24,6 +24,11 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+
+echo "Disabling handycon..."
+systemctl disable --now handycon.service
+
+
 echo "Installing dependencies..."
 # Uncomment these lines if dependencies need to be installed
 # apt-get update
