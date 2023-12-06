@@ -416,6 +416,8 @@ static void compose_hid_report_buffer(int fd, gamepad_status_t *const gamepad_st
     buf[44] = 0x80; // IDK... it seems constant...
 }
 
+
+
 /**
  * Thread function emulating the DualSense controller at USB level using USB UHID ( https://www.kernel.org/doc/html/latest/hid/uhid.html ) kernel APIs.
  *
@@ -454,6 +456,8 @@ void *virt_ds5_thread_func(void *ptr) {
         // main virtual device logic
         {
             event(fd, &stats->gamepad);
+
+            gamepad_status_qam_quirk(&stats->gamepad);
 
             if (stats->gamepad.connected) {
                 compose_hid_report_buffer(fd, &stats->gamepad, buf);

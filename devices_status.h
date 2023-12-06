@@ -5,6 +5,14 @@
 #include <pthread.h>
 #include <sys/time.h>
 
+#define GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER  0x00000001U
+#define GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM             0x00000002U
+
+#define PRESS_AND_RELEASE_DURATION_FOR_CENTER_BUTTON_MS     80
+#define PRESS_TIME_BEFORE_CROSS_BUTTON_MS                   250
+#define PRESS_TIME_CROSS_BUTTON_MS                          80
+#define PRESS_TIME_AFTER_CROSS_BUTTON_MS                    180
+
 typedef struct gamepad_status {
     bool connected;
 
@@ -71,3 +79,5 @@ void kbd_status_init(keyboard_status_t *const stats);
 void gamepad_status_init(gamepad_status_t *const stats);
 
 void devices_status_init(devices_status_t *const stats);
+
+void gamepad_status_qam_quirk(gamepad_status_t *const gamepad_stats);

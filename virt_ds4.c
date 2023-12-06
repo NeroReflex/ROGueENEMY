@@ -774,6 +774,8 @@ void *virt_ds4_thread_func(void *ptr) {
         {
             event(fd, &stats->gamepad);
 
+            gamepad_status_qam_quirk(&stats->gamepad);
+
             if (stats->gamepad.connected) {
                 compose_hid_report_buffer(fd, &stats->gamepad, buf);
             } else {
