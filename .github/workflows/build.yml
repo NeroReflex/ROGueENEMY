@@ -23,12 +23,12 @@ jobs:
           mkdir build
           cd build
       - name: Configure CMake
-        run: cmake ..
+        run: | 
+          ls -al
+          cmake ..
       - name: Build
         run: | 
           cmake --build .
-          ls -al
-            
       - name: Create Tag
         if: github.ref == 'refs/heads/main'
         run: |
