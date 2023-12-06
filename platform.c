@@ -29,7 +29,7 @@ int init_platform(rc71l_platform_t *const platform) {
     // fclose(mode_file);
 
     // printf("Asus MCU platform found: current mode %lu\n", platform->mode);
-    platform->modes_count = 3;
+    // platform->modes_count = 3;
 
     return 0;
 }
