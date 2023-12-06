@@ -17,11 +17,11 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 echo "Installing dependencies..."
-# Uncomment these lines if dependencies need to be installed
 # apt-get update
 # apt-get install -y cmake libconfig-dev libevdev libconfig git
 
 # Preparation
+echo "Preparing installation..."
 echo "Preparing installation..."
 rm -rf "$BUILD_DIR"
 git clone "$REPO_URL" "$BUILD_DIR"
@@ -31,6 +31,7 @@ cp "$BUILD_DIR/rogue_enemy.rule" "$UDEV_RULES_DIR/99-rogue_enemy.rules"
 cp "$BUILD_DIR/80-playstation.rules" "$UDEV_RULES_DIR"
 
 echo "Downloading the latest release..."
+echo "Downloading the latest release..."
 curl -L $(curl -s https://api.github.com/repos/corando98/ROGueENEMY/releases/latest | grep "browser_download_url" | cut -d '"' -f 4) -o $BUILD_DIR/rogue-enemy
 
 # Installation
@@ -39,6 +40,7 @@ mkdir -p "$INSTALL_DIR"
 cp "$BUILD_DIR/rogue-enemy" "$INSTALL_DIR/rogue-enemy"
 
 echo "Creating and setting up system service..."
+echo "Setting up system service..."
 mkdir -p "$SYSTEMD_DIR"
 mkdir -p "$UDEV_RULES_DIR"
 mkdir -p "$CONFIG_DIR"
@@ -79,4 +81,3 @@ echo "Cleaning up..."
 rm -rf "$BUILD_DIR"
 
 echo "Installation complete."
-

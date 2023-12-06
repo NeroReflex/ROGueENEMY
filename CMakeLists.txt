@@ -17,7 +17,8 @@ find_package(Threads REQUIRED)
 # Adding something we can run - Output name matches target name
 add_executable(${EXECUTABLE_NAME} dev_iio.c input_dev.c logic.c main.c output_dev.c platform.c queue.c settings.c virt_ds4.c virt_ds5.c)
 
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -lconfig)
+# Linking static libraries
+target_link_libraries(${EXECUTABLE_NAME} PRIVATE Threads::Threads -Wl,-Bstatic -levdev -lconfig -Wl,-Bdynamic)
 
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
 
