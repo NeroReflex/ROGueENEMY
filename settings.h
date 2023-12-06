@@ -14,6 +14,8 @@ typedef struct controller_settings {
      * 3 is Xbox one
      */
     int gamepad_output_device;
+
+    int rumble_dedicated_thread;
 } controller_settings_t;
 
 void init_config(controller_settings_t *const conf);

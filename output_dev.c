@@ -288,7 +288,44 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 	pthread_mutex_unlock(&out_dev->logic->dev_stats.mutex);
 }
 
-/*
+int handle_rumble(output_dev_t *const out_dev, uint64_t *rumble_events_count) {
+	// here transmit the rumble request to the input-device-handling components
+	pthread_mutex_lock(&out_dev->logic->dev_stats.mutex);
+	uint64_t tmp_ev_count = out_dev->logic->dev_stats.gamepad.rumble_events_count;
+	uint8_t right_motor = out_dev->logic->dev_stats.gamepad.motors_intensity[0];
+	uint8_t left_motor = out_dev->logic->dev_stats.gamepad.motors_intensity[1];
+	pthread_mutex_unlock(&out_dev->logic->dev_stats.mutex);
+
+	// check if the gamepad has notified the presence of a rumble event
+	if (tmp_ev_count != *rumble_events_count) {
+		rumble_message_t *const rumble_msg = malloc(sizeof(rumble_message_t));
+		if(rumble_msg != NULL) {
+			rumble_msg->strong_magnitude = (uint16_t)left_motor << (uint16_t)8;
+			rumble_msg->weak_magnitude = (uint16_t)right_motor << (uint16_t)8;
+
+			const int rumble_emit_res = queue_push_timeout(&out_dev->logic->rumble_events_queue, (void*)rumble_msg, 0);
+			if (rumble_emit_res == 0) {
+#if defined(INCLUDE_OUTPUT_DEBUG)
+				printf("Rumble request propagated\n");
+#endif
+
+				// update the rumble events counter: this rumble event was handled
+				*rumble_events_count = tmp_ev_count;
+			} else {
+#if defined(INCLUDE_OUTPUT_DEBUG)
+				fprintf(stderr, "Error propating the rumble event: %d\n", rumble_emit_res);
+#endif
+
+				free(rumble_msg);
+			}
+		} else {
+			return -ENOMEM;
+		}
+	}
+
+	return 0;
+}
+
 void *output_dev_rumble_thread_func(void* ptr) {
 	output_dev_t *const out_dev = (output_dev_t*)ptr;
 
@@ -300,9 +337,9 @@ void *output_dev_rumble_thread_func(void* ptr) {
 	__time_t usecAtInit = now.tv_usec;
 #endif
 
-	pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
-	uint64_t rumble_events_count = out_dev->logic->gamepad.rumble_events_count;
-	pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
+	pthread_mutex_lock(&out_dev->logic->dev_stats.mutex);
+	uint64_t rumble_events_count = out_dev->logic->dev_stats.gamepad.rumble_events_count;
+	pthread_mutex_unlock(&out_dev->logic->dev_stats.mutex);
 
 	// maximum number of ms that the gamepad can remain in a blocked status
 	const int timeout_ms = 40;
@@ -311,38 +348,9 @@ void *output_dev_rumble_thread_func(void* ptr) {
 		// sleep for about 16ms: this is an aggressive polling for rumble
 		usleep(16000);
 
-		// here transmit the rumble request to the input-device-handling components
-		pthread_mutex_lock(&out_dev->logic->gamepad_mutex);
-		uint64_t tmp_ev_count = out_dev->logic->gamepad.rumble_events_count;
-		uint8_t right_motor = out_dev->logic->gamepad.motors_intensity[0];
-		uint8_t left_motor = out_dev->logic->gamepad.motors_intensity[1];
-		pthread_mutex_unlock(&out_dev->logic->gamepad_mutex);
-
-		// check if the gamepad has notified the presence of a rumble event
-		if (tmp_ev_count != rumble_events_count) {
-			rumble_message_t *const rumble_msg = malloc(sizeof(rumble_message_t));
-			if(rumble_msg != NULL) {
-				rumble_msg->strong_magnitude = (uint16_t)left_motor << (uint16_t)8;
-				rumble_msg->weak_magnitude = (uint16_t)right_motor << (uint16_t)8;
-
-				const int rumble_emit_res = queue_push_timeout(&out_dev->logic->rumble_events_queue, (void*)rumble_msg, timeout_ms);
-				if (rumble_emit_res == 0) {
-#if defined(INCLUDE_OUTPUT_DEBUG)
-					printf("Rumble request propagated\n");
-#endif
-
-					// update the rumble events counter: this rumble event was handled
-					rumble_events_count = tmp_ev_count;
-				} else {
-#if defined(INCLUDE_OUTPUT_DEBUG)
-					fprintf(stderr, "Error propating the rumble event: %d\n", rumble_emit_res);
-#endif
-
-					free(rumble_msg);
-				}
-			} else {
-				fprintf(stderr, "Error allocating resources to request a rumble\n");
-			}
+		const int rumble_test = handle_rumble(out_dev, &rumble_events_count);
+		if (rumble_test != 0) {
+			fprintf(stderr, "handling rumble: %d\n", rumble_test);
 		}
 		
 		if (logic_termination_requested(out_dev->logic)) {
@@ -352,7 +360,6 @@ void *output_dev_rumble_thread_func(void* ptr) {
 
     return NULL;
 }
-*/
 
 void *output_dev_thread_func(void *ptr) {
 	output_dev_t *const out_dev = (output_dev_t*)ptr;
@@ -364,17 +371,19 @@ void *output_dev_thread_func(void *ptr) {
 	__time_t usecAtInit = now.tv_usec;
 #endif
 
-/*
-	pthread_t rumble_thread;
-	const int rumble_thread_creation = pthread_create(&rumble_thread, NULL, output_dev_rumble_thread_func, ptr);
-	if (rumble_thread_creation != 0) {
-		fprintf(stderr, "Error creating the rumble thread: %d -- rumble will not work.\n", rumble_thread_creation);
-	}
-*/
+	uint64_t rumble_events_count = 0;
 
-	pthread_mutex_lock(&out_dev->logic->dev_stats.mutex);
-	uint64_t rumble_events_count = out_dev->logic->dev_stats.gamepad.rumble_events_count;
-	pthread_mutex_unlock(&out_dev->logic->dev_stats.mutex);
+	pthread_t rumble_thread;
+	if (out_dev->logic->controller_settings.rumble_dedicated_thread) {
+		const int rumble_thread_creation = pthread_create(&rumble_thread, NULL, output_dev_rumble_thread_func, ptr);
+		if (rumble_thread_creation != 0) {
+			fprintf(stderr, "Error creating the rumble thread: %d -- rumble will not work.\n", rumble_thread_creation);
+		}
+	} else {
+		pthread_mutex_lock(&out_dev->logic->dev_stats.mutex);
+		rumble_events_count = out_dev->logic->dev_stats.gamepad.rumble_events_count;
+		pthread_mutex_unlock(&out_dev->logic->dev_stats.mutex);
+	}
 
     for (;;) {
 		void *raw_ev;
@@ -392,46 +401,21 @@ void *output_dev_thread_func(void *ptr) {
 			continue;
 		}
 
+		if (!out_dev->logic->controller_settings.rumble_dedicated_thread) {
+			const int rumble_test = handle_rumble(out_dev, &rumble_events_count);
+			if (rumble_test != 0) {
+				fprintf(stderr, "Error in handling rumble: %d\n", rumble_test);
+			}
+		}
+
 		if (logic_termination_requested(out_dev->logic)) {
             break;
         }
-
-		// here transmit the rumble request to the input-device-handling components
-		pthread_mutex_lock(&out_dev->logic->dev_stats.mutex);
-		uint64_t tmp_ev_count = out_dev->logic->dev_stats.gamepad.rumble_events_count;
-		uint8_t right_motor = out_dev->logic->dev_stats.gamepad.motors_intensity[0];
-		uint8_t left_motor = out_dev->logic->dev_stats.gamepad.motors_intensity[1];
-		pthread_mutex_unlock(&out_dev->logic->dev_stats.mutex);
-
-		// check if the gamepad has notified the presence of a rumble event
-		if (tmp_ev_count != rumble_events_count) {
-			rumble_message_t *const rumble_msg = malloc(sizeof(rumble_message_t));
-			if(rumble_msg != NULL) {
-				rumble_msg->strong_magnitude = (uint16_t)left_motor << (uint16_t)8;
-				rumble_msg->weak_magnitude = (uint16_t)right_motor << (uint16_t)8;
-
-				const int rumble_emit_res = queue_push_timeout(&out_dev->logic->rumble_events_queue, (void*)rumble_msg, 0);
-				if (rumble_emit_res == 0) {
-#if defined(INCLUDE_OUTPUT_DEBUG)
-					printf("Rumble request propagated\n");
-#endif
-
-					// update the rumble events counter: this rumble event was handled
-					rumble_events_count = tmp_ev_count;
-				} else {
-#if defined(INCLUDE_OUTPUT_DEBUG)
-					fprintf(stderr, "Error propating the rumble event: %d\n", rumble_emit_res);
-#endif
-
-					free(rumble_msg);
-				}
-			} else {
-				fprintf(stderr, "Error allocating resources to request a rumble\n");
-			}
-		}
     }
-/*
-	pthread_join(rumble_thread, NULL);
-*/
+
+	if (out_dev->logic->controller_settings.rumble_dedicated_thread) {
+		pthread_join(rumble_thread, NULL);
+	}
+
     return NULL;
 }

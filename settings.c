@@ -7,6 +7,7 @@ void init_config(controller_settings_t *const conf) {
     conf->enable_qam = 0;
     conf->nintendo_layout = 0;
     conf->gamepad_output_device = 1;
+    conf->rumble_dedicated_thread = 0;
 }
 
 int fill_config(controller_settings_t *const conf, const char* file) {
@@ -52,6 +53,13 @@ int fill_config(controller_settings_t *const conf, const char* file) {
         conf->gamepad_output_device = gamepad_output_device;
     } else {
         fprintf(stderr, "gamepad_output_device (int) configuration not found. Default value will be used.\n");
+    }
+
+    int rumble_dedicated_thread;
+    if (config_lookup_bool(&cfg, "rumble_dedicated_thread", &rumble_dedicated_thread) != CONFIG_FALSE) {
+        conf->rumble_dedicated_thread = rumble_dedicated_thread;
+    } else {
+        fprintf(stderr, "rumble_dedicated_thread (bool) configuration not found. Default value will be used.\n");
     }
 
     config_destroy(&cfg);
