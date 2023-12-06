@@ -12,12 +12,13 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: fedora:latest
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libevdev-dev libconfig-dev
+          dnf update -y
+          dnf install -y cmake gcc-c++ make libconfig-devel
       - name: Create build dir
         run: |
           mkdir build
