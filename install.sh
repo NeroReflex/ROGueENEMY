@@ -63,8 +63,7 @@ WantedBy=multi-user.target
 EOF
 
 # Install other files
-install -m 644 "$BUILD_DIR/80-playstation.rules" "$UDEV_RULES_DIR/"
-install -m 644 "$BUILD_DIR/99-rogue_enemy.rules" "$UDEV_RULES_DIR/"
+install -m 644 "$BUILD_DIR/99-rogue.rules" "$UDEV_RULES_DIR/"
 # Uncomment the following if the configuration file is necessary
 # install -m 644 "$BUILD_DIR/config.cfg" "$CONFIG_DIR/config.cfg"
 
