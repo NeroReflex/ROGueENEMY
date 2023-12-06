@@ -371,9 +371,14 @@ void *output_dev_thread_func(void *ptr) {
 		fprintf(stderr, "Error creating the rumble thread: %d -- rumble will not work.\n", rumble_thread_creation);
 	}
 */
+
+	pthread_mutex_lock(&out_dev->logic->dev_stats.mutex);
+	uint64_t rumble_events_count = out_dev->logic->dev_stats.gamepad.rumble_events_count;
+	pthread_mutex_unlock(&out_dev->logic->dev_stats.mutex);
+
     for (;;) {
 		void *raw_ev;
-		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 5000);
+		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1);
 		if (pop_res == 0) {
 			message_t *const msg = (message_t*)raw_ev;
 			handle_msg(out_dev, msg);
@@ -390,6 +395,40 @@ void *output_dev_thread_func(void *ptr) {
 		if (logic_termination_requested(out_dev->logic)) {
             break;
         }
+
+		// here transmit the rumble request to the input-device-handling components
+		pthread_mutex_lock(&out_dev->logic->dev_stats.mutex);
+		uint64_t tmp_ev_count = out_dev->logic->dev_stats.gamepad.rumble_events_count;
+		uint8_t right_motor = out_dev->logic->dev_stats.gamepad.motors_intensity[0];
+		uint8_t left_motor = out_dev->logic->dev_stats.gamepad.motors_intensity[1];
+		pthread_mutex_unlock(&out_dev->logic->dev_stats.mutex);
+
+		// check if the gamepad has notified the presence of a rumble event
+		if (tmp_ev_count != rumble_events_count) {
+			rumble_message_t *const rumble_msg = malloc(sizeof(rumble_message_t));
+			if(rumble_msg != NULL) {
+				rumble_msg->strong_magnitude = (uint16_t)left_motor << (uint16_t)8;
+				rumble_msg->weak_magnitude = (uint16_t)right_motor << (uint16_t)8;
+
+				const int rumble_emit_res = queue_push_timeout(&out_dev->logic->rumble_events_queue, (void*)rumble_msg, 0);
+				if (rumble_emit_res == 0) {
+#if defined(INCLUDE_OUTPUT_DEBUG)
+					printf("Rumble request propagated\n");
+#endif
+
+					// update the rumble events counter: this rumble event was handled
+					rumble_events_count = tmp_ev_count;
+				} else {
+#if defined(INCLUDE_OUTPUT_DEBUG)
+					fprintf(stderr, "Error propating the rumble event: %d\n", rumble_emit_res);
+#endif
+
+					free(rumble_msg);
+				}
+			} else {
+				fprintf(stderr, "Error allocating resources to request a rumble\n");
+			}
+		}
     }
 /*
 	pthread_join(rumble_thread, NULL);
