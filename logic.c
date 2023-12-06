@@ -1,6 +1,5 @@
 #include "logic.h"
 #include "platform.h"
-#include "queue.h"
 #include "virt_ds4.h"
 #include "virt_ds5.h"
 #include "virt_evdev.h"
@@ -21,23 +20,10 @@ int logic_create(logic_t *const logic) {
 
     devices_status_init(&logic->dev_stats);
 
-    ret = queue_init(&logic->rumble_events_queue, 1);
-    if (ret != 0) {
-        fprintf(stderr, "Unable to create the rumble events queue: %d\n", ret);
-        goto logic_create_err;
-    }
-
     ret = pthread_mutex_init(&logic->dev_stats.mutex, NULL);
     if (ret != 0) {
         fprintf(stderr, "Unable to create mutex: %d\n", ret);
         goto logic_create_err;
-    }
-
-    const int queue_init_res = queue_init(&logic->input_queue, 128);
-
-    if (queue_init_res < 0) {
-        fprintf(stderr, "Unable to create queue: %d\n", queue_init_res);
-        return queue_init_res;
     }
 
     bool lizard_thread_started = false;

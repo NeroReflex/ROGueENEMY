@@ -1,7 +1,6 @@
 #include "output_dev.h"
 #include "logic.h"
 #include "platform.h"
-#include "queue.h"
 #include "message.h"
 #include "settings.h"
 #include "virt_ds4.h"
@@ -11,7 +10,7 @@
 #define DECODE_EV_FLAG_MODE_MAIN_MENU_REQUESTED 0x00000002U
 #define DECODE_EV_FLAG_MODE_QAM_REQUESTED 		0x00000004U
 
-static uint32_t decode_ev(output_dev_t *const out_dev, message_t *const msg) {
+static uint32_t decode_ev(output_dev_t *const out_dev, in_message_t *const msg) {
 	uint32_t flags = 0x00000000U;
 
 	// scan for mouse mode and emit events in the virtual mouse if required
@@ -76,7 +75,6 @@ static uint32_t decode_ev(output_dev_t *const out_dev, message_t *const msg) {
             msg->flags |= INPUT_FILTER_FLAGS_DO_NOT_EMIT;
         } else if (
 			(msg->data.event.ev_count == 2) &&
-			(msg->data.event.ev_size >= 3) &&
 			(msg->data.event.ev[0].value == -13565896) &&
 			(msg->data.event.ev[1].type == EV_KEY) &&
 			(msg->data.event.ev[1].code == KEY_PROG1)
@@ -88,7 +86,7 @@ static uint32_t decode_ev(output_dev_t *const out_dev, message_t *const msg) {
 	return flags;
 }
 
-static void update_gs_from_ev(devices_status_t *const stats, message_t *const msg, controller_settings_t *const settings) {
+static void update_gs_from_ev(devices_status_t *const stats, in_message_t *const msg, controller_settings_t *const settings) {
 	if ( // this is what happens at release of the left-screen button of the ROG Ally
 		(msg->data.event.ev_count == 2) &&
 		(msg->data.event.ev[0].type == EV_MSC) &&
@@ -216,7 +214,7 @@ static void update_gs_from_ev(devices_status_t *const stats, message_t *const ms
 	}
 }
 
-static void update_gs_from_imu(devices_status_t *const stats, message_t *const msg, controller_settings_t *const settings) {
+static void update_gs_from_imu(devices_status_t *const stats, in_message_t *const msg, controller_settings_t *const settings) {
 	if (msg->data.imu.flags & IMU_MESSAGE_FLAGS_ANGLVEL) {
 		stats->gamepad.last_gyro_motion_time = msg->data.imu.gyro_read_time;
 
@@ -238,8 +236,8 @@ static void update_gs_from_imu(devices_status_t *const stats, message_t *const m
 	}
 }
 
-static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
-	if (msg->type == MSG_TYPE_EV) {
+static void handle_msg(output_dev_t *const out_dev, in_message_t *const msg) {
+	if (msg->type == IN_MSG_TYPE_EV) {
 		const uint32_t decode_ev_res_flags = decode_ev(out_dev, msg);
 
 		if (decode_ev_res_flags & DECODE_EV_FLAG_MODE_SWITCH_REQUESTED) {
@@ -275,9 +273,9 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 		return;
 	}
 
-	if (msg->type == MSG_TYPE_EV) {
+	if (msg->type == IN_MSG_TYPE_EV) {
 		update_gs_from_ev(&out_dev->logic->dev_stats, msg, &out_dev->logic->controller_settings);
-	} else if (msg->type == MSG_TYPE_IMU) {
+	} else if (msg->type == IN_MSG_TYPE_IMU) {
 		update_gs_from_imu(&out_dev->logic->dev_stats, msg, &out_dev->logic->controller_settings);
 	}
 
@@ -294,7 +292,7 @@ int handle_rumble(output_dev_t *const out_dev, uint64_t *rumble_events_count) {
 
 	// check if the gamepad has notified the presence of a rumble event
 	if (tmp_ev_count != *rumble_events_count) {
-		rumble_message_t *const rumble_msg = malloc(sizeof(rumble_message_t));
+		rumble_in_message_t *const rumble_msg = malloc(sizeof(rumble_in_message_t));
 		if(rumble_msg != NULL) {
 			rumble_msg->strong_magnitude = (uint16_t)left_motor << (uint16_t)8;
 			rumble_msg->weak_magnitude = (uint16_t)right_motor << (uint16_t)8;
@@ -385,7 +383,7 @@ void *output_dev_thread_func(void *ptr) {
 		void *raw_ev;
 		const int pop_res = queue_pop_timeout(&out_dev->logic->input_queue, &raw_ev, 1);
 		if (pop_res == 0) {
-			message_t *const msg = (message_t*)raw_ev;
+			in_message_t *const msg = (in_message_t*)raw_ev;
 			handle_msg(out_dev, msg);
 
 			// from now on it's forbidden to use this memory

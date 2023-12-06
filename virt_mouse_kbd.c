@@ -2,7 +2,7 @@
 
 static const char* uinput_path = "/dev/uinput";
 
-static int create_mouse_uinput() {
+static int create_mouse_uinput(void) {
     int fd = open(uinput_path, O_WRONLY | O_NONBLOCK);
 	if(fd < 0) {
         fd = -1;
@@ -76,7 +76,7 @@ create_mouse_uinput_err:
     return fd;
 }
 
-static int create_kb_uinput() {
+static int create_kb_uinput(void) {
 
     return -EINVAL;
 }

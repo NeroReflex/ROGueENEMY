@@ -4,7 +4,7 @@
 
 static const char* uinput_path = "/dev/uinput";
 
-static int create_gamepad_uinput() {
+static int create_gamepad_uinput(void) {
     int fd = open(uinput_path, O_WRONLY | O_NONBLOCK);
 	if(fd < 0) {
         fd = -1;
@@ -491,7 +491,7 @@ void *virt_evdev_thread_func(void *ptr) {
 }
 
 /*
-static void emit_ev(output_dev_t *const out_dev, const message_t *const msg) {
+static void emit_ev(output_dev_t *const out_dev, const in_message_t *const msg) {
 	// if events are flagged as do not emit... Do NOT emit!
 	if (msg->flags & INPUT_FILTER_FLAGS_DO_NOT_EMIT) {
 		return;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "queue.h"
 #include "message.h"
 #include "logic.h"
 
@@ -15,28 +14,24 @@ typedef enum input_dev_type {
 } input_dev_type_t;
 
 typedef struct uinput_filters {
-    const char* name;
+    const char name[256];
 } uinput_filters_t;
 
 typedef struct iio_filters {
-    const char* name;
+    const char name[256];
 } iio_filters_t;
 
 typedef struct input_dev {
     input_dev_type_t dev_type;
 
-    const uinput_filters_t* ev_filters;
-    const iio_filters_t* iio_filters;
+    union {
+        uinput_filters_t ev;
+        iio_filters_t iio;
+    } filters;
 
     ev_input_filter_t ev_input_filter_fn;
 
-    logic_t *logic;
-
 } input_dev_t;
-
-void *input_dev_thread_func(void *ptr);
-
-int open_and_hide_input(void);
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags);
 

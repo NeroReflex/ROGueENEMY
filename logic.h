@@ -1,7 +1,6 @@
 #pragma once
 
 #include "platform.h"
-#include "queue.h"
 #include "settings.h"
 #include "devices_status.h"
 
@@ -11,7 +10,7 @@
 typedef struct rumble_message {
     uint16_t strong_magnitude;
     uint16_t weak_magnitude;
-} rumble_message_t;
+} rumble_in_message_t;
 
 typedef struct logic {
 
@@ -19,14 +18,10 @@ typedef struct logic {
 
     devices_status_t dev_stats;
 
-    queue_t input_queue;
-
     pthread_t virt_dev_thread;
     bool virt_dev_thread_running;
 
     volatile uint32_t flags;
-
-    queue_t rumble_events_queue;
 
     controller_settings_t controller_settings;
 

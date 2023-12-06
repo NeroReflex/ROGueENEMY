@@ -498,7 +498,7 @@ static void multiplyMatrixVector(const double matrix[3][3], const double vector[
     result[2] = matrix[0][2] * vector[0] + matrix[1][2] * vector[1] + matrix[2][2] * vector[2];
 }
 
-int dev_iio_read_imu(const dev_iio_t *const iio, imu_message_t *const out) {
+int dev_iio_read_imu(const dev_iio_t *const iio, imu_in_message_t *const out) {
     struct timeval read_time;
     gettimeofday(&read_time, NULL);
 

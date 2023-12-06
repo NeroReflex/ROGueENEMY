@@ -1,4 +1,5 @@
 #include "virt_ds4.h"
+#include "message.h"
 
 #include <bits/types/time_t.h>
 #include <linux/uhid.h>
@@ -335,232 +336,6 @@ static void destroy(int fd)
 	uhid_write(fd, &ev);
 }
 
-/* This parses raw output reports sent by the kernel to the device. A normal
- * uhid program shouldn't do this but instead just forward the raw report.
- * However, for ducomentational purposes, we try to detect LED events here and
- * print debug messages for it. */
-static void handle_output(struct uhid_event *ev, gamepad_status_t *const gamepad_stats)
-{
-	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
-	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
-        return;
-
-    /*
-    if (ds4->update_rumble) {
-		* Select classic rumble style haptics and enable it. *
-		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_MOTOR;
-		common->motor_left = ds4->motor_left;
-		common->motor_right = ds4->motor_right;
-		ds4->update_rumble = false;
-	}
-
-	if (ds4->update_lightbar) {
-		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED;
-		* Comptabile behavior with hid-sony, which used a dummy global LED to
-		 * allow enabling/disabling the lightbar. The global LED maps to
-		 * lightbar_enabled.
-		 *
-		common->lightbar_red = ds4->lightbar_enabled ? ds4->lightbar_red : 0;
-		common->lightbar_green = ds4->lightbar_enabled ? ds4->lightbar_green : 0;
-		common->lightbar_blue = ds4->lightbar_enabled ? ds4->lightbar_blue : 0;
-		ds4->update_lightbar = false;
-	}
-
-	if (ds4->update_lightbar_blink) {
-		common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED_BLINK;
-		common->lightbar_blink_on = ds4->lightbar_blink_on;
-		common->lightbar_blink_off = ds4->lightbar_blink_off;
-		ds4->update_lightbar_blink = false;
-	}
-    */
-	
-	if (ev->u.output.size != 32) {
-        fprintf(stderr, "Invalid data length: got %d, expected 32\n", (int)ev->u.output.size);
-
-        return;
-    }
-
-	// first byte is report-id which is 0x01
-	if (ev->u.output.data[0] != 0x05) {
-        fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev->u.output.data[0]);
-        return;
-    }
-	
-    const uint8_t valid_flag0 = ev->u.output.data[1];
-	const uint8_t valid_flag1 = ev->u.output.data[2];
-	const uint8_t reserved = ev->u.output.data[3];
-	const uint8_t motor_right = ev->u.output.data[4];
-	const uint8_t motor_left = ev->u.output.data[5];
-	const uint8_t lightbar_red = ev->u.output.data[6];
-	const uint8_t lightbar_green = ev->u.output.data[7];
-	const uint8_t lightbar_blue = ev->u.output.data[8];
-	const uint8_t lightbar_blink_on = ev->u.output.data[9];
-	const uint8_t lightbar_blink_off = ev->u.output.data[10];
-
-    if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_MOTOR)) {    
-        gamepad_stats->motors_intensity[0] = motor_left;
-        gamepad_stats->motors_intensity[1] = motor_right;
-        ++gamepad_stats->rumble_events_count;
-
-#if defined(VIRT_DS4_DEBUG)
-        printf(
-            "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
-            motor_left,
-            motor_right,
-            valid_flag0,
-            valid_flag1
-        );
-#endif
-    }
-}
-
-static int event(int fd, gamepad_status_t *const gamepad_stats)
-{
-	struct uhid_event ev;
-	ssize_t ret;
-
-	memset(&ev, 0, sizeof(ev));
-	ret = read(fd, &ev, sizeof(ev));
-	if (ret == 0) {
-		fprintf(stderr, "Read HUP on uhid-cdev\n");
-		return -EFAULT;
-	} else if (ret == -1) {
-        return 0;
-    } else if (ret < 0) {
-		fprintf(stderr, "Cannot read uhid-cdev: %d\n", (int)ret);
-		return -errno;
-	} else if (ret != sizeof(ev)) {
-		fprintf(stderr, "Invalid size read from uhid-dev: %zd != %zu\n",
-			ret, sizeof(ev));
-		return -EFAULT;
-	}
-
-	switch (ev.type) {
-	case UHID_START:
-#if defined(VIRT_DS4_DEBUG)
-		printf("UHID_START from uhid-dev\n");
-#endif
-		break;
-	case UHID_STOP:
-#if defined(VIRT_DS4_DEBUG)
-        printf("UHID_STOP from uhid-dev\n");
-#endif
-        break;
-	case UHID_OPEN:
-#if defined(VIRT_DS4_DEBUG)
-        printf("UHID_OPEN from uhid-dev\n");
-#endif
-		break;
-	case UHID_CLOSE:
-#if defined(VIRT_DS4_DEBUG)
-        printf(stderr, "UHID_CLOSE from uhid-dev\n");
-#endif
-		break;
-	case UHID_OUTPUT:
-#if defined(VIRT_DS4_DEBUG)
-		printf("UHID_OUTPUT from uhid-dev\n");
-#endif
-		handle_output(&ev, gamepad_stats);
-		break;
-	case UHID_OUTPUT_EV:
-#if defined(VIRT_DS4_DEBUG)
-		printf("UHID_OUTPUT_EV from uhid-dev\n");
-#endif
-		break;
-    case UHID_GET_REPORT:
-        //fprintf(stderr, "UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
-        if (ev.u.get_report.rnum == 18) {
-            const struct uhid_event mac_addr_response = {
-                .type = UHID_GET_REPORT_REPLY,
-                .u = {
-                    .get_report_reply = {
-                        .size = 16,
-                        .id = ev.u.get_report.id,
-                        .err = 0,
-                        .data = {
-                            0x12, 0xf2, 0xa5, 0x71, 0x68, 0xaf, 0xdc, 0x08,
-                            0x25, 0x00, 0x4c, 0x46, 0x49, 0x0e, 0x41, 0x00
-                        }
-                    }
-                }
-            };
-
-            uhid_write(fd, &mac_addr_response);
-        } else if (ev.u.get_report.rnum == 0xa3) {
-            const struct uhid_event firmware_info_response = {
-                .type = UHID_GET_REPORT_REPLY,
-                .u = {
-                    .get_report_reply = {
-                        .size = 49,
-                        .id = ev.u.get_report.id,
-                        .err = 0,
-                        .data = {
-                            0xa3, 0x53, 0x65, 0x70, 0x20, 0x32, 0x31, 0x20,
-                            0x32, 0x30, 0x31, 0x38, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x30, 0x34, 0x3a, 0x35, 0x30, 0x3a, 0x35,
-                            0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x01, 0x0c, 0xb4, 0x01, 0x00, 0x00,
-                            0x00, 0x0a, 0xa0, 0x10, 0x20, 0x00, 0xa0, 0x02,
-                            0x00
-                        }
-                    }
-                }
-            };
-
-            uhid_write(fd, &firmware_info_response);
-        } else if (ev.u.get_report.rnum == 0x02) { // dualshock4_get_calibration_data
-            struct uhid_event firmware_info_response = {
-                .type = UHID_GET_REPORT_REPLY,
-                .u = {
-                    .get_report_reply = {
-                        .size = 37,
-                        .id = ev.u.get_report.id,
-                        .err = 0,
-                        .data = {
-                            0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x06, 0x00,
-
-                        }
-                    }
-                }
-            };
-
-            // bias in kernel is 0 (embedded constant)
-            // speed_2x = speed_2x*DS4_GYRO_RES_PER_DEG_S; calculated by the kernel will be 1080.
-            // As a consequence sens_numer (for every axis) is 1080*1024.
-            // that number will be 1105920
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[1], (const void*)&gyro_pitch_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[3], (const void*)&gyro_yaw_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[5], (const void*)&gyro_roll_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[7], (const void*)&gyro_pitch_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[9], (const void*)&gyro_pitch_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[11], (const void*)&gyro_yaw_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[13], (const void*)&gyro_yaw_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[15], (const void*)&gyro_roll_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[17], (const void*)&gyro_roll_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[19], (const void*)&gyro_speed_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[21], (const void*)&gyro_speed_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[23], (const void*)&acc_x_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[25], (const void*)&acc_x_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[27], (const void*)&acc_y_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[29], (const void*)&acc_y_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[31], (const void*)&acc_z_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[33], (const void*)&acc_z_minus, sizeof(int16_t));
-
-            uhid_write(fd, &firmware_info_response);
-        }
-
-		break;
-	default:
-		fprintf(stderr, "Invalid event from uhid-dev: %u\n", ev.type);
-	}
-
-	return 0;
-}
-
 typedef enum ds4_dpad_status {
     DPAD_N        = 0,
     DPAD_NE       = 1,
@@ -735,74 +510,289 @@ static void compose_hid_report_buffer(int fd, gamepad_status_t *const gamepad_st
     buf[44] = 0x80; // IDK... it seems constant...
 }
 
-/**
- * Thread function emulating the DualShock4 controller at USB level using USB UHID ( https://www.kernel.org/doc/html/latest/hid/uhid.html ) kernel APIs.
- *
- * See https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/hid/uhid.txt?id=refs/tags/v4.10-rc3
- */
-void *virt_ds4_thread_func(void *ptr) {
-    devices_status_t *const stats = (devices_status_t*)ptr;
+int virt_dualshock_init(virt_dualshock_t *const out_gamepad) {
+    int ret = 0;
 
-    fprintf(stderr, "Open uhid-cdev %s\n", path);
-    int fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
-    if (fd < 0) {
-        fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, fd);
-        return NULL;
+    out_gamepad->debug = false;
+
+    out_gamepad->fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
+    if (out_gamepad->fd < 0) {
+        fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, out_gamepad->fd);
+        ret = out_gamepad->fd;
+        goto virt_dualshock_init_err;
     }
 
-    fprintf(stderr, "Create uhid device\n");
-    int ret = create(fd);
+    ret = create(out_gamepad->fd);
     if (ret) {
-        close(fd);
-        return NULL;
+        fprintf(stderr, "Error creating uhid device: %d\n", ret);
+        close(out_gamepad->fd);
+        goto virt_dualshock_init_err;
     }
 
-    uint8_t buf[64];
+virt_dualshock_init_err:
+    return ret;
+}
 
-    for (;;) {
-        usleep(1250);
-        memset(buf, 0, sizeof(buf));
-    
-        const int lock_res = pthread_mutex_lock(&stats->mutex);
-        if (lock_res != 0) {
-            printf("Unable to lock gamepad mutex: %d\n", lock_res);
+int virt_dualshock_get_fd(virt_dualshock_t *const in_gamepad) {
+    return in_gamepad->fd;
+}
 
-            continue;
+int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *const out_device_status, int out_message_pipe_fd) {
+    struct uhid_event ev;
+	ssize_t ret;
+
+	memset(&ev, 0, sizeof(ev));
+	ret = read(gamepad->fd, &ev, sizeof(ev));
+	if (ret == 0) {
+		fprintf(stderr, "Read HUP on uhid-cdev\n");
+		return -EFAULT;
+	} else if (ret == -1) {
+        return 0;
+    } else if (ret < 0) {
+		fprintf(stderr, "Cannot read uhid-cdev: %d\n", (int)ret);
+		return -errno;
+	} else if (ret != sizeof(ev)) {
+		fprintf(stderr, "Invalid size read from uhid-dev: %zd != %zu\n",
+			ret, sizeof(ev));
+		return -EFAULT;
+	}
+
+	switch (ev.type) {
+	case UHID_START:
+        if (gamepad->debug) {
+		    printf("UHID_START from uhid-dev\n");
+        }
+		break;
+	case UHID_STOP:
+        if (gamepad->debug) {
+            printf("UHID_STOP from uhid-dev\n");
+        }
+        break;
+	case UHID_OPEN:
+        if (gamepad->debug) {
+            printf("UHID_OPEN from uhid-dev\n");
+        }
+		break;
+	case UHID_CLOSE:
+        if (gamepad->debug) {
+            printf(stderr, "UHID_CLOSE from uhid-dev\n");
+        }
+		break;
+	case UHID_OUTPUT:
+        if (gamepad->debug) {
+            printf("UHID_OUTPUT from uhid-dev\n");
         }
 
-        // main virtual device logic
-        {
-            event(fd, &stats->gamepad);
+        // Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
+        if (ev.u.output.rtype != UHID_OUTPUT_REPORT)
+            return 0;
 
-            gamepad_status_qam_quirk(&stats->gamepad);
-
-            if (stats->gamepad.connected) {
-                compose_hid_report_buffer(fd, &stats->gamepad, buf);
-            } else {
-                pthread_mutex_unlock(&stats->mutex);
-                
-                printf("DualShock has been terminated: closing the device.\n");
-                break;
-            }
+        /*
+        if (ds4->update_rumble) {
+            * Select classic rumble style haptics and enable it. *
+            common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_MOTOR;
+            common->motor_left = ds4->motor_left;
+            common->motor_right = ds4->motor_right;
+            ds4->update_rumble = false;
         }
 
-        pthread_mutex_unlock(&stats->mutex);
+        if (ds4->update_lightbar) {
+            common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED;
+            * Comptabile behavior with hid-sony, which used a dummy global LED to
+            * allow enabling/disabling the lightbar. The global LED maps to
+            * lightbar_enabled.
+            *
+            common->lightbar_red = ds4->lightbar_enabled ? ds4->lightbar_red : 0;
+            common->lightbar_green = ds4->lightbar_enabled ? ds4->lightbar_green : 0;
+            common->lightbar_blue = ds4->lightbar_enabled ? ds4->lightbar_blue : 0;
+            ds4->update_lightbar = false;
+        }
 
-        struct uhid_event l = {
-            .type = UHID_INPUT2,
-            .u = {
-                .input2 = {
-                    .size = 64,
+        if (ds4->update_lightbar_blink) {
+            common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED_BLINK;
+            common->lightbar_blink_on = ds4->lightbar_blink_on;
+            common->lightbar_blink_off = ds4->lightbar_blink_off;
+            ds4->update_lightbar_blink = false;
+        }
+        */
+        
+        if (ev.u.output.size != 32) {
+            fprintf(stderr, "Invalid data length: got %d, expected 32\n", (int)ev.u.output.size);
+
+            return 0;
+        }
+
+        // first byte is report-id which is 0x01
+        if (ev.u.output.data[0] != 0x05) {
+            fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev.u.output.data[0]);
+            return 0;
+        }
+        
+        const uint8_t valid_flag0 = ev.u.output.data[1];
+        const uint8_t valid_flag1 = ev.u.output.data[2];
+        const uint8_t reserved = ev.u.output.data[3];
+        const uint8_t motor_right = ev.u.output.data[4];
+        const uint8_t motor_left = ev.u.output.data[5];
+        const uint8_t lightbar_red = ev.u.output.data[6];
+        const uint8_t lightbar_green = ev.u.output.data[7];
+        const uint8_t lightbar_blue = ev.u.output.data[8];
+        const uint8_t lightbar_blink_on = ev.u.output.data[9];
+        const uint8_t lightbar_blink_off = ev.u.output.data[10];
+
+        if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_MOTOR)) {    
+            out_device_status->motors_intensity[0] = motor_left;
+            out_device_status->motors_intensity[1] = motor_right;
+            ++out_device_status->rumble_events_count;
+
+            out_message_t msg = {
+                .type = OUT_MSG_TYPE_RUMBLE,
+                .data = {
+                    .rumble = {
+                        .strong_magnitude = motor_left == 0 ? 0 : (uint16_t)0x00FF | ((uint16_t)motor_left << (uint16_t)8),
+                        .weak_magnitude = motor_right == 0 ? 0 : (uint16_t)0x00FF | ((uint16_t)motor_right << (uint16_t)8),
+                    }
                 }
+            };
+
+            const int write_res = write(out_message_pipe_fd, (void*)&msg, sizeof(msg));
+            if (write_res != 0) {
+                return write_res;
             }
-        };
 
-        memcpy(&l.u.input2.data[0], &buf[0], l.u.input2.size);
+            if (gamepad->debug) {
+                printf(
+                    "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
+                    motor_left,
+                    motor_right,
+                    valid_flag0,
+                    valid_flag1
+                );
+            }
+        }
+		break;
+	case UHID_OUTPUT_EV:
+        if (gamepad->debug) {
+		    printf("UHID_OUTPUT_EV from uhid-dev\n");
+        }
+		break;
+    case UHID_GET_REPORT:
+        if (gamepad->debug) {
+            printf("UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
+        }
+        
+        if (ev.u.get_report.rnum == 18) {
+            const struct uhid_event mac_addr_response = {
+                .type = UHID_GET_REPORT_REPLY,
+                .u = {
+                    .get_report_reply = {
+                        .size = 16,
+                        .id = ev.u.get_report.id,
+                        .err = 0,
+                        .data = {
+                            0x12, 0xf2, 0xa5, 0x71, 0x68, 0xaf, 0xdc, 0x08,
+                            0x25, 0x00, 0x4c, 0x46, 0x49, 0x0e, 0x41, 0x00
+                        }
+                    }
+                }
+            };
 
-        uhid_write(fd, &l);
-    }
-    
-    destroy(fd);
+            uhid_write(gamepad->fd, &mac_addr_response);
+        } else if (ev.u.get_report.rnum == 0xa3) {
+            const struct uhid_event firmware_info_response = {
+                .type = UHID_GET_REPORT_REPLY,
+                .u = {
+                    .get_report_reply = {
+                        .size = 49,
+                        .id = ev.u.get_report.id,
+                        .err = 0,
+                        .data = {
+                            0xa3, 0x53, 0x65, 0x70, 0x20, 0x32, 0x31, 0x20,
+                            0x32, 0x30, 0x31, 0x38, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x30, 0x34, 0x3a, 0x35, 0x30, 0x3a, 0x35,
+                            0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x01, 0x0c, 0xb4, 0x01, 0x00, 0x00,
+                            0x00, 0x0a, 0xa0, 0x10, 0x20, 0x00, 0xa0, 0x02,
+                            0x00
+                        }
+                    }
+                }
+            };
 
-    return NULL;
+            uhid_write(gamepad->fd, &firmware_info_response);
+        } else if (ev.u.get_report.rnum == 0x02) { // dualshock4_get_calibration_data
+            struct uhid_event firmware_info_response = {
+                .type = UHID_GET_REPORT_REPLY,
+                .u = {
+                    .get_report_reply = {
+                        .size = 37,
+                        .id = ev.u.get_report.id,
+                        .err = 0,
+                        .data = {
+                            0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            0x00, 0x00, 0x00, 0x06, 0x00,
+
+                        }
+                    }
+                }
+            };
+
+            // bias in kernel is 0 (embedded constant)
+            // speed_2x = speed_2x*DS4_GYRO_RES_PER_DEG_S; calculated by the kernel will be 1080.
+            // As a consequence sens_numer (for every axis) is 1080*1024.
+            // that number will be 1105920
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[1], (const void*)&gyro_pitch_bias, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[3], (const void*)&gyro_yaw_bias, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[5], (const void*)&gyro_roll_bias, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[7], (const void*)&gyro_pitch_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[9], (const void*)&gyro_pitch_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[11], (const void*)&gyro_yaw_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[13], (const void*)&gyro_yaw_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[15], (const void*)&gyro_roll_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[17], (const void*)&gyro_roll_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[19], (const void*)&gyro_speed_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[21], (const void*)&gyro_speed_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[23], (const void*)&acc_x_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[25], (const void*)&acc_x_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[27], (const void*)&acc_y_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[29], (const void*)&acc_y_minus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[31], (const void*)&acc_z_plus, sizeof(int16_t));
+            memcpy((void*)&firmware_info_response.u.get_report_reply.data[33], (const void*)&acc_z_minus, sizeof(int16_t));
+
+            uhid_write(gamepad->fd, &firmware_info_response);
+        }
+
+		break;
+	default:
+		fprintf(stderr, "Invalid event from uhid-dev: %u\n", ev.type);
+	}
+
+	return 0;
+}
+
+void virt_dualshock_close(virt_dualshock_t *const out_gamepad) {
+    destroy(out_gamepad->fd);
+}
+
+void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf) {
+    gamepad_status_qam_quirk(in_device_status);
+
+    compose_hid_report_buffer(gamepad->fd, in_device_status, out_buf);
+}
+
+int virt_dualshock_send(virt_dualshock_t *const gamepad, uint8_t *const out_buf) {
+    struct uhid_event l = {
+        .type = UHID_INPUT2,
+        .u = {
+            .input2 = {
+                .size = 64,
+            }
+        }
+    };
+
+    memcpy(&l.u.input2.data[0], &out_buf[0], l.u.input2.size);
+
+    return uhid_write(gamepad->fd, &l);
 }

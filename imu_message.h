@@ -26,4 +26,4 @@ typedef struct imu_message {
 
     uint32_t flags;
 
-} imu_message_t;
+} imu_in_message_t;

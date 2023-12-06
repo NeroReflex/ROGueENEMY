@@ -73,5 +73,5 @@ int dev_iio_read(
 
 int dev_iio_read_imu(
     const dev_iio_t *const iio,
-    imu_message_t *const out
+    imu_in_message_t *const out
 );
