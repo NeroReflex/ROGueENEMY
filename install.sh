@@ -10,6 +10,9 @@ CONFIG_DIR="/etc/ROGueENEMY"
 
 echo "Starting installation of ROGueENEMY..."
 
+echo "Disabling handycon..."
+systemctl disable --now handycon.service
+
 # Ensure running as root
 if [ "$(id -u)" -ne 0 ]; then
     echo "This script must be run as root." >&2
