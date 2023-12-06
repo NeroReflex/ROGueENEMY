@@ -1,11 +1,19 @@
 #!/bin/bash
 
+# Define the user's home directory
+# This ensures that we get the original user's home directory, not root's
+if [ "$SUDO_USER" ]; then
+    HOME_DIR=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+    HOME_DIR=$HOME
+fi
+
 # Define variables
 REPO_URL="https://github.com/corando98/ROGueENEMY"
 BUILD_DIR="/tmp/ROGueENEMY"
-INSTALL_DIR="/usr/bin"
+INSTALL_DIR="$HOME_DIR/.local/bin"
 SYSTEMD_DIR="/etc/systemd/system"
-UDEV_RULES_DIR="/usr/lib/udev/rules.d"
+UDEV_RULES_DIR="/etc/udev/rules.d"
 CONFIG_DIR="/etc/ROGueENEMY"
 
 echo "Starting installation of ROGueENEMY..."
