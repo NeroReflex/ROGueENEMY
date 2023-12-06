@@ -673,7 +673,7 @@ int cycle_mode(rc71l_platform_t *const platform) {
 
 		platform->mode = next_mode;
 
-		printf("Used hidraw to switch Asus MCU to mode %lu", platform->mode);
+		printf("Used hidraw to switch Asus MCU to mode %lu\n", platform->mode);
 		
         return reset_res;
     } else if (platform->platform_mode == rc71l_platform_mode_asus_mcu) {
@@ -692,7 +692,7 @@ int cycle_mode(rc71l_platform_t *const platform) {
 
         platform->mode = new_mode;
 
-		printf("Used asus-mcu to switch Asus MCU to mode %lu", platform->mode);
+		printf("Used asus-mcu to switch Asus MCU to mode %lu\n", platform->mode);
 
         fclose(mode_file);
     }
