@@ -233,7 +233,7 @@ dev_iio_t* dev_iio_create(const char* path) {
 
     // ============================================ samplig_freq ================================================
     {
-        const char* const preferred_samplig_freq = "800.000000";
+        const char* const preferred_samplig_freq = " 1600.000000";
         const size_t preferred_samplig_freq_len = strlen(preferred_samplig_freq);
 
         if (write_file(iio->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
