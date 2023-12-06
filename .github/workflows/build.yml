@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           dnf update -y
-          dnf install -y cmake gcc-c++ make libconfig-devel libevdev-devel
+          dnf install -y git cmake gcc-c++ make libconfig-devel libevdev-devel
       - name: Create build dir
         run: |
           mkdir build
