@@ -254,10 +254,6 @@ static void handle_msg(output_dev_t *const out_dev, message_t *const msg) {
 			// wait for the thread to terminate itself...
 			logic_terminate_output_thread(out_dev->logic);
 
-			// re-lock the mutex and flag the controller as connected so that the new thread won't exit immediatly
-			// as the other gamepad-accessing thread is now joined (has terminated) it's safe to update the state without locking the mutex
-			out_dev->logic->dev_stats.gamepad.connected = true;
-
 			const int cycle_mode_res = cycle_mode(&out_dev->logic->platform);
 			if (cycle_mode_res == 0) {
 				const int output_thread_start_res = (is_mouse_mode(&out_dev->logic->platform)) ?
