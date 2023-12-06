@@ -50,13 +50,13 @@ static int fill_message_from_iio(dev_in_iio_t *const in_evdev, in_message_t *con
     return -EINVAL;
 }
 
-static int fill_message_from_evdev(dev_in_ev_t *const in_evdev, in_message_t *const out_msg) {
+static int fill_message_from_evdev(dev_in_ev_t *const in_evdev, evdev_collected_t *const out_coll) {
     int res = 0;
 
     struct input_event read_ev;
 
     // reset the events count
-    out_msg->data.event.ev_count = 0;
+    out_coll->ev_count = 0;
 
     // if the device does not support syn reports read just one event and return
     if (!in_evdev->has_syn_report) {
@@ -66,13 +66,13 @@ static int fill_message_from_evdev(dev_in_ev_t *const in_evdev, in_message_t *co
         }
 
         // just copy the input event
-        out_msg->data.event.ev[out_msg->data.event.ev_count++] = read_ev;
+        out_coll->ev[out_coll->ev_count++] = read_ev;
         
         goto fill_message_from_evdev_err_completed;
     }
 
     // the device does support syn reports so read every event until one is found
-    while (out_msg->data.event.ev_count < MAX_EVDEV_EVENTS_IN_MESSAGE) {
+    while (out_coll->ev_count < MAX_COLLECTED_EVDEV_EVENTS) {
         res = libevdev_next_event(in_evdev->evdev, LIBEVDEV_READ_FLAG_BLOCKING, &read_ev);
         if (res < 0) {
             goto fill_message_from_evdev_err;
@@ -88,23 +88,12 @@ static int fill_message_from_evdev(dev_in_ev_t *const in_evdev, in_message_t *co
         }
 
         // just copy the input event
-        out_msg->data.event.ev[out_msg->data.event.ev_count++] = read_ev;
+        out_coll->ev[out_coll->ev_count++] = read_ev;
     }
 
 fill_message_from_evdev_err:
 fill_message_from_evdev_err_completed:
     return res;
-}
-
-static int fill_message_from_device(dev_in_t *const in_dev, in_message_t *const out_msg) {
-    if (in_dev->type == DEV_IN_TYPE_EV) {
-        return fill_message_from_evdev(&in_dev->dev.evdev, out_msg);
-    } else if (in_dev->type == DEV_IN_TYPE_EV) {
-        return fill_message_from_iio(&in_dev->dev.iio, out_msg);
-    }
-
-    fprintf(stderr, "Unable to recognise device type\n");
-    return -EINVAL;
 }
 
 int open_device(
@@ -240,8 +229,6 @@ void* dev_in_thread_func(void *ptr) {
         devices[i].type = DEV_IN_TYPE_NONE;
     }
 
-    in_message_t current_message;
-
     for (;;) {
         FD_ZERO(&read_fds);
         FD_SET(devs->in_message_pipe_fd, &read_fds);
@@ -299,23 +286,28 @@ void* dev_in_thread_func(void *ptr) {
             if (devices[i].type == DEV_IN_TYPE_EV) {
                 fd = libevdev_get_fd(devices[i].dev.evdev.evdev);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
-
+                // TODO: implement IIO
             }
             
             if (!FD_ISSET(fd, &read_fds)) {
                 continue;
             }
 
-            const int fill_msg_res = fill_message_from_device(&devices[i], &current_message);
-            if (!fill_msg_res) {
-                fprintf(stderr, "Error reading from selected input device (%zu): %d\n", i, fill_msg_res);
-                continue;
-            }
+            if (devices[i].type == DEV_IN_TYPE_EV) {
+                evdev_collected_t coll = {
+                    .ev_count = 0
+                };
 
-            const ssize_t in_message_pipe_write_res = write(devs->in_message_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-            if (in_message_pipe_write_res != sizeof(in_message_t)) {
-                fprintf(stderr, "Unable to write data to the in_message pipe: %zu\n", in_message_pipe_write_res);
-                continue;
+                const int fill_res = fill_message_from_evdev(&devices[i].dev.evdev, &coll);
+                if (fill_res != 0) {
+                    fprintf(stderr, "Unable to fill input_event(s) for device %zd: %d\n", i, fill_res);
+                    continue;
+                } else {
+                    devs->input_dev_decl[i].ev_input_map_fn(&coll, devs->in_message_pipe_fd, devs->input_dev_decl[i].user_data);
+                }
+            } else if (devices[i].type == DEV_IN_TYPE_EV) {
+                // TODO: implement IIO
+                //fill_message_from_iio(&devices[i].dev.iio, out_msg);
             }
         }
     }

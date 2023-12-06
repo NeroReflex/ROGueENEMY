@@ -27,5 +27,3 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
 int virt_dualshock_send(virt_dualshock_t *const gamepad, uint8_t *const out_buf);
 
 void virt_dualshock_close(virt_dualshock_t *const gamepad);
-
-void *virt_ds4_thread_func(void *ptr);

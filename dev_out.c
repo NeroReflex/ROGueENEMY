@@ -9,6 +9,10 @@ void *dev_out_thread_func(void *ptr) {
     int current_keyboard_fd = -1;
     int current_mouse_fd = -1;
 
+
+    // TODO: stats->gamepad.flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+
+
     for (;;) {
         
 

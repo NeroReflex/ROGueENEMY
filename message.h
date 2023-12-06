@@ -6,44 +6,33 @@
 #define EV_MESSAGE_FLAGS_IMU              0x00000002U
 #define EV_MESSAGE_FLAGS_MOUSE            0x00000004U
 
-#define MAX_EVDEV_EVENTS_IN_MESSAGE 16
-
 typedef enum in_message_gamepad_btn {
-    GAMEPAD_BTN_A,
-    GAMEPAD_BTN_B,
-    GAMEPAD_BTN_X,
-    GAMEPAD_BTN_Y,
-    GAMEPAD_BTN_START,
-    GAMEPAD_BTN_SELECT,
+    GAMEPAD_BTN_CROSS,
+    GAMEPAD_BTN_CIRCLE,
+    GAMEPAD_BTN_SQUARE,
+    GAMEPAD_BTN_TRIANGLE,
+    GAMEPAD_BTN_OPTION,
+    GAMEPAD_BTN_SHARE,
     GAMEPAD_BTN_L1,
     GAMEPAD_BTN_R1,
     GAMEPAD_BTN_L2,
     GAMEPAD_BTN_R2,
     GAMEPAD_BTN_L3,
     GAMEPAD_BTN_R3,
-} __packed in_message_gamepad_btn_t;
+} __packed in_gamepad_element_t;
 
-typedef struct in_message_gamepad_btn_change {
-    in_message_gamepad_btn_t button;
+typedef struct in_message_gamepad_set_element {
+    in_gamepad_element_t element;
     uint8_t status;
-} __packed in_message_gamepad_btn_change_t;
+} __packed in_message_gamepad_set_element_t;
 
-typedef enum in_message_gamepad_delta_type {
-    GAMEPAD_DELTA_BTN,
-} __packed in_message_gamepad_delta_type_t;
-
-typedef struct in_message_gamepad_delta {
-    in_message_gamepad_delta_type_t type;
-
-    union {
-        in_message_gamepad_btn_change_t btn;
-    } data;
-} __packed in_message_gamepad_delta_t;
+typedef enum in_message_gamepad_action {
+    GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
+} in_message_gamepad_action_t;
 
 typedef enum in_in_message_type {
-    IN_MSG_TYPE_BTN,
-    IN_MSG_TYPE_SENSOR,
-    IN_MSG_TYPE_MACRO,
+    GAMEPAD_SET_ELEMENT,
+    GAMEPAD_ACTION,
 } __packed in_message_type_t;
 
 typedef struct in_message {
@@ -52,7 +41,9 @@ typedef struct in_message {
     union {
         //imu_in_message_t imu;
 
-        in_message_gamepad_delta_t gamepad_delta;
+        in_message_gamepad_action_t action;
+
+        in_message_gamepad_set_element_t gamepad_set;
     } data;
 
 } __packed in_message_t;

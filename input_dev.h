@@ -6,7 +6,18 @@
 #undef INCLUDE_INPUT_DEBUG
 #undef IGNORE_INPUT_SCAN
 
-typedef uint32_t (*ev_input_filter_t)(struct input_event*, size_t*, uint32_t*, uint32_t*);
+#define MAX_COLLECTED_EVDEV_EVENTS 16
+
+typedef struct evdev_collected {
+    struct input_event ev[MAX_COLLECTED_EVDEV_EVENTS];
+    size_t ev_count;
+} evdev_collected_t;
+
+/**
+ * A function with this signature grapbs input_event data and sends to the pipe messages
+ * constructed from that data.
+ */
+typedef void (*ev_map)(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data);
 
 typedef enum input_dev_type {
     input_dev_type_uinput,
@@ -29,7 +40,9 @@ typedef struct input_dev {
         iio_filters_t iio;
     } filters;
 
-    ev_input_filter_t ev_input_filter_fn;
+    void* user_data;
+
+    ev_map ev_input_map_fn;
 
 } input_dev_t;
 
