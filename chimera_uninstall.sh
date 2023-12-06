@@ -34,8 +34,7 @@ rm -f "$INSTALL_DIR/rogue-enemy"
 
 # Remove udev rules
 echo "Removing udev rules..."
-rm -f "$UDEV_RULES_DIR/99-rogue_enemy.rules"
-rm -f "$UDEV_RULES_DIR/80-playstation.rules"
+rm -f "$UDEV_RULES_DIR/99-rogue.rules"
 
 # Remove configuration directory
 echo "Removing configuration files..."

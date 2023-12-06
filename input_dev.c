@@ -499,7 +499,7 @@ void* hidraw_reading_thread(void* ptr){
             sleep(3);
             printf("Lost device i/o error");
             device = find_matching_hidraw_devices();
-            fd = open(device, O_RDONLY | O_NONBLOCK);
+            fd = open(device, O_RDONLY);
             
             if (fd < 0) {
                 free(device);
@@ -522,7 +522,7 @@ void* hidraw_reading_thread(void* ptr){
             msg->flags |= MESSAGE_FLAGS_HANDLE_DONE;
             msg = NULL;
         }
-        usleep(20000);
+        // usleep(20000); 
     }
     if(fd>=0) close(fd);
     free(device);

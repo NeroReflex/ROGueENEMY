@@ -26,9 +26,8 @@ echo "Preparing installation..."
 rm -rf "$BUILD_DIR"
 git clone "$REPO_URL" "$BUILD_DIR"
 
-echo "Copying udev rules..."
-cp "$BUILD_DIR/rogue_enemy.rule" "$UDEV_RULES_DIR/99-rogue_enemy.rules"
-cp "$BUILD_DIR/80-playstation.rules" "$UDEV_RULES_DIR"
+echo "Copying udev rule..."
+cp "$BUILD_DIR/99-rogue.rules" "$UDEV_RULES_DIR"
 
 echo "Downloading the latest release..."
 echo "Downloading the latest release..."
