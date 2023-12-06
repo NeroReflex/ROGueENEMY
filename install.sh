@@ -38,6 +38,7 @@ curl -L $(curl -s https://api.github.com/repos/corando98/ROGueENEMY/releases/lat
 echo "Installing executable..."
 mkdir -p "$INSTALL_DIR"
 cp "$BUILD_DIR/rogue-enemy" "$INSTALL_DIR/rogue-enemy"
+chmod +x $INSTALL_DIR/rogue-enemy
 
 echo "Creating and setting up system service..."
 echo "Setting up system service..."
