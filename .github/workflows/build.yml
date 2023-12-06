@@ -24,10 +24,11 @@ jobs:
           cd build
       - name: Configure CMake
         run: | 
-          ls -al
+          cd build
           cmake ..
       - name: Build
         run: | 
+          cd build
           cmake --build .
       - name: Create Tag
         if: github.ref == 'refs/heads/main'
