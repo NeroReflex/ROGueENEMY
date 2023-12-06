@@ -376,7 +376,7 @@ int check_device_match(const char *device_path) {
 }
 
 int test_device_data_length(const char *dev_path) {
-    int fd = open(dev_path, O_RDONLY | O_NONBLOCK);
+    int fd = open(dev_path, O_RDONLY);
     if (fd < 0) {
         perror("open");
         return 0;
