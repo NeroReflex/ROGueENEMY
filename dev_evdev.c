@@ -123,6 +123,7 @@ int dev_evdev_open(
             }
 
             // the device has been found
+            res = 0;
             break;
         }
         closedir(d);
