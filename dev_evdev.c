@@ -17,8 +17,10 @@ static bool ev_matches(struct libevdev *dev, const uinput_filters_t* const filte
 
     const char* name = libevdev_get_name(dev);
     if ((name != NULL) && (strcmp(name, filters->name) != 0)) {
-        printf("%s does not match %s", name, filters->name);
+        printf("%s does not match %s\n", name, filters->name);
         return false;
+    } else {
+        printf("%s matches %s\n", name, filters->name);
     }
 
     // TODO: if more filters are implemented write them here
