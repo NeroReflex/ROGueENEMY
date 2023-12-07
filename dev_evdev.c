@@ -89,7 +89,7 @@ int dev_evdev_open(
             // try to open the device, if it cannot be opened to go the next
             int fd = open(path, O_RDWR);
             if (fd < 0) {
-                //fprintf(stderr, "Cannot open %s, device skipped.\n", sysfs_entry);
+                fprintf(stderr, "Cannot open %s, device skipped.\n", path);
                 continue;
             }
 
@@ -100,6 +100,7 @@ int dev_evdev_open(
                 if ((open_fds[o] != -1) && (open_fds[o] == fd)) {
                     close(fd);
                     skip = 1;
+                    printf("Device %s already opened\n", path);
                     break;
                 } else if (open_fds[o] == -1) {
                     open_sysfs_idx = o;
@@ -107,6 +108,7 @@ int dev_evdev_open(
             }
 
             if ((skip) || (open_sysfs_idx == -1)) {
+                printf("skip=%d open_sysfs_idx=%d\n", skip, open_sysfs_idx);
                 continue;
             } else {
                 open_fds[open_sysfs_idx] = fd;
