@@ -122,12 +122,13 @@ static void handle_incoming_message(
     }
 }
 
-int64_t get_timediff_usec(struct timeval* past, struct timeval* now) {
-    const time_t secs_diff = now->tv_sec - past->tv_sec;
+int64_t get_timediff_usec(const struct timeval *const past, const struct timeval *const now) {
+    struct timeval tdiff;
+    timersub(past, now, &tdiff);
 
-    // TODO: this is wrong...
-    const suseconds_t usecs_diff = now->tv_usec - past->tv_usec;
-    return secs_diff * (int64_t)1000000 + usecs_diff;
+    const int64_t sgn = ((past->tv_sec > now->tv_sec) || ((past->tv_sec == now->tv_sec) && (past->tv_usec > now->tv_usec))) ? -1 : +1;
+
+    return (int64_t)(tdiff.tv_sec) * (int64_t)1000000 + (int64_t)(tdiff.tv_usec);
 }
 
 void *dev_out_thread_func(void *ptr) {
@@ -175,47 +176,43 @@ void *dev_out_thread_func(void *ptr) {
         FD_SET(current_gamepad_fd, &read_fds);
 
         gettimeofday(&now, NULL);
-        const int64_t gamepad_timediff_us = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
+        int64_t gamepad_time_diff_usecs = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
+        if (gamepad_time_diff_usecs >= 1250) {
+            gamepad_last_hid_report_sent = now;
 
-        // calculate the shortest timeout between one of the multiple device will needs to send out its hid report
-        struct timeval timeout = {
-            .tv_sec = (__time_t)gamepad_timediff_us / (__time_t)1000000,
-            .tv_usec = (__suseconds_t)gamepad_timediff_us % (__suseconds_t)1000000,
-        };
+            if (current_gamepad == GAMEPAD_DUALSENSE) {
 
-        int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
-        gamepad_status_qam_quirk(&dev_out->dev_stats.gamepad);
+            } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
+                virt_dualshock_compose(&controller_data.ds4, &dev_out->dev_stats.gamepad, tmp_buf);
+                virt_dualshock_send(&controller_data.ds4, tmp_buf);
+            }
+        } else {
+            // calculate the shortest timeout between one of the multiple device will needs to send out its hid report
+            struct timeval timeout = {
+                .tv_sec = (__time_t)gamepad_time_diff_usecs / (__time_t)1000000,
+                .tv_usec = (__suseconds_t)gamepad_time_diff_usecs % (__suseconds_t)1000000,
+            };
 
-        if (ready_fds == -1) {
-            const int err = errno;
-            fprintf(stderr, "Error reading devices: %d\n", err);
-            continue;
-        } else if (ready_fds == 0) {
-            gettimeofday(&now, NULL);
+            int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
+            gamepad_status_qam_quirk_ext_time(&dev_out->dev_stats.gamepad, &now);
 
-            // timeout: this means a device needs to send out the hid report
-            int64_t gamepad_time_diff_usecs = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
-            if (gamepad_time_diff_usecs >= 1250) {
-                gamepad_last_hid_report_sent = now;
-
-                if (current_gamepad == GAMEPAD_DUALSENSE) {
-
-                } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
-                    virt_dualshock_compose(&controller_data.ds4, &dev_out->dev_stats.gamepad, tmp_buf);
-                    virt_dualshock_send(&controller_data.ds4, tmp_buf);
-                }
+            if (ready_fds == -1) {
+                const int err = errno;
+                fprintf(stderr, "Error reading devices: %d\n", err);
+                continue;
+            } else if (ready_fds == 0) {
+                // timeout: do nothing but continue. next iteration will take care
+                continue;
             }
 
-            continue;
-        }
-
-        if (FD_ISSET(dev_out->in_message_pipe_fd, &read_fds)) {
-            in_message_t incoming_message;
-            size_t in_message_pipe_read_res = read(dev_out->in_message_pipe_fd, (void*)&incoming_message, sizeof(in_message_t));
-            if (in_message_pipe_read_res == sizeof(in_message_t)) {
-                handle_incoming_message(&incoming_message, &dev_out->dev_stats);
-            } else {
-                fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu butes", in_message_pipe_read_res, sizeof(in_message_t));
+            if (FD_ISSET(dev_out->in_message_pipe_fd, &read_fds)) {
+                in_message_t incoming_message;
+                size_t in_message_pipe_read_res = read(dev_out->in_message_pipe_fd, (void*)&incoming_message, sizeof(in_message_t));
+                if (in_message_pipe_read_res == sizeof(in_message_t)) {
+                    handle_incoming_message(&incoming_message, &dev_out->dev_stats);
+                } else {
+                    fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu butes", in_message_pipe_read_res, sizeof(in_message_t));
+                }
             }
         }
     }

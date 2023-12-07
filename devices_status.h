@@ -81,3 +81,5 @@ void gamepad_status_init(gamepad_status_t *const stats);
 void devices_status_init(devices_status_t *const stats);
 
 void gamepad_status_qam_quirk(gamepad_status_t *const gamepad_stats);
+
+void gamepad_status_qam_quirk_ext_time(gamepad_status_t *const gamepad_stats, struct timeval *now);
