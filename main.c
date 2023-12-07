@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "input_dev.h"
-#include "output_dev.h"
 #include "dev_in.h"
 #include "dev_out.h"
 #include "rog_ally.h"

@@ -47,6 +47,8 @@ void dev_evdev_close(struct libevdev* out_evdev) {
     pthread_mutex_unlock(&input_acquire_mutex);
 }
 
+#define MAX_PATH_LEN 512
+
 int dev_evdev_open(
     const uinput_filters_t *const in_filters,
     struct libevdev* out_evdev
@@ -61,7 +63,7 @@ int dev_evdev_open(
         goto dev_evdev_open_err;
     }
 
-    char path[512] = "\0";
+    char path[MAX_PATH_LEN] = "\0";
     
     DIR *d;
     struct dirent *dir;
@@ -76,7 +78,7 @@ int dev_evdev_open(
                 continue;
             }
 
-            sprintf(path, "%s%s", input_path, dir->d_name);
+            snprintf(path, MAX_PATH_LEN - 1, "%s%s", input_path, dir->d_name);
 
             // try to open the device, if it cannot be opened to go the next
             int fd = open(path, O_RDWR);
@@ -88,7 +90,7 @@ int dev_evdev_open(
             // check if that has been already opened
             // open_sysfs
             int skip = 0;
-            for (int o = 0; o < (sizeof(open_fds) / sizeof(int)); ++o) {
+            for (int o = 0; o < (sizeof(open_fds) / sizeof(open_fds[0])); ++o) {
                 if ((open_fds[o] != -1) && (open_fds[o] == fd)) {
                     close(fd);
                     skip = 1;
@@ -105,9 +107,11 @@ int dev_evdev_open(
             }
 
             if (libevdev_new_from_fd(fd, &out_evdev) != 0) {
-                //fprintf(stderr, "Cannot initialize libevdev from this device (%s): skipping.\n", sysfs_entry);
+                fprintf(stderr, "Cannot initialize libevdev from this device (%s): skipping.\n", path);
                 close(fd);
                 continue;
+            } else {
+                printf("Acquired evdev device %d", fd);
             }
 
             // try to open the device
@@ -123,8 +127,8 @@ int dev_evdev_open(
         closedir(d);
     }
 
+dev_evdev_open_err:
     pthread_mutex_unlock(&input_acquire_mutex);
 
-dev_evdev_open_err:
     return res;
 }

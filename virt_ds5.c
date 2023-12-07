@@ -69,7 +69,7 @@ static int uhid_write(int fd, const struct uhid_event *ev)
 		return -errno;
 	} else if (ret != sizeof(*ev)) {
 		fprintf(stderr, "Wrong size written to uhid: %zd != %zu\n",
-			ret, sizeof(ev));
+			ret, sizeof(*ev));
 		return -EFAULT;
 	} else {
 		return 0;
@@ -172,7 +172,7 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
 		break;
 	case UHID_CLOSE:
         if (gamepad->debug) {
-            printf(stderr, "UHID_CLOSE from uhid-dev\n");
+            fprintf(stderr, "UHID_CLOSE from uhid-dev\n");
         }
 		break;
 	case UHID_OUTPUT:

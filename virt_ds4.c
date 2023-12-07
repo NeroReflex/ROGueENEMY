@@ -301,7 +301,7 @@ static int uhid_write(int fd, const struct uhid_event *ev)
 		return -errno;
 	} else if (ret != sizeof(*ev)) {
 		fprintf(stderr, "Wrong size written to uhid: %zd != %zu\n",
-			ret, sizeof(ev));
+			ret, sizeof(*ev));
 		return -EFAULT;
 	} else {
 		return 0;
