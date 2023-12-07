@@ -41,7 +41,9 @@ void dev_evdev_close(struct libevdev* out_evdev) {
 
     int fd = libevdev_get_fd(out_evdev);
     for (int i = 0; i < sizeof(open_fds) / sizeof(int); ++i) {
-        open_fds[i] = (open_fds[i] == fd) ? -1 : open_fds[i];
+        if (open_fds[i] == fd) {
+            open_fds[i] = -1;
+        }
     }
 
     // free the memory
@@ -97,18 +99,21 @@ int dev_evdev_open(
             // open_sysfs
             int skip = 0;
             for (int o = 0; o < (sizeof(open_fds) / sizeof(open_fds[0])); ++o) {
-                if (open_fds[o] != -1) {
-                    if (open_fds[o] == fd) {
-                        // Device already opened
-                        close(fd);
-                        skip = 1;
-                        printf("Device %s already opened\n", path);
-                        break;
+                if ((open_fds[o] != -1) && (open_fds[o] == fd)) {
+                    close(fd);
+                    skip = 1;
+                    printf("Device %s already opened:\n", path);
+                    for (int k = 0; k < (sizeof(open_fds) / sizeof(open_fds[0])); ++k) {
+                        if (k == o) {
+                            printf("%d[x] ", open_fds[k]);
+                        } else {
+                            printf("%d[o] ", open_fds[k]);
+                        }
                     }
-                } else {
-                    if (open_sysfs_idx == -1) {
-                        open_sysfs_idx = o;
-                    }
+                    printf("\n");
+                    break;
+                } else if (open_fds[o] == -1) {
+                    open_sysfs_idx = o;
                 }
             }
 
