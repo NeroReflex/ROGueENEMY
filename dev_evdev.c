@@ -57,9 +57,10 @@ int dev_evdev_open(
 
     int open_sysfs_idx = -1;
 
-    res = pthread_mutex_lock(&input_acquire_mutex);
-    if (res != 0) {
-        fprintf(stderr, "Cannot lock input mutex: %d\n", res);
+    const int mutex_lock_res = pthread_mutex_lock(&input_acquire_mutex);
+    if (mutex_lock_res != 0) {
+        fprintf(stderr, "Cannot lock input mutex: %d\n", mutex_lock_res);
+        res = mutex_lock_res;
         goto dev_evdev_open_err;
     }
 
