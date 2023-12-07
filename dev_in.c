@@ -241,7 +241,7 @@ void* dev_in_thread_func(void *ptr) {
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
 
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
-                fprintf(stderr, "Device %zu not found -- Attempt reconnection", i);
+                fprintf(stderr, "Device %zu not found -- Attempt reconnection\n", i);
 
                 if (devs->input_dev_decl[i].dev_type == input_dev_type_uinput) {
                     const int open_res = open_device(&devs->input_dev_decl[i].filters.ev, &devices[i].dev.evdev);

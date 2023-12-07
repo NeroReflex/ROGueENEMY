@@ -107,11 +107,11 @@ int dev_evdev_open(
             }
 
             if (libevdev_new_from_fd(fd, &out_evdev) != 0) {
-                fprintf(stderr, "Cannot initialize libevdev from this device (%s): skipping.\n", path);
+                fprintf(stderr, "Cannot initialize libevdev from this device (%s) -- Skipping.\n", path);
                 close(fd);
                 continue;
             } else {
-                printf("Acquired evdev device %d", fd);
+                printf("Acquired evdev device %s: fd=%d", path, fd);
             }
 
             // try to open the device
