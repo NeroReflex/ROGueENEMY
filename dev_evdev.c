@@ -81,6 +81,8 @@ int dev_evdev_open(
 
             snprintf(path, MAX_PATH_LEN - 1, "%s%s", input_path, dir->d_name);
 
+            printf("Testing for device %s\n", path);
+
             // try to open the device, if it cannot be opened to go the next
             int fd = open(path, O_RDWR);
             if (fd < 0) {
