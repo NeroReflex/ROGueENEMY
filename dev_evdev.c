@@ -97,13 +97,18 @@ int dev_evdev_open(
             // open_sysfs
             int skip = 0;
             for (int o = 0; o < (sizeof(open_fds) / sizeof(open_fds[0])); ++o) {
-                if ((open_fds[o] != -1) && (open_fds[o] == fd)) {
-                    close(fd);
-                    skip = 1;
-                    printf("Device %s already opened\n", path);
-                    break;
-                } else if (open_fds[o] == -1) {
-                    open_sysfs_idx = o;
+                if (open_fds[o] != -1) {
+                    if (open_fds[o] == fd) {
+                        // Device already opened
+                        close(fd);
+                        skip = 1;
+                        printf("Device %s already opened\n", path);
+                        break;
+                    }
+                } else {
+                    if (open_sysfs_idx == -1) {
+                        open_sysfs_idx = o;
+                    }
                 }
             }
 
