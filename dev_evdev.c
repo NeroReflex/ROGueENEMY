@@ -105,7 +105,7 @@ int dev_evdev_open(
                     printf("Device %s already opened:\n", path);
                     for (int k = 0; k < (sizeof(open_fds) / sizeof(open_fds[0])); ++k) {
                         if (k == o) {
-                            printf("%d[x] ", open_fds[k]);
+                            printf("%d[%d] ", open_fds[k], fd);
                         } else {
                             printf("%d[o] ", open_fds[k]);
                         }
