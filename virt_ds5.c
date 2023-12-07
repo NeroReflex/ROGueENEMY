@@ -1,6 +1,11 @@
 #include "virt_ds5.h"
 
+#include <bits/types/time_t.h>
 #include <linux/uhid.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <pthread.h>
+#include <stdint.h>
 
 #define DS_FEATURE_REPORT_PAIRING_INFO      0x09
 #define DS_FEATURE_REPORT_PAIRING_INFO_SIZE 20
@@ -77,7 +82,7 @@ static int create(int fd)
 
 	memset(&ev, 0, sizeof(ev));
 	ev.type = UHID_CREATE;
-	strcpy((char*)ev.u.create.name, "Sony Corp. DualShock 4 [CUH-ZCT2x]");
+	strcpy((char*)ev.u.create.name, "Sony Interactive Entertainment DualSense Wireless Controller");
 	ev.u.create.rd_data = rdesc;
 	ev.u.create.rd_size = sizeof(rdesc);
 	ev.u.create.bus = BUS_USB;
@@ -99,70 +104,39 @@ static void destroy(int fd)
 	uhid_write(fd, &ev);
 }
 
-static void handle_output(struct uhid_event *ev, gamepad_status_t *const gamepad_stats)
-{
-	// Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
-	if (ev->u.output.rtype != UHID_OUTPUT_REPORT)
-        return;
-	
-	if (ev->u.output.size != 48) {
-        fprintf(stderr, "Invalid data length: got %d, expected 48\n", (int)ev->u.output.size);
+int virt_dualsense_init(virt_dualsense_t *const out_gamepad) {
+    int ret = 0;
 
-        return;
+    out_gamepad->debug = false;
+
+    out_gamepad->fd = open(path, O_RDWR | O_CLOEXEC /* | O_NONBLOCK */);
+    if (out_gamepad->fd < 0) {
+        fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, out_gamepad->fd);
+        ret = out_gamepad->fd;
+        goto virt_dualshock_init_err;
     }
 
-	// first byte is report-id which is 0x01
-	if (ev->u.output.data[0] != 0x02) {
-        fprintf(stderr, "Unrecognised report-id: got 0x%x expected 0x02\n", (int)ev->u.output.data[0]);
-        return;
+    ret = create(out_gamepad->fd);
+    if (ret) {
+        fprintf(stderr, "Error creating uhid device: %d\n", ret);
+        close(out_gamepad->fd);
+        goto virt_dualshock_init_err;
     }
-	
-    const uint8_t valid_flag0 = ev->u.output.data[1];
-	const uint8_t valid_flag1 = ev->u.output.data[2];
-	// For DualShock 4 compatibility mode.
-	const uint8_t motor_right = ev->u.output.data[3];
-	const uint8_t motor_left = ev->u.output.data[4];
 
-	// Audio controls
-	const uint8_t reserved[4] = { ev->u.output.data[5], ev->u.output.data[6], ev->u.output.data[7], ev->u.output.data[8]};
-	const uint8_t mute_button_led = ev->u.output.data[9];
-
-	uint8_t power_save_control = ev->u.output.data[10];
-	uint8_t reserved2[28];
-
-	// LEDs and lightbar
-	uint8_t valid_flag2 = ev->u.output.data[39];
-	uint8_t reserved3[2] = {ev->u.output.data[40], ev->u.output.data[41]};
-	uint8_t lightbar_setup = ev->u.output.data[42];
-	uint8_t led_brightness = ev->u.output.data[43];
-	uint8_t player_leds = ev->u.output.data[44];
-	uint8_t lightbar_red = ev->u.output.data[45];
-	uint8_t lightbar_green = ev->u.output.data[46];
-	uint8_t lightbar_blue = ev->u.output.data[47];
-
-    if ((valid_flag0 & DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT)) {
-        if ((valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) || (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
-            gamepad_stats->motors_intensity[0] = motor_left;
-            gamepad_stats->motors_intensity[1] = motor_right;
-            ++gamepad_stats->rumble_events_count;
-
-#if defined(VIRT_DS5_DEBUG)
-            printf(
-                "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
-                motor_left,
-                motor_right,
-                valid_flag0,
-                valid_flag1
-            );
-#endif
-        }
-    }
+virt_dualshock_init_err:
+    return ret;
 }
 
-static int event(int fd, gamepad_status_t *const gamepad_stats)
+int virt_dualsense_get_fd(virt_dualsense_t *const in_gamepad) {
+    return in_gamepad->fd;
+}
+
+int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *const out_device_status, int out_message_pipe_fd)
 {
 	struct uhid_event ev;
 	ssize_t ret;
+
+    int fd = virt_dualsense_get_fd(gamepad);
 
 	memset(&ev, 0, sizeof(ev));
 	ret = read(fd, &ev, sizeof(ev));
@@ -182,35 +156,90 @@ static int event(int fd, gamepad_status_t *const gamepad_stats)
 
 	switch (ev.type) {
 	case UHID_START:
-#if defined(VIRT_DS5_DEBUG)
-		printf("UHID_START from uhid-dev\n");
-#endif
+        if (gamepad->debug) {
+		    printf("UHID_START from uhid-dev\n");
+        }
 		break;
 	case UHID_STOP:
-#if defined(VIRT_DS5_DEBUG)
-        printf("UHID_STOP from uhid-dev\n");
-#endif
+        if (gamepad->debug) {
+            printf("UHID_STOP from uhid-dev\n");
+        }
         break;
 	case UHID_OPEN:
-#if defined(VIRT_DS5_DEBUG)
-        printf("UHID_OPEN from uhid-dev\n");
-#endif
+        if (gamepad->debug) {
+            printf("UHID_OPEN from uhid-dev\n");
+        }
 		break;
 	case UHID_CLOSE:
-#if defined(VIRT_DS5_DEBUG)
-        printf(stderr, "UHID_CLOSE from uhid-dev\n");
-#endif
+        if (gamepad->debug) {
+            printf(stderr, "UHID_CLOSE from uhid-dev\n");
+        }
 		break;
 	case UHID_OUTPUT:
-#if defined(VIRT_DS5_DEBUG)
-		printf("UHID_OUTPUT from uhid-dev\n");
-#endif
-		handle_output(&ev, gamepad_stats);
+        if (gamepad->debug) {
+		    printf("UHID_OUTPUT from uhid-dev\n");
+        }
+        // Rumble and LED messages are adverised via OUTPUT reports; ignore the rest
+        if (ev.u.output.rtype != UHID_OUTPUT_REPORT)
+            return 0;
+        
+        if (ev.u.output.size != 48) {
+            fprintf(stderr, "Invalid data length: got %d, expected 48\n", (int)ev.u.output.size);
+
+            return 0;
+        }
+
+        // first byte is report-id which is 0x01
+        if (ev.u.output.data[0] != 0x02) {
+            fprintf(stderr, "Unrecognised report-id: got 0x%x expected 0x02\n", (int)ev.u.output.data[0]);
+            return 0;
+        }
+        
+        const uint8_t valid_flag0 = ev.u.output.data[1];
+        const uint8_t valid_flag1 = ev.u.output.data[2];
+        // For DualShock 4 compatibility mode.
+        const uint8_t motor_right = ev.u.output.data[3];
+        const uint8_t motor_left = ev.u.output.data[4];
+
+        // Audio controls
+        const uint8_t reserved[4] = { ev.u.output.data[5], ev.u.output.data[6], ev.u.output.data[7], ev.u.output.data[8]};
+        const uint8_t mute_button_led = ev.u.output.data[9];
+
+        uint8_t power_save_control = ev.u.output.data[10];
+        uint8_t reserved2[28];
+
+        // LEDs and lightbar
+        uint8_t valid_flag2 = ev.u.output.data[39];
+        uint8_t reserved3[2] = {ev.u.output.data[40], ev.u.output.data[41]};
+        uint8_t lightbar_setup = ev.u.output.data[42];
+        uint8_t led_brightness = ev.u.output.data[43];
+        uint8_t player_leds = ev.u.output.data[44];
+        uint8_t lightbar_red = ev.u.output.data[45];
+        uint8_t lightbar_green = ev.u.output.data[46];
+        uint8_t lightbar_blue = ev.u.output.data[47];
+
+        if ((valid_flag0 & DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT)) {
+            if ((valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) || (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
+                out_device_status->motors_intensity[0] = motor_left;
+                out_device_status->motors_intensity[1] = motor_right;
+                ++out_device_status->rumble_events_count;
+
+                if (gamepad->debug) {
+                    printf(
+                        "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
+                        motor_left,
+                        motor_right,
+                        valid_flag0,
+                        valid_flag1
+                    );
+                }
+            }
+        }
 		break;
 	case UHID_OUTPUT_EV:
-#if defined(VIRT_DS5_DEBUG)
-		printf("UHID_OUTPUT_EV from uhid-dev\n");
-#endif
+        if (gamepad->debug) {
+		    printf("UHID_OUTPUT_EV from uhid-dev\n");
+        }
 		break;
     case UHID_GET_REPORT:
         //fprintf(stderr, "UHID_GET_REPORT from uhid-dev, report=%d\n", ev.u.get_report.rnum);
@@ -416,76 +445,27 @@ static void compose_hid_report_buffer(int fd, gamepad_status_t *const gamepad_st
     buf[44] = 0x80; // IDK... it seems constant...
 }
 
+void virt_dualsense_close(virt_dualsense_t *const out_gamepad) {
+    destroy(out_gamepad->fd);
+}
 
+void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf) {
+    gamepad_status_qam_quirk(in_device_status);
 
-/**
- * Thread function emulating the DualSense controller at USB level using USB UHID ( https://www.kernel.org/doc/html/latest/hid/uhid.html ) kernel APIs.
- *
- * See https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/hid/uhid.txt?id=refs/tags/v4.10-rc3
- */
-void *virt_ds5_thread_func(void *ptr) {
-    devices_status_t *const stats = (devices_status_t*)ptr;
+    compose_hid_report_buffer(gamepad->fd, in_device_status, out_buf);
+}
 
-    fprintf(stderr, "Open uhid-cdev %s\n", path);
-    int fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
-    if (fd < 0) {
-        fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, fd);
-        return NULL;
-    }
-
-    fprintf(stderr, "Create uhid device\n");
-    int ret = create(fd);
-    if (ret) {
-        close(fd);
-        return NULL;
-    }
-
-    uint8_t buf[64];
-
-    for (;;) {
-        usleep(1250);
-        memset(buf, 0, sizeof(buf));
-    
-        const int lock_res = pthread_mutex_lock(&stats->mutex);
-        if (lock_res != 0) {
-            printf("Unable to lock gamepad mutex: %d\n", lock_res);
-
-            continue;
-        }
-
-        // main virtual device logic
-        {
-            event(fd, &stats->gamepad);
-
-            gamepad_status_qam_quirk(&stats->gamepad);
-
-            if (stats->gamepad.connected) {
-                compose_hid_report_buffer(fd, &stats->gamepad, buf);
-            } else {
-                pthread_mutex_unlock(&stats->mutex);
-                
-                printf("DualSense has been terminated: closing the device.\n");
-                break;
+int virt_dualsense_send(virt_dualsense_t *const gamepad, uint8_t *const out_buf) {
+    struct uhid_event l = {
+        .type = UHID_INPUT2,
+        .u = {
+            .input2 = {
+                .size = 64,
             }
         }
+    };
 
-        pthread_mutex_unlock(&stats->mutex);
+    memcpy(&l.u.input2.data[0], &out_buf[0], l.u.input2.size);
 
-        struct uhid_event l = {
-            .type = UHID_INPUT2,
-            .u = {
-                .input2 = {
-                    .size = DS_INPUT_REPORT_USB_SIZE,
-                }
-            }
-        };
-
-        memcpy(&l.u.input2.data[0], &buf[0], l.u.input2.size);
-
-        uhid_write(fd, &l);
-    }
-
-    destroy(fd);
-
-    return NULL;
+    return uhid_write(gamepad->fd, &l);
 }

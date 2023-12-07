@@ -3,8 +3,6 @@
 #include "message.h"
 #include "devices_status.h"
 
-#undef VIRT_DS4_DEBUG
-
 /**
  * Emulator of the DualShock4 controller at USB level using USB UHID ( https://www.kernel.org/doc/html/latest/hid/uhid.html ) kernel APIs.
  *
