@@ -198,7 +198,7 @@ void *dev_out_thread_func(void *ptr) {
 
             if (ready_fds == -1) {
                 const int err = errno;
-                fprintf(stderr, "Error reading devices: %d\n", err);
+                fprintf(stderr, "Error reading events for output devices: %d\n", err);
                 continue;
             } else if (ready_fds == 0) {
                 // timeout: do nothing but continue. next iteration will take care
