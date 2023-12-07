@@ -95,6 +95,11 @@ int dev_evdev_open(
                 continue;
             }
 
+            for (int k = 0; k < (sizeof(open_fds) / sizeof(open_fds[0])); ++k) {
+                printf("open_fds[k: %d]=%d ", k, open_fds[k]);
+            }
+            printf("\n");
+
             // check if that has been already opened
             // open_sysfs
             int skip = 0;
@@ -102,15 +107,7 @@ int dev_evdev_open(
                 if ((open_fds[o] != -1) && (open_fds[o] == fd)) {
                     close(fd);
                     skip = 1;
-                    printf("Device %s already opened:\n", path);
-                    for (int k = 0; k < (sizeof(open_fds) / sizeof(open_fds[0])); ++k) {
-                        if (k == o) {
-                            printf("%d[%d] ", open_fds[k], fd);
-                        } else {
-                            printf("%d[o] ", open_fds[k]);
-                        }
-                    }
-                    printf("\n");
+                    printf("Device %s already opened -- Skipping\n", path);
                     break;
                 } else if (open_fds[o] == -1) {
                     open_sysfs_idx = o;
