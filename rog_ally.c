@@ -70,10 +70,10 @@ input_dev_t *in_devs[] = {
     &in_asus_kb_3_dev,
 };
 
-size_t rog_ally_device_def_count() {
+size_t rog_ally_device_def_count(void) {
     return sizeof(in_devs) / sizeof(input_dev_t*);
 }
 
-input_dev_t **rog_ally_device_def() {
+input_dev_t **rog_ally_device_def(void) {
     return in_devs;
 }

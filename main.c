@@ -39,6 +39,9 @@ int main(int argc, char ** argv) {
   input_dev_t **in_devs = rog_ally_device_def();
   const size_t in_devs_sz = rog_ally_device_def_count();
 
+  int dev_in_thread_creation = -1;
+  int dev_out_thread_creation = -1;
+
   int out_message_pipes[2];
   pipe(out_message_pipes);
 
@@ -58,7 +61,7 @@ int main(int argc, char ** argv) {
   dev_out_thread_data.out_message_pipe_fd = out_message_pipes[1];
 
   pthread_t dev_in_thread;
-  const int dev_in_thread_creation = pthread_create(&dev_in_thread, NULL, dev_in_thread_func, (void*)(&dev_in_thread_data));
+  dev_in_thread_creation = pthread_create(&dev_in_thread, NULL, dev_in_thread_func, (void*)(&dev_in_thread_data));
   if (dev_in_thread_creation != 0) {
     fprintf(stderr, "Error creating dev_in thread: %d\n", dev_in_thread_creation);
     ret = -1;
@@ -67,7 +70,7 @@ int main(int argc, char ** argv) {
   }
 
   pthread_t dev_out_thread;
-  const int dev_out_thread_creation = pthread_create(&dev_out_thread, NULL, dev_out_thread_func, (void*)(&dev_out_thread_data));
+  dev_out_thread_creation = pthread_create(&dev_out_thread, NULL, dev_out_thread_func, (void*)(&dev_out_thread_data));
   if (dev_out_thread_creation != 0) {
     fprintf(stderr, "Error creating dev_out thread: %d\n", dev_out_thread_creation);
     ret = -1;

@@ -3,6 +3,6 @@
 #include "input_dev.h"
 #include "xbox360.h"
 
-size_t rog_ally_device_def_count();
+size_t rog_ally_device_def_count(void);
 
-input_dev_t **rog_ally_device_def();
+input_dev_t **rog_ally_device_def(void);

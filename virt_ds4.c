@@ -515,7 +515,7 @@ int virt_dualshock_init(virt_dualshock_t *const out_gamepad) {
 
     out_gamepad->debug = false;
 
-    out_gamepad->fd = open(path, O_RDWR | O_CLOEXEC | O_NONBLOCK);
+    out_gamepad->fd = open(path, O_RDWR | O_CLOEXEC /* | O_NONBLOCK */);
     if (out_gamepad->fd < 0) {
         fprintf(stderr, "Cannot open uhid-cdev %s: %d\n", path, out_gamepad->fd);
         ret = out_gamepad->fd;
@@ -575,7 +575,7 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
 		break;
 	case UHID_CLOSE:
         if (gamepad->debug) {
-            printf(stderr, "UHID_CLOSE from uhid-dev\n");
+            printf("UHID_CLOSE from uhid-dev\n");
         }
 		break;
 	case UHID_OUTPUT:
