@@ -17,6 +17,7 @@ static bool ev_matches(struct libevdev *dev, const uinput_filters_t* const filte
 
     const char* name = libevdev_get_name(dev);
     if ((name != NULL) && (strcmp(name, filters->name) != 0)) {
+        printf("%s does not match %s", name, filters->name);
         return false;
     }
 
