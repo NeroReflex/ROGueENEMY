@@ -230,6 +230,8 @@ void* dev_in_thread_func(void *ptr) {
     }
 
     for (;;) {
+        
+
         FD_ZERO(&read_fds);
         FD_SET(devs->in_message_pipe_fd, &read_fds);
         for (size_t i = 0; i < devs->input_dev_cnt; ++i) {

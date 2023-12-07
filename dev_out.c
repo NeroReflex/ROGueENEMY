@@ -3,32 +3,131 @@
 #include "virt_ds4.h"
 
 static void handle_incoming_message_gamepad_action(
-    in_message_gamepad_action_t *const msg_payload,
+    const in_message_gamepad_action_t *const msg_payload,
     gamepad_status_t *const inout_gamepad
 ) {
-    
+    if (msg_payload == GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER) {
+        inout_gamepad->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
+    }    
 }
 
 static void handle_incoming_message_gamepad_set(
-    in_message_gamepad_set_element_t *const msg_payload,
+    const in_message_gamepad_set_element_t *const msg_payload,
     gamepad_status_t *const inout_gamepad
 ) {
-    
-}
+    switch (msg_payload->element) {
+        case GAMEPAD_BTN_CROSS: {
+            inout_gamepad->cross = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_CIRCLE: {
+            inout_gamepad->circle = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_SQUARE: {
+            inout_gamepad->square = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_TRIANGLE: {
+            inout_gamepad->triangle = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_OPTION: {
+            inout_gamepad->option = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_SHARE: {
+            inout_gamepad->share = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_L1: {
+            inout_gamepad->l1 = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_R1: {
+            inout_gamepad->r1 = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_L2_TRIGGER: {
+            inout_gamepad->l2_trigger = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_R2_TRIGGER: {
+            inout_gamepad->r2_trigger = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_L3: {
+            inout_gamepad->l3 = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_R3: {
+            inout_gamepad->r3 = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_LEFT_JOYSTICK_X: {
+            inout_gamepad->joystick_positions[0][0] = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_LEFT_JOYSTICK_Y: {
+            inout_gamepad->joystick_positions[0][1] = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_RIGHT_JOYSTICK_X: {
+            inout_gamepad->joystick_positions[1][0] = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_RIGHT_JOYSTICK_Y: {
+            inout_gamepad->joystick_positions[1][1] = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_DPAD_X: {
+            const int8_t v = msg_payload->status.dpad;
 
-static void handle_incoming_message(
-    in_message_t *const msg,
-    devices_status_t *const dev_stats
-) {
-    if (msg->type == GAMEPAD_SET_ELEMENT) {
-        handle_incoming_message_gamepad_set(&msg->data.gamepad_set, dev_stats);
-    } else if (msg->type == GAMEPAD_ACTION) {
-        handle_incoming_message_gamepad_action(&msg->data.action, dev_stats);
+            inout_gamepad->dpad &= 0xF0;
+            if (v == 0) {
+                inout_gamepad->dpad |= 0x00;
+            } else if (v == 1) {
+                inout_gamepad->dpad |= 0x01;
+            } else if (v == -1) {
+                inout_gamepad->dpad |= 0x02;
+            }
+
+            break;
+        }
+        case GAMEPAD_DPAD_Y: {
+            const int8_t v = msg_payload->status.dpad;
+
+            inout_gamepad->dpad &= 0x0F;
+            if (v == 0) {
+                inout_gamepad->dpad |= 0x00;
+            } else if (v == 1) {
+                inout_gamepad->dpad |= 0x20;
+            } else if (v == -1) {
+                inout_gamepad->dpad |= 0x10;
+            }
+
+            break;
+        }
     }
 }
 
-uint64_t get_timediff_usec(struct timeval past, struct timeval now) {
-    return 0;
+static void handle_incoming_message(
+    const in_message_t *const msg,
+    devices_status_t *const dev_stats
+) {
+    if (msg->type == GAMEPAD_SET_ELEMENT) {
+        handle_incoming_message_gamepad_set(&msg->data.gamepad_set, &dev_stats->gamepad);
+    } else if (msg->type == GAMEPAD_ACTION) {
+        handle_incoming_message_gamepad_action(&msg->data.action, &dev_stats->gamepad);
+    }
+}
+
+int64_t get_timediff_usec(struct timeval* past, struct timeval* now) {
+    const time_t secs_diff = now->tv_sec - past->tv_sec;
+
+    // TODO: this is wrong...
+    const suseconds_t usecs_diff = now->tv_usec - past->tv_usec;
+    return secs_diff * (int64_t)1000000 + usecs_diff;
 }
 
 void *dev_out_thread_func(void *ptr) {
@@ -44,8 +143,8 @@ void *dev_out_thread_func(void *ptr) {
     } controller_data;
 
     int current_gamepad_fd = -1;
-    int current_keyboard_fd = -1;
-    int current_mouse_fd = -1;
+    //int current_keyboard_fd = -1;
+    //int current_mouse_fd = -1;
 
     if (current_gamepad == GAMEPAD_DUALSENSE) {
 
@@ -58,8 +157,6 @@ void *dev_out_thread_func(void *ptr) {
         }
     }
 
-    // TODO: stats->gamepad.flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
-
     struct timeval now = {0};
     gettimeofday(&now, NULL);
 
@@ -67,37 +164,48 @@ void *dev_out_thread_func(void *ptr) {
     struct timeval mouse_last_hid_report_sent = now;
     struct timeval keyboard_last_hid_report_sent = now;
 
+    uint8_t tmp_buf[256];
+
     fd_set read_fds;
     for (;;) {
-        FD_ZERO(&read_fds);        
-
-        if (current_gamepad == GAMEPAD_DUALSENSE) {
-
-        } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
-            
-        }
-
+        FD_ZERO(&read_fds);
         FD_SET(dev_out->out_message_pipe_fd, &read_fds);
         // TODO: FD_SET(current_mouse_fd, &read_fds);
         // TODO: FD_SET(current_keyboard_fd, &read_fds);
         FD_SET(current_gamepad_fd, &read_fds);
 
-        // TODO: calculate the shortest time between multiple device
+        gettimeofday(&now, NULL);
+        const int64_t gamepad_timediff_us = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
+
+        // calculate the shortest timeout between one of the multiple device will needs to send out its hid report
         struct timeval timeout = {
-            //.tv_sec = (__time_t)devs->timeout_ms / (__time_t)1000,
-            //.tv_usec = ((__suseconds_t)devs->timeout_ms % (__suseconds_t)1000) * (__suseconds_t)1000000,
+            .tv_sec = (__time_t)gamepad_timediff_us / (__time_t)1000000,
+            .tv_usec = (__suseconds_t)gamepad_timediff_us % (__suseconds_t)1000000,
         };
 
-        gettimeofday(&now, NULL);
-
         int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
+        gamepad_status_qam_quirk(&dev_out->dev_stats.gamepad);
 
         if (ready_fds == -1) {
             const int err = errno;
             fprintf(stderr, "Error reading devices: %d\n", err);
             continue;
         } else if (ready_fds == 0) {
-            // Timeout... simply retry
+            gettimeofday(&now, NULL);
+
+            // timeout: this means a device needs to send out the hid report
+            int64_t gamepad_time_diff_usecs = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
+            if (gamepad_time_diff_usecs >= 1250) {
+                gamepad_last_hid_report_sent = now;
+
+                if (current_gamepad == GAMEPAD_DUALSENSE) {
+
+                } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
+                    virt_dualshock_compose(&controller_data.ds4, &dev_out->dev_stats.gamepad, tmp_buf);
+                    virt_dualshock_send(&controller_data.ds4, tmp_buf);
+                }
+            }
+
             continue;
         }
 
@@ -109,7 +217,6 @@ void *dev_out_thread_func(void *ptr) {
             } else {
                 fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu butes", in_message_pipe_read_res, sizeof(in_message_t));
             }
-        
         }
     }
 
