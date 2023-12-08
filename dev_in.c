@@ -232,8 +232,6 @@ void* dev_in_thread_func(void *ptr) {
     }
 
     for (;;) {
-        
-
         FD_ZERO(&read_fds);
         FD_SET(devs->in_message_pipe_fd, &read_fds);
         for (size_t i = 0; i < devs->input_dev_cnt; ++i) {
@@ -245,10 +243,10 @@ void* dev_in_thread_func(void *ptr) {
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
                 
 
-                if (devs->input_dev_decl[i].dev_type == input_dev_type_uinput) {
-                    fprintf(stderr, "Device (evdev) %zu not found -- Attempt reconnection for device named %s\n", i, devs->input_dev_decl[i].filters.ev.name);
+                if ((*devs->input_dev_decl)[i].dev_type == input_dev_type_uinput) {
+                    fprintf(stderr, "Device (evdev) %zu not found -- Attempt reconnection for device named %s\n", i, (*devs->input_dev_decl)[i].filters.ev.name);
 
-                    const int open_res = open_device(&devs->input_dev_decl[i].filters.ev, &devices[i].dev.evdev);
+                    const int open_res = open_device(&(*devs->input_dev_decl)[i].filters.ev, &devices[i].dev.evdev);
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_EV;
 
@@ -312,7 +310,7 @@ void* dev_in_thread_func(void *ptr) {
                     fprintf(stderr, "Unable to fill input_event(s) for device %zd: %d\n", i, fill_res);
                     continue;
                 } else {
-                    devs->input_dev_decl[i].ev_input_map_fn(&coll, devs->in_message_pipe_fd, devs->input_dev_decl[i].user_data);
+                    (*devs->input_dev_decl)[i].ev_input_map_fn(&coll, devs->in_message_pipe_fd, (*devs->input_dev_decl)[i].user_data);
                 }
             } else if (devices[i].type == DEV_IN_TYPE_EV) {
                 // TODO: implement IIO

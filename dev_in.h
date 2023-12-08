@@ -10,7 +10,7 @@ typedef struct dev_in_data {
     uint64_t timeout_ms;
 
     // declarations of devices to monitor
-    input_dev_t *input_dev_decl;
+    input_dev_t **input_dev_decl;
 
     // number of devices to monitor
     size_t input_dev_cnt;

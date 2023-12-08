@@ -59,7 +59,7 @@ int main(int argc, char ** argv) {
   dev_in_thread_data.timeout_ms = 400;
   dev_in_thread_data.in_message_pipe_fd = in_message_pipes[1];
   dev_in_thread_data.out_message_pipe_fd = out_message_pipes[0];
-  dev_in_thread_data.input_dev_decl = *in_devs;
+  dev_in_thread_data.input_dev_decl = in_devs;
   dev_in_thread_data.input_dev_cnt = in_devs_sz;
   
   // populate the output device thread data
