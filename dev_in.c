@@ -111,7 +111,7 @@ int iio_open_device(
     const char *const dev_name = dev_iio_get_name(out_dev->iiodev);
 
     printf(
-        "Opened iio device:\n   name: %s    has accel: %s\n    has anglvel: %s\n",
+        "Opened iio device:\n   name: %s\n    has accel: %s\n    has anglvel: %s\n",
         (dev_name != NULL) ? dev_name : "NULL",
         dev_iio_has_accel(out_dev->iiodev) ? "yes" : "no",
         dev_iio_has_anglvel(out_dev->iiodev) ? "yes" : "no"
