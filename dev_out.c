@@ -66,19 +66,19 @@ static void handle_incoming_message_gamepad_set(
             break;
         }
         case GAMEPAD_LEFT_JOYSTICK_X: {
-            inout_gamepad->joystick_positions[0][0] = msg_payload->status.btn;
+            inout_gamepad->joystick_positions[0][0] = msg_payload->status.joystick_pos;
             break;
         }
         case GAMEPAD_LEFT_JOYSTICK_Y: {
-            inout_gamepad->joystick_positions[0][1] = msg_payload->status.btn;
+            inout_gamepad->joystick_positions[0][1] = msg_payload->status.joystick_pos;
             break;
         }
         case GAMEPAD_RIGHT_JOYSTICK_X: {
-            inout_gamepad->joystick_positions[1][0] = msg_payload->status.btn;
+            inout_gamepad->joystick_positions[1][0] = msg_payload->status.joystick_pos;
             break;
         }
         case GAMEPAD_RIGHT_JOYSTICK_Y: {
-            inout_gamepad->joystick_positions[1][1] = msg_payload->status.btn;
+            inout_gamepad->joystick_positions[1][1] = msg_payload->status.joystick_pos;
             break;
         }
         case GAMEPAD_DPAD_X: {
