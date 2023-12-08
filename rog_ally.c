@@ -523,7 +523,7 @@ static int rc71l_platform_init(void** platform_data) {
   int res = -EINVAL;
 
   rc71l_platform_t *const platform = malloc(sizeof(rc71l_platform_t));
-  if (platform != NULL) {
+  if (platform == NULL) {
     fprintf(stderr, "Unable to setup platform\n");
     res = -ENOMEM;
     goto rc71l_platform_init_err;
