@@ -137,7 +137,7 @@ int evdev_open_device(
     const int grab_res = libevdev_grab(out_dev->evdev, LIBEVDEV_GRAB);
     out_dev->grabbed = grab_res == 0;
     if (!out_dev->grabbed) {
-        fprintf(stderr, "Unable to grab the device (%s): %d.\n", dev_name != NULL ? "NULL" : dev_name, grab_res);
+        fprintf(stderr, "Unable to grab the device (%s): %d.\n", dev_name == NULL ? "NULL" : dev_name, grab_res);
     }
 
     if (out_dev->has_rumble_support) {
@@ -166,7 +166,7 @@ int evdev_open_device(
         }
     } else {
         printf("Opened device\n    name: %s\n    rumble: no force-feedback\n",
-            dev_name != NULL ? "NULL" : dev_name
+            dev_name == NULL ? "NULL" : dev_name
         );
     }
 
