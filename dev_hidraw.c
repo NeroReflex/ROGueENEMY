@@ -12,7 +12,9 @@ static bool hidraw_matches(
         return false;
     } else if (in_dev->info.vendor != in_filters->vid) {
         return false;
-    } else if (in_dev->rdesc.size != in_filters->rdesc_size)
+    } else if (in_dev->rdesc.size != in_filters->rdesc_size) {
+        return false;
+    }
 
     return true;
 }
