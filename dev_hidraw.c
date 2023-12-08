@@ -27,7 +27,9 @@ static int dev_hidraw_new_from_fd(int fd, dev_hidraw_t **const out_dev) {
         goto dev_hidraw_new_from_fd_err;
     }
 
+    (*out_dev)->fd = fd;
     memset(&(*out_dev)->info, 0, sizeof(struct hidraw_devinfo));
+    memset(&(*out_dev)->rdesc, 0, sizeof(struct hidraw_report_descriptor));
 
     res = ioctl((*out_dev)->fd, HIDIOCGRAWINFO, &(*out_dev)->info);
     if (res < 0) {
