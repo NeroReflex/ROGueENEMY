@@ -1,4 +1,5 @@
 #include "virt_ds5.h"
+#include "message.h"
 
 #include <bits/types/time_t.h>
 #include <linux/uhid.h>
@@ -23,6 +24,8 @@
 
 #define DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2 0x04
 #define DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION  0x01
+
+#define DS_OUTPUT_VALID_FLAG1_LIGHTBAR_CONTROL_ENABLE 0x04
 
 #define DS5_SPEC_DELTA_TIME         4096.0f
 
@@ -219,10 +222,25 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
         uint8_t lightbar_blue = ev.u.output.data[47];
 
         if ((valid_flag0 & DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT)) {
-            if ((valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) || (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
+            if (/*(valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) ||*/ (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
                 out_device_status->motors_intensity[0] = motor_left;
                 out_device_status->motors_intensity[1] = motor_right;
                 ++out_device_status->rumble_events_count;
+
+                const out_message_t msg = {
+                    .type = OUT_MSG_TYPE_RUMBLE,
+                    .data = {
+                        .rumble = {
+                            .motors_left = motor_left,
+                            .motors_right = motor_right,
+                        }
+                    }
+                };
+
+                const int write_res = write(out_message_pipe_fd, (void*)&msg, sizeof(msg));
+                if (write_res != 0) {
+                    return write_res;
+                }
 
                 if (gamepad->debug) {
                     printf(
@@ -235,6 +253,25 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
                 }
             }
         }
+
+        if (valid_flag1 & DS_OUTPUT_VALID_FLAG1_LIGHTBAR_CONTROL_ENABLE) {
+            const out_message_t msg = {
+                .type = OUT_MSG_TYPE_LEDS,
+                .data = {
+                    .leds = {
+                        .r = lightbar_red,
+                        .g = lightbar_green,
+                        .b = lightbar_blue,
+                    }
+                }
+            };
+
+            const int write_res = write(out_message_pipe_fd, (void*)&msg, sizeof(msg));
+            if (write_res != 0) {
+                return write_res;
+            }
+        }
+
 		break;
 	case UHID_OUTPUT_EV:
         if (gamepad->debug) {

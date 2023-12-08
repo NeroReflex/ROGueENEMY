@@ -644,7 +644,7 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
             out_device_status->motors_intensity[1] = motor_right;
             ++out_device_status->rumble_events_count;
 
-            out_message_t msg = {
+            const out_message_t msg = {
                 .type = OUT_MSG_TYPE_RUMBLE,
                 .data = {
                     .rumble = {
