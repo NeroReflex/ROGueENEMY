@@ -648,8 +648,8 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
                 .type = OUT_MSG_TYPE_RUMBLE,
                 .data = {
                     .rumble = {
-                        .strong_magnitude = motor_left == 0 ? 0 : (uint16_t)0x00FF | ((uint16_t)motor_left << (uint16_t)8),
-                        .weak_magnitude = motor_right == 0 ? 0 : (uint16_t)0x00FF | ((uint16_t)motor_right << (uint16_t)8),
+                        .motors_left = motor_left,
+                        .motors_right = motor_right,
                     }
                 }
             };

@@ -62,8 +62,8 @@ typedef struct in_message {
 
 
 typedef struct out_message_rumble {
-    uint16_t strong_magnitude;
-    uint16_t weak_magnitude;
+    uint8_t motors_left;
+    uint8_t motors_right;
 }  out_message_rumble_t;
 
 typedef struct out_message_leds {

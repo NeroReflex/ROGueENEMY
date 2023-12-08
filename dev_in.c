@@ -3,6 +3,7 @@
 #include "message.h"
 #include "dev_evdev.h"
 #include "dev_iio.h"
+#include <libevdev-1.0/libevdev/libevdev.h>
 
 typedef enum dev_in_type {
     DEV_IN_TYPE_NONE,
@@ -195,9 +196,11 @@ static void handle_rumble_device(dev_in_ev_t *const in_dev, const out_message_ru
         }
     }
 
+    printf("Rumble for %s: l=%d, r=%d\n", libevdev_get_name(in_dev->evdev), (int)in_rumble_msg->motors_left, (int)in_rumble_msg->motors_right);
+
     // load the new effect data
-    in_dev->ff_effect.u.rumble.strong_magnitude = in_rumble_msg->strong_magnitude;
-    in_dev->ff_effect.u.rumble.weak_magnitude = in_rumble_msg->weak_magnitude;
+    in_dev->ff_effect.u.rumble.strong_magnitude = in_rumble_msg->motors_left << (uint16_t)8;
+    in_dev->ff_effect.u.rumble.weak_magnitude = in_rumble_msg->motors_right << (uint16_t)8;
 
     // upload the new effect to the device
     const int effect_upload_res = ioctl(fd, EVIOCSFF, &in_dev->ff_effect);
