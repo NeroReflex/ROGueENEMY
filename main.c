@@ -5,6 +5,7 @@
 #include "dev_in.h"
 #include "dev_out.h"
 #include "rog_ally.h"
+#include "settings.h"
 
 /*
 logic_t global_logic;
@@ -22,11 +23,18 @@ void sig_handler(int signo)
 }
 */
 
+static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
+
 dev_in_data_t dev_in_thread_data;
 dev_out_data_t dev_out_thread_data;
 
+controller_settings_t settings;
+
 int main(int argc, char ** argv) {
   int ret = 0;
+
+  init_config(&settings);
+  fill_config(&settings, configuration_file);
 
 /*
   const int logic_creation_res = logic_create(&global_logic);
@@ -35,7 +43,7 @@ int main(int argc, char ** argv) {
     return EXIT_FAILURE;
   }
 */
-  input_dev_t **in_devs = rog_ally_device_def();
+  input_dev_t **in_devs = rog_ally_device_def(&settings);
   const size_t in_devs_sz = rog_ally_device_def_count();
 
   int dev_in_thread_creation = -1;
