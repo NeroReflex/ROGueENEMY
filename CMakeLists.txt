@@ -32,6 +32,8 @@ add_executable(${EXECUTABLE_NAME}
                   xbox360.c
 )
 
+set_property(TARGET ${EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
+
 target_link_libraries(${EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm)
 
 set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
