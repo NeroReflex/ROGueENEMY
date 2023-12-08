@@ -123,6 +123,7 @@ int dev_evdev_open(
 
             if (libevdev_new_from_fd(fd, &out_evdev) != 0) {
                 fprintf(stderr, "Cannot initialize libevdev from this device (%s) -- Skipping.\n", path);
+                open_fds[open_sysfs_idx] = -1;
                 close(fd);
                 continue;
             } else {
@@ -132,6 +133,7 @@ int dev_evdev_open(
             // try to open the device
             if (!ev_matches(out_evdev, in_filters)) {
                 libevdev_free(out_evdev);
+                open_fds[open_sysfs_idx] = -1;
                 close(fd);
                 continue;
             }
