@@ -1,4 +1,5 @@
 #include "dev_in.h"
+#include "dev_hidraw.h"
 #include "input_dev.h"
 #include "message.h"
 #include "dev_evdev.h"
@@ -17,6 +18,10 @@ typedef struct dev_in_iio {
     dev_iio_t *iiodev;
 
 } dev_in_iio_t;
+
+typedef struct dev_in_hidraw {
+    dev_hidraw_t *hidrawdev;
+} dev_in_hidraw_t;
 
 typedef struct dev_in_ev {
     bool ignore_msc_scan;
@@ -38,6 +43,7 @@ typedef struct dev_in_ev {
 typedef union dev_in_aggr {
     dev_in_ev_t evdev;
     dev_in_iio_t iio;
+    dev_in_hidraw_t hidraw;
 } dev_in_aggr_t;
 
 typedef struct dev_in {
@@ -270,6 +276,8 @@ void* dev_in_thread_func(void *ptr) {
                 FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
                 
+            } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
+                FD_SET(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
                 const input_dev_type_t d_type = dev_in_data->input_dev_decl->dev[i]->dev_type;
                 if (d_type == input_dev_type_uinput) {
@@ -289,6 +297,16 @@ void* dev_in_thread_func(void *ptr) {
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_IIO;
                     }
+                } else if (d_type == input_dev_type_hidraw) {
+                    fprintf(stderr, "Device (hidraw) %zu not found -- Attempt reconnection for device %x:%x\n", i, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.pid, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.vid);
+                
+                    // TODO: do the same with hidraw:
+                    /*
+                    const int open_res = iio_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.iio, &devices[i].dev.iio);
+                    if (open_res == 0) {
+                        devices[i].type = DEV_IN_TYPE_HIDRAW;
+                    }
+                    */
                 }
             }
         }
@@ -356,6 +374,8 @@ void* dev_in_thread_func(void *ptr) {
             } else if (devices[i].type == DEV_IN_TYPE_EV) {
                 // TODO: implement IIO
                 //fill_message_from_iio(&devices[i].dev.iio, out_msg);
+            } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
+                // TODO: do here your hidraw things
             }
         }
     }

@@ -54,6 +54,7 @@ typedef struct input_dev {
     union {
         uinput_filters_t ev;
         iio_filters_t iio;
+        hidraw_filters_t hidraw;
     } filters;
 
     void* user_data;
