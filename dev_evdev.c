@@ -124,8 +124,6 @@ int dev_evdev_open(
                 open_fds[open_sysfs_idx] = -1;
                 close(fd);
                 continue;
-            } else {
-                printf("post-ev_matches: %s\n", libevdev_get_name(*out_evdev));
             }
 
             // the device has been found
