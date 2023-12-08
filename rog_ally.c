@@ -1,14 +1,14 @@
 #include "rog_ally.h"
 
 void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data) {
-    in_message_t current_message;
+  in_message_t current_message;
 
-    
-    
-    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-    if (in_message_pipe_write_res != sizeof(in_message_t)) {
-        fprintf(stderr, "Unable to write data to the in_message pipe: %zu\n", in_message_pipe_write_res);
-    }
+  
+  
+  const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
+  if (in_message_pipe_write_res != sizeof(in_message_t)) {
+      fprintf(stderr, "Unable to write data to the in_message pipe: %zu\n", in_message_pipe_write_res);
+  }
 }
 
 static input_dev_t in_iio_dev = {
@@ -63,17 +63,18 @@ static input_dev_t in_xbox_dev = {
 };
 
 input_dev_t *in_devs[] = {
-    &in_xbox_dev,
-    &in_iio_dev,
-    &in_asus_kb_1_dev,
-    &in_asus_kb_2_dev,
-    &in_asus_kb_3_dev,
+  &in_xbox_dev,
+  &in_iio_dev,
+  &in_asus_kb_1_dev,
+  &in_asus_kb_2_dev,
+  &in_asus_kb_3_dev,
 };
 
 size_t rog_ally_device_def_count(void) {
-    return sizeof(in_devs) / sizeof(input_dev_t*);
+  return sizeof(in_devs) / sizeof(input_dev_t*);
 }
 
-input_dev_t **rog_ally_device_def(void) {
-    return in_devs;
+input_dev_t **rog_ally_device_def(const controller_settings_t *const settings) {
+  in_xbox_dev.user_data = (void*)settings;
+  return in_devs;
 }

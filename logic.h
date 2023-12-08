@@ -7,11 +7,6 @@
 #define LOGIC_FLAGS_PLATFORM_ENABLE         0x00000010U
 #define LOGIC_FLAGS_TERMINATION_REQUESTED   0x80000000U
 
-typedef struct rumble_message {
-    uint16_t strong_magnitude;
-    uint16_t weak_magnitude;
-} rumble_in_message_t;
-
 typedef struct logic {
 
     rc71l_platform_t platform;
