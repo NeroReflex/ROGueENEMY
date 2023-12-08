@@ -182,7 +182,7 @@ void *dev_out_thread_func(void *ptr) {
         int64_t gamepad_time_diff_usecs = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
         if (gamepad_time_diff_usecs >= 1250) {
             gamepad_last_hid_report_sent = now;
-
+            
             if (current_gamepad == GAMEPAD_DUALSENSE) {
                 virt_dualsense_compose(&controller_data.ds5, &dev_out->dev_stats.gamepad, tmp_buf);
                 virt_dualsense_send(&controller_data.ds5, tmp_buf);
@@ -213,6 +213,14 @@ void *dev_out_thread_func(void *ptr) {
             } else if (ready_fds == 0) {
                 // timeout: do nothing but continue. next iteration will take care
                 continue;
+            }
+
+            if (FD_ISSET(current_gamepad_fd, &read_fds)) {
+                if (current_gamepad == GAMEPAD_DUALSENSE) {
+                    virt_dualsense_event(&controller_data.ds5, &dev_out->dev_stats.gamepad, dev_out->out_message_pipe_fd);
+                } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
+                    virt_dualshock_event(&controller_data.ds4, &dev_out->dev_stats.gamepad, dev_out->out_message_pipe_fd);
+                }
             }
 
             if (FD_ISSET(dev_out->in_message_pipe_fd, &read_fds)) {
