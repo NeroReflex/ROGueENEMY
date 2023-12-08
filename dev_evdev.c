@@ -127,8 +127,6 @@ int dev_evdev_open(
                 open_fds[open_sysfs_idx] = -1;
                 close(fd);
                 continue;
-            } else {
-                printf("Acquired evdev device %s: fd=%d\n", path, fd);
             }
 
             // the device has been found

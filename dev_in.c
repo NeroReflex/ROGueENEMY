@@ -105,7 +105,7 @@ int open_device(
         fprintf(stderr, "Unable to open the specified device: %d\n", res);
         goto open_device_err;
     } else {
-        printf("I got a device.\n");
+        printf("Device opened: %s\n", libevdev_get_name(out_dev->evdev));
     }
 
     out_dev->has_rumble_support = libevdev_has_event_type(out_dev->evdev, EV_FF) && libevdev_has_event_code(out_dev->evdev, EV_FF, FF_RUMBLE);
