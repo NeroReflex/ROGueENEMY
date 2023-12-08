@@ -142,7 +142,7 @@ int evdev_open_device(
 
     if (out_dev->has_rumble_support) {
         printf("Opened ev device\n    name: %s\n    rumble: %s\n",
-            dev_name != NULL ? "NULL" : dev_name,
+            dev_name == NULL ? "NULL" : dev_name,
             libevdev_has_event_code(out_dev->evdev, EV_FF, FF_RUMBLE) ? "true" : "false"
         );
 
