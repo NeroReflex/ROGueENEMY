@@ -18,6 +18,7 @@ typedef struct evdev_collected {
  * constructed from that data.
  */
 typedef void (*ev_map)(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data);
+typedef void (*hidraw_map)(int hidraw_fd, int in_messages_pipe_fd, void* user_data);
 
 typedef enum input_dev_type {
     input_dev_type_uinput,
@@ -59,7 +60,10 @@ typedef struct input_dev {
 
     void* user_data;
 
-    ev_map ev_input_map_fn;
+    union {
+        ev_map ev_input_map_fn;
+        hidraw_map hidraw_input_map_fn;
+    };
 
 } input_dev_t;
 

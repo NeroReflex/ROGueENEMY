@@ -116,3 +116,11 @@ int dev_hidraw_get_fd(const dev_hidraw_t* in_dev) {
 
     return in_dev->fd;
 }
+
+int16_t dev_hidraw_get_pid(const dev_hidraw_t* in_dev) {
+    return in_dev->info.product;
+}
+
+int16_t dev_hidraw_get_vid(const dev_hidraw_t* in_dev) {
+    return in_dev->info.vendor;
+}

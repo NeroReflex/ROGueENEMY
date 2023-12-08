@@ -104,6 +104,26 @@ fill_message_from_evdev_err_completed:
     return res;
 }
 
+int hidraw_open_device(
+    const hidraw_filters_t *const in_filters,
+    dev_in_hidraw_t *const out_dev
+) {
+    int res = dev_hidraw_open(in_filters, &out_dev->hidrawdev);
+    if (res != 0) {
+        fprintf(stderr, "Unable to open the specified iio device: %d\n", res);
+        goto iio_open_device_err;
+    }
+
+    printf(
+        "Opened hidraw device: %x:%x\n",
+        dev_hidraw_get_vid(out_dev->hidrawdev),
+        dev_hidraw_get_pid(out_dev->hidrawdev)
+    );
+
+iio_open_device_err:
+    return res;
+}
+
 int iio_open_device(
     const iio_filters_t *const in_filters,
     dev_in_iio_t *const out_dev
@@ -300,13 +320,10 @@ void* dev_in_thread_func(void *ptr) {
                 } else if (d_type == input_dev_type_hidraw) {
                     fprintf(stderr, "Device (hidraw) %zu not found -- Attempt reconnection for device %x:%x\n", i, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.pid, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.vid);
                 
-                    // TODO: do the same with hidraw:
-                    /*
-                    const int open_res = iio_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.iio, &devices[i].dev.iio);
+                    const int open_res = hidraw_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.hidraw, &devices[i].dev.hidraw);
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_HIDRAW;
                     }
-                    */
                 }
             }
         }
@@ -375,7 +392,7 @@ void* dev_in_thread_func(void *ptr) {
                 // TODO: implement IIO
                 //fill_message_from_iio(&devices[i].dev.iio, out_msg);
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
-                // TODO: do here your hidraw things
+                dev_in_data->input_dev_decl->dev[i]->hidraw_input_map_fn(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
             }
         }
     }
