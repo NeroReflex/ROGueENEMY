@@ -1,4 +1,5 @@
 #include "dev_in.h"
+#include "input_dev.h"
 #include "message.h"
 #include "dev_evdev.h"
 #include <libevdev-1.0/libevdev/libevdev.h>
@@ -236,9 +237,8 @@ void* dev_in_thread_func(void *ptr) {
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
 
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
-                
-
-                if ((*devs->input_dev_decl)[i].dev_type == input_dev_type_uinput) {
+                const input_dev_type_t d_type = (*devs->input_dev_decl)[i].dev_type;
+                if (d_type == input_dev_type_uinput) {
                     fprintf(stderr, "Device (evdev) %zu not found -- Attempt reconnection for device named %s\n", i, (*devs->input_dev_decl)[i].filters.ev.name);
 
                     const int open_res = open_device(&(*devs->input_dev_decl)[i].filters.ev, &devices[i].dev.evdev);
@@ -248,8 +248,9 @@ void* dev_in_thread_func(void *ptr) {
                         // device is now connected, query it in select
                         FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
                     }
+                } else if (d_type == input_dev_type_iio) {
+                    fprintf(stderr, "Device (iio) %zu not found -- Attempt reconnection for device named %s\n", i, (*devs->input_dev_decl)[i].filters.iio.name);
                 }
-                
             }
         }
 
