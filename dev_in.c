@@ -286,7 +286,7 @@ void* dev_in_thread_func(void *ptr) {
                     // TODO: handle LEDs
                 }
             } else {
-                fprintf(stderr, "Unable to read message: %zd\n", out_message_pipe_read_res);
+                fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu butes\n", out_message_pipe_read_res, sizeof(out_message_t));
             }
         }
 
@@ -297,6 +297,9 @@ void* dev_in_thread_func(void *ptr) {
                 fd = libevdev_get_fd(devices[i].dev.evdev.evdev);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
                 // TODO: implement IIO
+                continue;
+            } else {
+                continue;
             }
             
             if (!FD_ISSET(fd, &read_fds)) {
