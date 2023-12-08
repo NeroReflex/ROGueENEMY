@@ -104,8 +104,6 @@ int open_device(
     if (res != 0) {
         fprintf(stderr, "Unable to open the specified device: %d\n", res);
         goto open_device_err;
-    } else {
-        printf("Device opened: %s\n", libevdev_get_name(out_dev->evdev));
     }
 
     out_dev->has_rumble_support = libevdev_has_event_type(out_dev->evdev, EV_FF) && libevdev_has_event_code(out_dev->evdev, EV_FF, FF_RUMBLE);
@@ -139,10 +137,7 @@ int open_device(
         const int gain_set_res = write(libevdev_get_fd(out_dev->evdev), (const void*)&gain, sizeof(gain));
         if (gain_set_res != sizeof(gain)) {
             fprintf(stderr, "Unable to adjust gain for force-feedback: %d\n", gain_set_res);
-        } else {
-            printf("Gain for force-feedback set to %u for device %s\n", gain.value, libevdev_get_name(out_dev->evdev));
         }
-
     } else {
         printf("Opened device\n    name: %s\n    rumble: no force-feedback\n",
             libevdev_get_name(out_dev->evdev)
