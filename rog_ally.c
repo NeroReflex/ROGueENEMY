@@ -549,7 +549,7 @@ static void rc71l_platform_deinit(void** platform_data) {
 }
 
 static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
-
+  return -EINVAL;
 }
 
 input_dev_composite_t rc71l_composite = {
@@ -561,6 +561,9 @@ input_dev_composite_t rc71l_composite = {
     &in_asus_kb_3_dev,
   },
   .dev_count = 5,
+  .init_fn = rc71l_platform_init,
+  .deinit_fn = rc71l_platform_deinit,
+  .leds_fn = rc71l_platform_leds,
 };
 
 input_dev_composite_t* rog_ally_device_def(const controller_settings_t *const settings) {

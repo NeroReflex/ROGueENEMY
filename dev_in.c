@@ -312,7 +312,10 @@ void* dev_in_thread_func(void *ptr) {
                 if (out_msg.type == OUT_MSG_TYPE_RUMBLE) {
                     handle_rumble(devices, max_devices, &out_msg.data.rumble);
                 } else if (out_msg.type == OUT_MSG_TYPE_LEDS) {
-                    // TODO: handle LEDs
+                    // first inform the platform
+                    dev_in_data->input_dev_decl->leds_fn(out_msg.data.leds.r, out_msg.data.leds.g, out_msg.data.leds.b, platform_data);
+
+                    // TODO: handle_leds()
                 }
             } else {
                 fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu butes\n", out_message_pipe_read_res, sizeof(out_message_t));
