@@ -240,6 +240,9 @@ void* dev_in_thread_func(void *ptr) {
             int fd = -1;
             if (devices[i].type == DEV_IN_TYPE_EV) {
                 fd = libevdev_get_fd(devices[i].dev.evdev.evdev);
+
+                // device is present, query it in select
+                FD_SET(fd, &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
 
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
@@ -250,12 +253,15 @@ void* dev_in_thread_func(void *ptr) {
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_EV;
                         fd = libevdev_get_fd(devices[i].dev.evdev.evdev);
+
+                        // device is now connected, query it in select
+                        FD_SET(fd, &read_fds);
                     }
                 }
                 
             }
 
-            FD_SET(fd, &read_fds);
+            
         }
 
         int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
