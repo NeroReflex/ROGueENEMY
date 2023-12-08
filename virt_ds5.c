@@ -489,9 +489,9 @@ static int send_data(int fd, logic_t *const logic) {
         buf[33] = 0x7F;
     }
 
-    // Debug: Print original touchpad values
-printf("Original Touchpad X: %u\n", touchpadX);
-printf("Original Touchpad Y: %u\n", touchpadY);
+// Debug: Print original touchpad values
+// printf("Original Touchpad X: %u\n", touchpadX);
+// printf("Original Touchpad Y: %u\n", touchpadY);
 
 // Padding settings
 const uint16_t padding = 100;
@@ -510,9 +510,9 @@ uint16_t yScaled = (adjustedTouchpadY * 1000) / (paddedMaxValue - padding);
 xScaled = xScaled > 1920 ? 1920 : xScaled;
 yScaled = yScaled > 1000 ? 1000 : yScaled;
 
-// Debug: Print scaled values
-printf("Scaled X: %u (Mapped to 1920x900)\n", xScaled);
-printf("Scaled Y: %u (Mapped to 1920x900)\n", yScaled);
+// // Debug: Print scaled values
+// printf("Scaled X: %u (Mapped to 1920x900)\n", xScaled);
+// printf("Scaled Y: %u (Mapped to 1920x900)\n", yScaled);
 
 // Packing the values into buf (if necessary)
 buf[34] = xScaled & 0xFF; // Lower 8 bits of xScaled
@@ -520,9 +520,9 @@ buf[35] = (xScaled >> 8) | ((yScaled & 0x0F) << 4); // Upper 4 bits of xScaled a
 buf[36] = (yScaled >> 4) & 0xFF; // Upper 8 bits of yScaled
 
 // Debug: Print packed values
-printf("Buf[34]: 0x%X\n", buf[34]);
-printf("Buf[35]: 0x%X\n", buf[35]);
-printf("Buf[36]: 0x%X\n", buf[36]);
+// printf("Buf[34]: 0x%X\n", buf[34]);
+// printf("Buf[35]: 0x%X\n", buf[35]);
+// printf("Buf[36]: 0x%X\n", buf[36]);
 
 
  
