@@ -1,6 +1,6 @@
 #pragma once
 
-#include "logic.h"
+#include "rogue_enemy.h"
 
 #undef VIRT_EVDEV_DEBUG
 

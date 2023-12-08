@@ -1,4 +1,5 @@
 #include "virt_mouse_kbd.h"
+#include "devices_status.h"
 
 static const char* uinput_path = "/dev/uinput";
 

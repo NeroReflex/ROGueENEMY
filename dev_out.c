@@ -65,6 +65,10 @@ static void handle_incoming_message_gamepad_set(
             inout_gamepad->r3 = msg_payload->status.btn;
             break;
         }
+        case GAMEPAD_BTN_TOUCHPAD: {
+            inout_gamepad->touchpad_press = msg_payload->status.btn;
+            break;
+        }
         case GAMEPAD_LEFT_JOYSTICK_X: {
             inout_gamepad->joystick_positions[0][0] = msg_payload->status.joystick_pos;
             break;

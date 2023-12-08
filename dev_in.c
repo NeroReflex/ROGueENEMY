@@ -235,6 +235,12 @@ static void handle_rumble(dev_in_t *const in_devs, size_t in_devs_count, const o
 void* dev_in_thread_func(void *ptr) {
     dev_in_data_t *const dev_in_data = (dev_in_data_t*)ptr;
 
+    void* platform_data;
+    const int platform_init_res = dev_in_data->input_dev_decl->init_fn(&platform_data);
+    if (platform_init_res != 0) {
+        fprintf(stderr, "Error setting up platform data: %d\n", platform_init_res);
+    }
+
     struct timeval timeout = {
         .tv_sec = (__time_t)dev_in_data->timeout_ms / (__time_t)1000,
         .tv_usec = ((__suseconds_t)dev_in_data->timeout_ms % (__suseconds_t)1000) * (__suseconds_t)1000000,
@@ -346,6 +352,10 @@ void* dev_in_thread_func(void *ptr) {
                 //fill_message_from_iio(&devices[i].dev.iio, out_msg);
             }
         }
+    }
+
+    if (platform_init_res != 0) {
+        dev_in_data->input_dev_decl->deinit_fn(&platform_data);
     }
 
     // TODO: free every fd

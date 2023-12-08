@@ -44,6 +44,8 @@ typedef struct gamepad_status {
     uint8_t l5;
     uint8_t r5;
 
+    uint8_t touchpad_press;
+
     struct timeval last_gyro_motion_time;
     struct timeval last_accel_motion_time;
 

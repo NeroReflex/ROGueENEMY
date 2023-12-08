@@ -18,10 +18,10 @@ find_package(Threads REQUIRED)
 add_executable(${EXECUTABLE_NAME}
                   dev_evdev.c
                   dev_iio.c
+                  dev_hidraw.c
                   dev_in.c
                   dev_out.c
                   main.c
-                  platform.c
                   settings.c
                   virt_ds4.c
                   virt_ds5.c

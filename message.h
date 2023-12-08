@@ -19,6 +19,7 @@ typedef enum in_message_gamepad_btn {
     GAMEPAD_BTN_R2_TRIGGER,
     GAMEPAD_BTN_L3,
     GAMEPAD_BTN_R3,
+    GAMEPAD_BTN_TOUCHPAD,
 
     GAMEPAD_LEFT_JOYSTICK_X,
     GAMEPAD_LEFT_JOYSTICK_Y,

@@ -4,8 +4,10 @@
 #include "input_dev.h"
 #include "dev_in.h"
 #include "dev_out.h"
-#include "rog_ally.h"
 #include "settings.h"
+
+#include "rog_ally.h"
+#include "legion_go.h"
 
 /*
 logic_t global_logic;
@@ -43,7 +45,25 @@ int main(int argc, char ** argv) {
     return EXIT_FAILURE;
   }
 */
-  input_dev_composite_t* in_devs = rog_ally_device_def(&settings);
+  input_dev_composite_t* in_devs = NULL;
+  
+  int dmi_name_fd = open("/sys/class/dmi/id/board_name", O_RDONLY | O_NONBLOCK);
+  if (dmi_name_fd < 0) {
+    fprintf(stderr, "Cannot get the board name\n");
+    return EXIT_FAILURE;
+  }
+
+  char bname[256];
+  memset(bname, 0, sizeof(bname));
+  read(dmi_name_fd, bname, sizeof(bname));
+  if (strstr(bname, "RC71L") != NULL) {
+    printf("Running in an Asus ROG Ally device\n");
+    in_devs = rog_ally_device_def(&settings);
+  } else if (strstr(bname, "LNVNB161216")) {
+    printf("Running in an Asus ROG Ally device\n");
+    in_devs = legion_go_device_def(&settings);
+  }
+  close(dmi_name_fd);
 
   int dev_in_thread_creation = -1;
   int dev_out_thread_creation = -1;

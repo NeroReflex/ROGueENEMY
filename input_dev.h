@@ -1,7 +1,6 @@
 #pragma once
 
 #include "message.h"
-#include "logic.h"
 
 #undef INCLUDE_INPUT_DEBUG
 #undef IGNORE_INPUT_SCAN
@@ -23,7 +22,14 @@ typedef void (*ev_map)(const evdev_collected_t *const e, int in_messages_pipe_fd
 typedef enum input_dev_type {
     input_dev_type_uinput,
     input_dev_type_iio,
+    input_dev_type_hidraw,
 } input_dev_type_t;
+
+typedef struct hidraw_filters {
+    const int16_t pid;
+    const int16_t vid;
+    const uint16_t rdesc_size;
+} hidraw_filters_t;
 
 typedef struct uinput_filters {
     const char name[256];
@@ -32,6 +38,15 @@ typedef struct uinput_filters {
 typedef struct iio_filters {
     const char name[256];
 } iio_filters_t;
+
+typedef int (*hidraw_set_leds)(uint8_t r, uint8_t g, uint8_t b, void* user_data);
+
+typedef int (*hidraw_rumble)(uint8_t left_motor, uint8_t right_motor, void* user_data);
+
+typedef struct hidraw_callbacks {
+    hidraw_set_leds leds_callback;
+    hidraw_rumble rumble_callback;
+} hidraw_callbacks_t;
 
 typedef struct input_dev {
     input_dev_type_t dev_type;
@@ -47,11 +62,23 @@ typedef struct input_dev {
 
 } input_dev_t;
 
+typedef int (*platform_init)(void** platform_data);
+
+typedef void (*platform_deinit)(void** platform_data);
+
+typedef int (*platform_leds)(uint8_t r, uint8_t g, uint8_t b, void* platform_data);
+
 typedef struct input_dev_composite {
 
     const input_dev_t* dev[MAX_INPUT_DEVICES];
 
     size_t dev_count;
+
+    platform_leds leds_fn;
+
+    platform_init init_fn;
+
+    platform_deinit deinit_fn;
 
 } input_dev_composite_t;
 

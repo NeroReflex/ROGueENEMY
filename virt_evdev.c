@@ -1,6 +1,5 @@
 #include "virt_evdev.h"
 #include "devices_status.h"
-#include "logic.h"
 
 static const char* uinput_path = "/dev/uinput";
 

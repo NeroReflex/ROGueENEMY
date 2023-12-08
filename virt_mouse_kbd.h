@@ -1,9 +1,8 @@
 #pragma once
 
-#include "logic.h"
+#include "rogue_enemy.h"
 
 #undef VIRT_EVDEV_DEBUG
-
 
 // Emulates a "Generic" controller:
 #define OUTPUT_DEV_NAME             "ROGueENEMY"

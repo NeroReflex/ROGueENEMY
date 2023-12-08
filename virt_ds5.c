@@ -459,6 +459,7 @@ static void compose_hid_report_buffer(int fd, gamepad_status_t *const gamepad_st
             (gs.r5 ? 0x80 : 0x00) |
             (gs.l4 ? 0x10 : 0x00) |
             (gs.r4 ? 0x20 : 0x00) |
+            (gs.touchpad_press ? 0x02 : 0x00) |
             (gs.center ? 0x01 : 0x00);
     //buf[11] = ;
     
@@ -470,6 +471,10 @@ static void compose_hid_report_buffer(int fd, gamepad_status_t *const gamepad_st
     memcpy(&buf[24], &a_y, sizeof(int16_t));
     memcpy(&buf[26], &a_z, sizeof(int16_t));
     memcpy(&buf[28], &timestamp, sizeof(timestamp));
+
+    // TODO: when touch is detected send 0x7F, when not 0x80
+    buf[33] = 0x80; //touch0 active?
+    buf[37] = 0x80; //touch1 active?
 
 /*
     buf[30] = 0x1b; // no headset attached

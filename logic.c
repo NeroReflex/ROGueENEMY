@@ -1,5 +1,3 @@
-#include "logic.h"
-#include "platform.h"
 #include "virt_ds4.h"
 #include "virt_ds5.h"
 #include "virt_evdev.h"
