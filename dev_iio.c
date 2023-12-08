@@ -381,9 +381,14 @@ int dev_iio_open(
             //printf("Testing for device %s\n", path);
 
             // try to open the device, if it cannot be opened to go the next
-            int fd = open(path, O_RDWR);
-            if (fd < 0) {
-                fprintf(stderr, "Cannot open %s, device skipped.\n", path);
+            int fd = dev_iio_create(path, out_dev);
+            if (fd != 0) {
+                //fprintf(stderr, "Cannot open %s, device skipped.\n", path);
+                continue;
+            }
+
+            if (!iio_matches(in_filters, *out_dev)) {
+                dev_iio_close(*out_dev);
                 continue;
             }
 
