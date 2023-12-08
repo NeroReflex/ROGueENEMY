@@ -95,11 +95,6 @@ int dev_evdev_open(
                 continue;
             }
 
-            for (int k = 0; k < (sizeof(open_fds) / sizeof(open_fds[0])); ++k) {
-                printf("open_fds[k: %d]=%d ", k, open_fds[k]);
-            }
-            printf("\n");
-
             // check if that has been already opened
             // open_sysfs
             int skip = 0;
@@ -107,7 +102,6 @@ int dev_evdev_open(
                 if ((open_fds[o] != -1) && (open_fds[o] == fd)) {
                     close(fd);
                     skip = 1;
-                    printf("Device %s already opened -- Skipping\n", path);
                     break;
                 } else if (open_fds[o] == -1) {
                     open_sysfs_idx = o;
@@ -115,7 +109,6 @@ int dev_evdev_open(
             }
 
             if ((skip) || (open_sysfs_idx == -1)) {
-                printf("skip=%d open_sysfs_idx=%d\n", skip, open_sysfs_idx);
                 continue;
             } else {
                 open_fds[open_sysfs_idx] = fd;
@@ -126,8 +119,6 @@ int dev_evdev_open(
                 open_fds[open_sysfs_idx] = -1;
                 close(fd);
                 continue;
-            } else {
-                printf("Acquired evdev device %s: fd=%d", path, fd);
             }
 
             // try to open the device
@@ -136,6 +127,8 @@ int dev_evdev_open(
                 open_fds[open_sysfs_idx] = -1;
                 close(fd);
                 continue;
+            } else {
+                printf("Acquired evdev device %s: fd=%d\n", path, fd);
             }
 
             // the device has been found
