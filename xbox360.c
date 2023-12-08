@@ -4,14 +4,11 @@
 void xbox360_ev_map(const evdev_collected_t *const coll, int in_messages_pipe_fd, void* user_data) {
 	const xbox360_settings_t *const settings = (xbox360_settings_t*)user_data;
 
-    in_message_t current_message;
-
-	ssize_t last_write_res = 0;
     for (uint32_t i = 0; i < coll->ev_count; ++i) {
-		last_write_res = sizeof(in_message_t);
-
 		if (coll->ev[i].type == EV_KEY) {
-			current_message.type = GAMEPAD_SET_ELEMENT;
+			in_message_t current_message = {
+				.type = GAMEPAD_SET_ELEMENT
+			};
 
 			if (coll->ev[i].code == BTN_EAST) {
 				current_message.data.gamepad_set.element = (settings->nintendo_layout) ? GAMEPAD_BTN_CROSS : GAMEPAD_BTN_CIRCLE;
@@ -49,9 +46,13 @@ void xbox360_ev_map(const evdev_collected_t *const coll, int in_messages_pipe_fd
 			}
 
 			// send the button event over the pipe
-			last_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
+			if (write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t)) != sizeof(in_message_t)) {
+				fprintf(stderr, "Unable to write gamepad data to the in_message pipe\n");
+			}
 		} else if (coll->ev[i].type == EV_ABS) {
-			current_message.type = GAMEPAD_SET_ELEMENT;
+			in_message_t current_message = {
+				.type = GAMEPAD_SET_ELEMENT,
+			};
 			
 			if (coll->ev[i].code == ABS_X) {
 				current_message.data.gamepad_set.element = GAMEPAD_LEFT_JOYSTICK_X;
@@ -80,11 +81,9 @@ void xbox360_ev_map(const evdev_collected_t *const coll, int in_messages_pipe_fd
 			}
 
 			// send the button event over the pipe
-			last_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-		}
-
-		if (last_write_res != sizeof(in_message_t)) {
-			fprintf(stderr, "Unable to write data to the in_message pipe: %zd\n", last_write_res);
+			if (write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t)) != sizeof(in_message_t)) {
+				fprintf(stderr, "Unable to write gamepad data to the in_message pipe\n");
+			}
 		}
 	}
 }

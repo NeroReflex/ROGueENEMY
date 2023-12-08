@@ -109,6 +109,10 @@ static void handle_incoming_message_gamepad_set(
 
             break;
         }
+        default: {
+            fprintf(stderr, "Unknown gamepad element: %d\n", msg_payload->element);
+            break;
+        }
     }
 }
 
