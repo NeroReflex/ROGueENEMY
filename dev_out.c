@@ -192,7 +192,7 @@ void *dev_out_thread_func(void *ptr) {
             }
         } else {
             FD_ZERO(&read_fds);
-            FD_SET(dev_out->out_message_pipe_fd, &read_fds);
+            FD_SET(dev_out->in_message_pipe_fd, &read_fds);
             // TODO: FD_SET(current_mouse_fd, &read_fds);
             // TODO: FD_SET(current_keyboard_fd, &read_fds);
             FD_SET(current_gamepad_fd, &read_fds);
@@ -229,7 +229,7 @@ void *dev_out_thread_func(void *ptr) {
                 if (in_message_pipe_read_res == sizeof(in_message_t)) {
                     handle_incoming_message(&incoming_message, &dev_out->dev_stats);
                 } else {
-                    fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu butes", in_message_pipe_read_res, sizeof(in_message_t));
+                    fprintf(stderr, "Error reading from in_message_pipe_fd: got %zu bytes, expected %zu butes", in_message_pipe_read_res, sizeof(in_message_t));
                 }
             }
         }
