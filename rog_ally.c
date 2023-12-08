@@ -1,4 +1,5 @@
 #include "rog_ally.h"
+#include "xbox360.h"
 
 void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data) {
   in_message_t current_message;
@@ -63,9 +64,7 @@ static input_dev_t in_xbox_dev = {
   .ev_input_map_fn = xbox360_ev_map,
 };
 
-input_dev_t in_devs[] = {
-  
-};
+xbox360_settings_t x360_cfg;
 
 input_dev_composite_t rc71l_composite = {
   .dev = {
@@ -79,6 +78,8 @@ input_dev_composite_t rc71l_composite = {
 };
 
 input_dev_composite_t* rog_ally_device_def(const controller_settings_t *const settings) {
-  in_xbox_dev.user_data = (void*)settings;
+  x360_cfg.nintendo_layout = settings->nintendo_layout;
+
+  in_xbox_dev.user_data = (void*)&x360_cfg;
   return &rc71l_composite;
 }
