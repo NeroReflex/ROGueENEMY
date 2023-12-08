@@ -57,7 +57,7 @@ void xbox360_ev_map(const evdev_collected_t *const coll, int in_messages_pipe_fd
 				current_message.data.gamepad_set.element = GAMEPAD_LEFT_JOYSTICK_X;
 				current_message.data.gamepad_set.status.joystick_pos = (int32_t)coll->ev[i].value;
 			} else if (coll->ev[i].code == ABS_Y) {
-				current_message.data.gamepad_set.element = GAMEPAD_LEFT_JOYSTICK_X;
+				current_message.data.gamepad_set.element = GAMEPAD_LEFT_JOYSTICK_Y;
 				current_message.data.gamepad_set.status.joystick_pos = (int32_t)coll->ev[i].value;
 			} else if (coll->ev[i].code == ABS_RX) {
 				current_message.data.gamepad_set.element = GAMEPAD_RIGHT_JOYSTICK_X;
