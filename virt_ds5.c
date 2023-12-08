@@ -219,7 +219,7 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
         uint8_t lightbar_blue = ev.u.output.data[47];
 
         if ((valid_flag0 & DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT)) {
-            if (/*(valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) ||*/ (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
+            if ((valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) || (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
                 out_device_status->motors_intensity[0] = motor_left;
                 out_device_status->motors_intensity[1] = motor_right;
                 ++out_device_status->rumble_events_count;
