@@ -124,9 +124,9 @@ static void handle_incoming_message(
 
 int64_t get_timediff_usec(const struct timeval *const past, const struct timeval *const now) {
     struct timeval tdiff;
-    timersub(past, now, &tdiff);
+    timersub(now, past, &tdiff);
 
-    const int64_t sgn = ((past->tv_sec > now->tv_sec) || ((past->tv_sec == now->tv_sec) && (past->tv_usec > now->tv_usec))) ? -1 : +1;
+    const int64_t sgn = ((now->tv_sec > past->tv_sec) || ((now->tv_sec == past->tv_sec) && (now->tv_usec > past->tv_usec))) ? -1 : +1;
 
     return (int64_t)(tdiff.tv_sec) * (int64_t)1000000 + (int64_t)(tdiff.tv_usec);
 }
@@ -169,12 +169,6 @@ void *dev_out_thread_func(void *ptr) {
 
     fd_set read_fds;
     for (;;) {
-        FD_ZERO(&read_fds);
-        FD_SET(dev_out->out_message_pipe_fd, &read_fds);
-        // TODO: FD_SET(current_mouse_fd, &read_fds);
-        // TODO: FD_SET(current_keyboard_fd, &read_fds);
-        FD_SET(current_gamepad_fd, &read_fds);
-
         gettimeofday(&now, NULL);
         int64_t gamepad_time_diff_usecs = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
         if (gamepad_time_diff_usecs >= 1250) {
@@ -187,6 +181,12 @@ void *dev_out_thread_func(void *ptr) {
                 virt_dualshock_send(&controller_data.ds4, tmp_buf);
             }
         } else {
+            FD_ZERO(&read_fds);
+            FD_SET(dev_out->out_message_pipe_fd, &read_fds);
+            // TODO: FD_SET(current_mouse_fd, &read_fds);
+            // TODO: FD_SET(current_keyboard_fd, &read_fds);
+            FD_SET(current_gamepad_fd, &read_fds);
+
             // calculate the shortest timeout between one of the multiple device will needs to send out its hid report
             struct timeval timeout = {
                 .tv_sec = (__time_t)gamepad_time_diff_usecs / (__time_t)1000000,
