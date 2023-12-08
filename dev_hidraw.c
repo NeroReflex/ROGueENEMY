@@ -56,8 +56,6 @@ int dev_hidraw_open(
 ) {
     int res = -ENOENT;
 
-    
-
     char path[MAX_PATH_LEN] = "\0";
     
     DIR *d;
@@ -75,7 +73,7 @@ int dev_hidraw_open(
 
             // try to open the device, if it cannot be opened to go the next
             int fd = open(path, O_RDWR);
-            if (fd != 0) {
+            if (fd < 0) {
                 //fprintf(stderr, "Cannot open %s, device skipped.\n", path);
                 continue;
             }

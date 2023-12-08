@@ -384,8 +384,8 @@ int dev_iio_open(
             //printf("Testing for device %s\n", path);
 
             // try to open the device, if it cannot be opened to go the next
-            int fd = dev_iio_create(path, out_dev);
-            if (fd != 0) {
+            const int iio_creation_res = dev_iio_create(path, out_dev);
+            if (iio_creation_res != 0) {
                 //fprintf(stderr, "Cannot open %s, device skipped.\n", path);
                 continue;
             }

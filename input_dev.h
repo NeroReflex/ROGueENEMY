@@ -28,7 +28,7 @@ typedef enum input_dev_type {
 typedef struct hidraw_filters {
     const int16_t pid;
     const int16_t vid;
-    const uint16_t rdesc_size;
+    const uint16_t rdesc_size; // wc -c < /sys/class/hidraw/hidraw0/device/report_descriptor
 } hidraw_filters_t;
 
 typedef struct uinput_filters {
