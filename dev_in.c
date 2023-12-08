@@ -313,7 +313,10 @@ void* dev_in_thread_func(void *ptr) {
                     handle_rumble(devices, max_devices, &out_msg.data.rumble);
                 } else if (out_msg.type == OUT_MSG_TYPE_LEDS) {
                     // first inform the platform
-                    dev_in_data->input_dev_decl->leds_fn(out_msg.data.leds.r, out_msg.data.leds.g, out_msg.data.leds.b, platform_data);
+                    const int platform_leds_res = dev_in_data->input_dev_decl->leds_fn(out_msg.data.leds.r, out_msg.data.leds.g, out_msg.data.leds.b, platform_data);
+                    if (platform_leds_res != 0) {
+                        fprintf(stderr, "Error in changing platform LEDs: %d\n", platform_leds_res);
+                    }
 
                     // TODO: handle_leds()
                 }
