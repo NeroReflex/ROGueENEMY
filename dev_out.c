@@ -1,6 +1,7 @@
 #include "dev_out.h"
 
 #include "virt_ds4.h"
+#include "virt_ds5.h"
 
 static void handle_incoming_message_gamepad_action(
     const in_message_gamepad_action_t *const msg_payload,
@@ -141,6 +142,7 @@ void *dev_out_thread_func(void *ptr) {
 
     union {
         virt_dualshock_t ds4;
+        virt_dualsense_t ds5;
     } controller_data;
 
     int current_gamepad_fd = -1;
@@ -148,7 +150,12 @@ void *dev_out_thread_func(void *ptr) {
     //int current_mouse_fd = -1;
 
     if (current_gamepad == GAMEPAD_DUALSENSE) {
-
+        const int ds5_init_res = virt_dualsense_init(&controller_data.ds5);
+        if (ds5_init_res != 0) {
+            fprintf(stderr, "Unable to initialize the DualSense device: %d\n", ds5_init_res);
+        } else {
+            current_gamepad_fd = virt_dualshock_get_fd(&controller_data.ds4);
+        }
     } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
         const int ds4_init_res = virt_dualshock_init(&controller_data.ds4);
         if (ds4_init_res != 0) {
@@ -175,7 +182,8 @@ void *dev_out_thread_func(void *ptr) {
             gamepad_last_hid_report_sent = now;
 
             if (current_gamepad == GAMEPAD_DUALSENSE) {
-
+                virt_dualsense_compose(&controller_data.ds5, &dev_out->dev_stats.gamepad, tmp_buf);
+                virt_dualsense_send(&controller_data.ds5, tmp_buf);
             } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
                 virt_dualshock_compose(&controller_data.ds4, &dev_out->dev_stats.gamepad, tmp_buf);
                 virt_dualshock_send(&controller_data.ds4, tmp_buf);
