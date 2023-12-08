@@ -611,7 +611,13 @@ static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_d
   if ((platform->platform_mode == rc71l_platform_mode_hidraw) && (platform->platform.hidraw != NULL)) {
     int fd = dev_hidraw_get_fd(platform->platform.hidraw);
 
-    write(fd, brightness_buf, sizeof(brightness_buf));
+    if (write(fd, brightness_buf, sizeof(brightness_buf)) != 64) {
+      fprintf(stderr, "Unable to send LEDs brightness command change\n");
+    }
+
+    if (write(fd, colors_buf, sizeof(colors_buf)) != 64) {
+      fprintf(stderr, "Unable to send LEDs color command change\n");
+    }
 
     return 0;
   }
