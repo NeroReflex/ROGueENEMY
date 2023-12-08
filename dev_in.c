@@ -237,31 +237,27 @@ void* dev_in_thread_func(void *ptr) {
         FD_ZERO(&read_fds);
         FD_SET(devs->in_message_pipe_fd, &read_fds);
         for (size_t i = 0; i < devs->input_dev_cnt; ++i) {
-            int fd = -1;
             if (devices[i].type == DEV_IN_TYPE_EV) {
-                fd = libevdev_get_fd(devices[i].dev.evdev.evdev);
-
                 // device is present, query it in select
-                FD_SET(fd, &read_fds);
+                FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
 
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
-                fprintf(stderr, "Device %zu not found -- Attempt reconnection\n", i);
+                
 
                 if (devs->input_dev_decl[i].dev_type == input_dev_type_uinput) {
+                    fprintf(stderr, "Device (evdev) %zu not found -- Attempt reconnection for device named %s\n", i, devs->input_dev_decl[i].filters.ev.name);
+
                     const int open_res = open_device(&devs->input_dev_decl[i].filters.ev, &devices[i].dev.evdev);
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_EV;
-                        fd = libevdev_get_fd(devices[i].dev.evdev.evdev);
 
                         // device is now connected, query it in select
-                        FD_SET(fd, &read_fds);
+                        FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
                     }
                 }
                 
             }
-
-            
         }
 
         int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
