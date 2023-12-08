@@ -17,10 +17,7 @@ static bool ev_matches(struct libevdev *dev, const uinput_filters_t* const filte
 
     const char* name = libevdev_get_name(dev);
     if ((name != NULL) && (strcmp(name, filters->name) != 0)) {
-        printf("%s does not match %s\n", name, filters->name);
         return false;
-    } else {
-        printf("%s matches %s\n", name, filters->name);
     }
 
     // TODO: if more filters are implemented write them here
@@ -86,7 +83,7 @@ int dev_evdev_open(
 
             snprintf(path, MAX_PATH_LEN - 1, "%s%s", input_path, dir->d_name);
 
-            printf("Testing for device %s\n", path);
+            //printf("Testing for device %s\n", path);
 
             // try to open the device, if it cannot be opened to go the next
             int fd = open(path, O_RDWR);
@@ -115,7 +112,7 @@ int dev_evdev_open(
             }
 
             if (libevdev_new_from_fd(fd, out_evdev) != 0) {
-                fprintf(stderr, "Cannot initialize libevdev from this device (%s) -- Skipping.\n", path);
+                //fprintf(stderr, "Cannot initialize libevdev from this device (%s) -- Skipping.\n", path);
                 open_fds[open_sysfs_idx] = -1;
                 close(fd);
                 continue;
