@@ -97,6 +97,7 @@ static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
         goto dev_iio_create_err;
     }
 
+    (*out_iio)->flags = 0x00000000U;
     (*out_iio)->anglvel_x_fd = NULL;
     (*out_iio)->anglvel_y_fd = NULL;
     (*out_iio)->anglvel_z_fd = NULL;
@@ -172,6 +173,7 @@ static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
 
         char* const anglvel_scale = read_file((*out_iio)->path, scale_main_file);
         if (anglvel_scale != NULL) {
+            (*out_iio)->flags |= DEV_IIO_HAS_ANGLVEL;
             (*out_iio)->anglvel_scale_x = (*out_iio)->anglvel_scale_y = (*out_iio)->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
 
@@ -199,6 +201,7 @@ static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
 
         char* const accel_scale = read_file((*out_iio)->path, scale_main_file);
         if (accel_scale != NULL) {
+            (*out_iio)->flags |= DEV_IIO_HAS_ACCEL;
             (*out_iio)->accel_scale_x = (*out_iio)->accel_scale_y = (*out_iio)->accel_scale_z = strtod(accel_scale, NULL);
             free((void*)accel_scale);
 
@@ -296,6 +299,7 @@ static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
 
     free(tmp);
 
+/*
     printf(
         "anglvel scale: x=%f, y=%f, z=%f | accel scale: x=%f, y=%f, z=%f\n",
         (*out_iio)->anglvel_scale_x,
@@ -305,9 +309,8 @@ static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
         (*out_iio)->accel_scale_y,
         (*out_iio)->accel_scale_z
     );
+*/
 
-    // give time to change the scale
-    sleep(4);
     res = 0;
 
 dev_iio_create_err:

@@ -107,6 +107,15 @@ int iio_open_device(
         goto iio_open_device_err;
     }
 
+    const char *const dev_name = dev_iio_get_name(out_dev->iiodev);
+
+    printf(
+        "Opened iio device:\n   name: %s    has accel: %s\n    has anglvel: %s\n",
+        (dev_name != NULL) ? dev_name : "NULL",
+        dev_iio_has_accel(out_dev->iiodev) ? "yes" : "no",
+        dev_iio_has_anglvel(out_dev->iiodev) ? "yes" : "no"
+    );
+
 iio_open_device_err:
     return res;
 }
@@ -123,15 +132,17 @@ int evdev_open_device(
 
     out_dev->has_rumble_support = libevdev_has_event_type(out_dev->evdev, EV_FF) && libevdev_has_event_code(out_dev->evdev, EV_FF, FF_RUMBLE);
 
+    const char *const dev_name = libevdev_get_name(out_dev->evdev);
+
     const int grab_res = libevdev_grab(out_dev->evdev, LIBEVDEV_GRAB);
     out_dev->grabbed = grab_res == 0;
     if (!out_dev->grabbed) {
-        fprintf(stderr, "Unable to grab the device (%s): %d.\n", libevdev_get_name(out_dev->evdev), grab_res);
+        fprintf(stderr, "Unable to grab the device (%s): %d.\n", dev_name != NULL ? "NULL" : dev_name, grab_res);
     }
 
     if (out_dev->has_rumble_support) {
-        printf("Opened device\n    name: %s\n    rumble: %s\n",
-            libevdev_get_name(out_dev->evdev),
+        printf("Opened ev device\n    name: %s\n    rumble: %s\n",
+            dev_name != NULL ? "NULL" : dev_name,
             libevdev_has_event_code(out_dev->evdev, EV_FF, FF_RUMBLE) ? "true" : "false"
         );
 
@@ -155,7 +166,7 @@ int evdev_open_device(
         }
     } else {
         printf("Opened device\n    name: %s\n    rumble: no force-feedback\n",
-            libevdev_get_name(out_dev->evdev)
+            dev_name != NULL ? "NULL" : dev_name
         );
     }
 
@@ -268,6 +279,9 @@ void* dev_in_thread_func(void *ptr) {
                     fprintf(stderr, "Device (iio) %zu not found -- Attempt reconnection for device named %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.iio.name);
                 
                     const int open_res = iio_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.iio, &devices[i].dev.iio);
+                    if (open_res == 0) {
+                        devices[i].type = DEV_IN_TYPE_IIO;
+                    }
                 }
             }
         }
