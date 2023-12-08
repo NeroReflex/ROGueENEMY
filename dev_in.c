@@ -2,7 +2,7 @@
 #include "input_dev.h"
 #include "message.h"
 #include "dev_evdev.h"
-#include <libevdev-1.0/libevdev/libevdev.h>
+#include "dev_iio.h"
 
 typedef enum dev_in_type {
     DEV_IN_TYPE_NONE,
@@ -13,7 +13,7 @@ typedef enum dev_in_type {
 
 typedef struct dev_in_iio {
 
-    int fd;
+    dev_iio_t *iiodev;
 
 } dev_in_iio_t;
 
@@ -97,14 +97,28 @@ fill_message_from_evdev_err_completed:
     return res;
 }
 
-int open_device(
+int iio_open_device(
+    const iio_filters_t *const in_filters,
+    dev_in_iio_t *const out_dev
+) {
+    int res = dev_iio_open(in_filters, &out_dev->iiodev);
+    if (res != 0) {
+        fprintf(stderr, "Unable to open the specified iio device: %d\n", res);
+        goto iio_open_device_err;
+    }
+
+iio_open_device_err:
+    return res;
+}
+
+int evdev_open_device(
     const uinput_filters_t *const in_filters,
     dev_in_ev_t *const out_dev
 ) {
     int res = dev_evdev_open(in_filters, &out_dev->evdev);
     if (res != 0) {
-        fprintf(stderr, "Unable to open the specified device: %d\n", res);
-        goto open_device_err;
+        fprintf(stderr, "Unable to open the specified ev device: %d\n", res);
+        goto evdev_open_device_err;
     }
 
     out_dev->has_rumble_support = libevdev_has_event_type(out_dev->evdev, EV_FF) && libevdev_has_event_code(out_dev->evdev, EV_FF, FF_RUMBLE);
@@ -145,7 +159,7 @@ int open_device(
         );
     }
 
-open_device_err:
+evdev_open_device_err:
     return res;
 }
 
@@ -237,13 +251,13 @@ void* dev_in_thread_func(void *ptr) {
                 // device is present, query it in select
                 FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
-
+                
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
                 const input_dev_type_t d_type = dev_in_data->input_dev_decl->dev[i]->dev_type;
                 if (d_type == input_dev_type_uinput) {
                     fprintf(stderr, "Device (evdev) %zu not found -- Attempt reconnection for device named %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.ev.name);
 
-                    const int open_res = open_device(&dev_in_data->input_dev_decl->dev[i]->filters.ev, &devices[i].dev.evdev);
+                    const int open_res = evdev_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.ev, &devices[i].dev.evdev);
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_EV;
 
@@ -252,6 +266,8 @@ void* dev_in_thread_func(void *ptr) {
                     }
                 } else if (d_type == input_dev_type_iio) {
                     fprintf(stderr, "Device (iio) %zu not found -- Attempt reconnection for device named %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.iio.name);
+                
+                    const int open_res = iio_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.iio, &devices[i].dev.iio);
                 }
             }
         }

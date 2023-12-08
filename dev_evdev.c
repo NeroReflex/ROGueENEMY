@@ -13,10 +13,16 @@ static int open_fds[] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
 };
 
-static bool ev_matches(struct libevdev *dev, const uinput_filters_t* const filters) {
+static bool ev_matches(
+    const uinput_filters_t* const in_filters,
+    struct libevdev *in_evdev
+) {
+    if (in_evdev == NULL) {
+        return NULL;
+    }
 
-    const char* name = libevdev_get_name(dev);
-    if ((name != NULL) && (strcmp(name, filters->name) != 0)) {
+    const char* name = libevdev_get_name(in_evdev);
+    if ((name != NULL) && (strcmp(name, in_filters->name) != 0)) {
         return false;
     }
 
@@ -119,7 +125,7 @@ int dev_evdev_open(
             }
 
             // try to open the device
-            if (!ev_matches(*out_evdev, in_filters)) {
+            if (!ev_matches(in_filters, *out_evdev)) {
                 libevdev_free(*out_evdev);
                 open_fds[open_sysfs_idx] = -1;
                 close(fd);

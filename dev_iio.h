@@ -2,6 +2,8 @@
 
 #include "imu_message.h"
 
+#include "input_dev.h"
+
 #define DEV_IIO_HAS_ACCEL   0x00000001U
 #define DEV_IIO_HAS_ANGLVEL 0x00000002U
 
@@ -48,9 +50,14 @@ typedef struct dev_iio {
     double sampling_rate_hz;
 } dev_iio_t;
 
-dev_iio_t* dev_iio_create(const char* path);
+int dev_iio_open(
+    const iio_filters_t *const in_filters,
+    dev_iio_t **const out_dev
+);
 
-void dev_iio_destroy(dev_iio_t* iio);
+void dev_iio_close(dev_iio_t* iio);
+
+int dev_iio_get_buffer_fd(const dev_iio_t* iio);
 
 const char* dev_iio_get_name(const dev_iio_t* iio);
 

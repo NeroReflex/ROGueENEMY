@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <sys/syscall.h>
 
 #include <linux/hidraw.h>
 #include <linux/input-event-codes.h>

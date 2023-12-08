@@ -1,6 +1,8 @@
 #include "dev_iio.h"
 #include <stdlib.h>
 
+#define MAX_PATH_LEN 512
+
 static char* read_file(const char* base_path, const char *file) {
     char* res = NULL;
     char* fdir = NULL;
@@ -85,35 +87,39 @@ write_file_err:
     return res;
 }
 
-dev_iio_t* dev_iio_create(const char* path) {
-    dev_iio_t *iio = malloc(sizeof(dev_iio_t));
-    if (iio == NULL) {
-        return NULL;
+static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
+    int res = -ENOENT;
+
+    *out_iio = malloc(sizeof(dev_iio_t));
+    if (*out_iio == NULL) {
+        fprintf(stderr, "Cannot allocate memory for iio device\n");
+        res = -ENOMEM;
+        goto dev_iio_create_err;
     }
 
-    iio->anglvel_x_fd = NULL;
-    iio->anglvel_y_fd = NULL;
-    iio->anglvel_z_fd = NULL;
-    iio->accel_x_fd = NULL;
-    iio->accel_y_fd = NULL;
-    iio->accel_z_fd = NULL;
-    iio->temp_fd = NULL;
+    (*out_iio)->anglvel_x_fd = NULL;
+    (*out_iio)->anglvel_y_fd = NULL;
+    (*out_iio)->anglvel_z_fd = NULL;
+    (*out_iio)->accel_x_fd = NULL;
+    (*out_iio)->accel_y_fd = NULL;
+    (*out_iio)->accel_z_fd = NULL;
+    (*out_iio)->temp_fd = NULL;
 
-    iio->accel_scale_x = 0.0f;
-    iio->accel_scale_y = 0.0f;
-    iio->accel_scale_z = 0.0f;
-    iio->anglvel_scale_x = 0.0f;
-    iio->anglvel_scale_y = 0.0f;
-    iio->anglvel_scale_z = 0.0f;
-    iio->temp_scale = 0.0f;
+    (*out_iio)->accel_scale_x = 0.0f;
+    (*out_iio)->accel_scale_y = 0.0f;
+    (*out_iio)->accel_scale_z = 0.0f;
+    (*out_iio)->anglvel_scale_x = 0.0f;
+    (*out_iio)->anglvel_scale_y = 0.0f;
+    (*out_iio)->anglvel_scale_z = 0.0f;
+    (*out_iio)->temp_scale = 0.0f;
 
-    iio->outer_accel_scale_x = ACCEL_SCALE;
-    iio->outer_accel_scale_y = ACCEL_SCALE;
-    iio->outer_accel_scale_z = ACCEL_SCALE;
-    iio->outer_anglvel_scale_x = GYRO_SCALE;
-    iio->outer_anglvel_scale_y = GYRO_SCALE;
-    iio->outer_anglvel_scale_z = GYRO_SCALE;
-    iio->outer_temp_scale = 0.0;
+    (*out_iio)->outer_accel_scale_x = ACCEL_SCALE;
+    (*out_iio)->outer_accel_scale_y = ACCEL_SCALE;
+    (*out_iio)->outer_accel_scale_z = ACCEL_SCALE;
+    (*out_iio)->outer_anglvel_scale_x = GYRO_SCALE;
+    (*out_iio)->outer_anglvel_scale_y = GYRO_SCALE;
+    (*out_iio)->outer_anglvel_scale_z = GYRO_SCALE;
+    (*out_iio)->outer_temp_scale = 0.0;
 
     double mm[3][3] = 
     /*
@@ -132,29 +138,29 @@ dev_iio_t* dev_iio_create(const char* path) {
     };
 
     // store the mount matrix
-    memcpy(iio->mount_matrix, mm, sizeof(mm));
+    memcpy((*out_iio)->mount_matrix, mm, sizeof(mm));
 
     const long path_len = strlen(path) + 1;
-    iio->path = malloc(path_len);
-    if (iio->path == NULL) {
+    (*out_iio)->path = malloc(path_len);
+    if ((*out_iio)->path == NULL) {
         fprintf(stderr, "Cannot allocate %ld bytes for device name, device skipped.\n", path_len);
-        free(iio);
-        iio = NULL;
+        free(*out_iio);
+        *out_iio = NULL;
         goto dev_iio_create_err;
     }
-    strcpy(iio->path, path);
+    strcpy((*out_iio)->path, path);
 
     // ============================================= DEVICE NAME ================================================
-    iio->name = read_file(iio->path, "/name");
-    if (iio->name == NULL) {
+    (*out_iio)->name = read_file((*out_iio)->path, "/name");
+    if ((*out_iio)->name == NULL) {
         fprintf(stderr, "Unable to read iio device name.\n");
-        free(iio);
-        iio = NULL;
+        free(*out_iio);
+        *out_iio = NULL;
         goto dev_iio_create_err;
     } else {
-        int idx = strlen(iio->name) - 1;
-        if ((iio->name[idx] == '\n') || ((iio->name[idx] == '\t'))) {
-            iio->name[idx] = '\0';
+        int idx = strlen((*out_iio)->name) - 1;
+        if (((*out_iio)->name[idx] == '\n') || (((*out_iio)->name[idx] == '\t'))) {
+            (*out_iio)->name[idx] = '\0';
         }
     }
     // ==========================================================================================================
@@ -164,23 +170,23 @@ dev_iio_t* dev_iio_create(const char* path) {
         const char* preferred_scale = LSB_PER_RAD_S_2000_DEG_S_STR;
         const char *scale_main_file = "/in_anglvel_scale";
 
-        char* const anglvel_scale = read_file(iio->path, scale_main_file);
+        char* const anglvel_scale = read_file((*out_iio)->path, scale_main_file);
         if (anglvel_scale != NULL) {
-            iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = strtod(anglvel_scale, NULL);
+            (*out_iio)->anglvel_scale_x = (*out_iio)->anglvel_scale_y = (*out_iio)->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
 
-            if (write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
-                iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = LSB_PER_RAD_S_2000_DEG_S;
-                printf("anglvel scale changed to %f for device %s\n", iio->anglvel_scale_x, iio->name);
+            if (write_file((*out_iio)->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
+                (*out_iio)->anglvel_scale_x = (*out_iio)->anglvel_scale_y = (*out_iio)->anglvel_scale_z = LSB_PER_RAD_S_2000_DEG_S;
+                printf("anglvel scale changed to %f for device %s\n", (*out_iio)->anglvel_scale_x, (*out_iio)->name);
             } else {
-                fprintf(stderr, "Unable to set preferred in_anglvel_scale for device %s.\n", iio->name);
+                fprintf(stderr, "Unable to set preferred in_anglvel_scale for device %s.\n", (*out_iio)->name);
             }
         } else {
             // TODO: what about if those are split in in_anglvel_{x,y,z}_scale?
-            fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", iio->path, scale_main_file);
+            fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", (*out_iio)->path, scale_main_file);
 
-            free(iio);
-            iio = NULL;
+            free(*out_iio);
+            *out_iio = NULL;
             goto dev_iio_create_err;
         }
     }
@@ -191,23 +197,23 @@ dev_iio_t* dev_iio_create(const char* path) {
         const char* preferred_scale = LSB_PER_16G_STR;
         const char *scale_main_file = "/in_accel_scale";
 
-        char* const accel_scale = read_file(iio->path, scale_main_file);
+        char* const accel_scale = read_file((*out_iio)->path, scale_main_file);
         if (accel_scale != NULL) {
-            iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = strtod(accel_scale, NULL);
+            (*out_iio)->accel_scale_x = (*out_iio)->accel_scale_y = (*out_iio)->accel_scale_z = strtod(accel_scale, NULL);
             free((void*)accel_scale);
 
-            if (write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
-                iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = LSB_PER_16G;
-                printf("accel scale changed to %f for device %s\n", iio->accel_scale_x, iio->name);
+            if (write_file((*out_iio)->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
+                (*out_iio)->accel_scale_x = (*out_iio)->accel_scale_y = (*out_iio)->accel_scale_z = LSB_PER_16G;
+                printf("accel scale changed to %f for device %s\n", (*out_iio)->accel_scale_x, (*out_iio)->name);
             } else {
-                fprintf(stderr, "Unable to set preferred in_accel_scale for device %s.\n", iio->name);
+                fprintf(stderr, "Unable to set preferred in_accel_scale for device %s.\n", (*out_iio)->name);
             }
         } else {
             // TODO: what about if those are plit in in_accel_{x,y,z}_scale?
-            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, scale_main_file);
+            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", (*out_iio)->path, scale_main_file);
 
-            free(iio);
-            iio = NULL;
+            free(*out_iio);
+            *out_iio = NULL;
             goto dev_iio_create_err;
         }
     }
@@ -217,15 +223,15 @@ dev_iio_t* dev_iio_create(const char* path) {
     {
         const char *scale_main_file = "/in_temp_scale";
 
-        char* const accel_scale = read_file(iio->path, scale_main_file);
+        char* const accel_scale = read_file((*out_iio)->path, scale_main_file);
         if (accel_scale != NULL) {
-            iio->temp_scale = strtod(accel_scale, NULL);
+            (*out_iio)->temp_scale = strtod(accel_scale, NULL);
             free((void*)accel_scale);
         } else {
-            fprintf(stderr, "Unable to read in_temp_scale file from path %s%s.\n", iio->path, scale_main_file);
+            fprintf(stderr, "Unable to read in_temp_scale file from path %s%s.\n", (*out_iio)->path, scale_main_file);
 
-            free(iio);
-            iio = NULL;
+            free(*out_iio);
+            *out_iio = NULL;
             goto dev_iio_create_err;
         }
     }
@@ -236,13 +242,13 @@ dev_iio_t* dev_iio_create(const char* path) {
         const char* const preferred_samplig_freq = " 1600.000000";
         const size_t preferred_samplig_freq_len = strlen(preferred_samplig_freq);
 
-        if (write_file(iio->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
+        if (write_file((*out_iio)->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
             printf("Accel sampling frequency changed to %s\n", preferred_samplig_freq);
         } else {
             fprintf(stderr, "Could not change accel sampling frequency\n");
         }
 
-        if (write_file(iio->path, "/in_anglvel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
+        if (write_file((*out_iio)->path, "/in_anglvel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
             printf("Gyro sampling frequency changed to %s\n", preferred_samplig_freq);
         } else {
             fprintf(stderr, "Could not change gyro sampling frequency\n");
@@ -254,60 +260,65 @@ dev_iio_t* dev_iio_create(const char* path) {
     char* const tmp = malloc(tmp_sz);
 
     memset(tmp, 0, tmp_sz);
-    strcat(tmp, iio->path);
+    strcat(tmp, (*out_iio)->path);
     strcat(tmp, "/in_accel_x_raw");
-    iio->accel_x_fd = fopen(tmp, "r");
+    (*out_iio)->accel_x_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
-    strcat(tmp, iio->path);
+    strcat(tmp, (*out_iio)->path);
     strcat(tmp, "/in_accel_y_raw");
-    iio->accel_y_fd = fopen(tmp, "r");
+    (*out_iio)->accel_y_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
-    strcat(tmp, iio->path);
+    strcat(tmp, (*out_iio)->path);
     strcat(tmp, "/in_accel_z_raw");
-    iio->accel_z_fd = fopen(tmp, "r");
+    (*out_iio)->accel_z_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
-    strcat(tmp, iio->path);
+    strcat(tmp, (*out_iio)->path);
     strcat(tmp, "/in_anglvel_x_raw");
-    iio->anglvel_x_fd = fopen(tmp, "r");
+    (*out_iio)->anglvel_x_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
-    strcat(tmp, iio->path);
+    strcat(tmp, (*out_iio)->path);
     strcat(tmp, "/in_anglvel_y_raw");
-    iio->anglvel_y_fd = fopen(tmp, "r");
+    (*out_iio)->anglvel_y_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
-    strcat(tmp, iio->path);
+    strcat(tmp, (*out_iio)->path);
     strcat(tmp, "/in_anglvel_z_raw");
-    iio->anglvel_z_fd = fopen(tmp, "r");
+    (*out_iio)->anglvel_z_fd = fopen(tmp, "r");
 
     memset(tmp, 0, tmp_sz);
-    strcat(tmp, iio->path);
+    strcat(tmp, (*out_iio)->path);
     strcat(tmp, "/in_temp_raw");
-    iio->temp_fd = fopen(tmp, "r");
+    (*out_iio)->temp_fd = fopen(tmp, "r");
 
     free(tmp);
 
     printf(
         "anglvel scale: x=%f, y=%f, z=%f | accel scale: x=%f, y=%f, z=%f\n",
-        iio->anglvel_scale_x,
-        iio->anglvel_scale_y,
-        iio->anglvel_scale_z,
-        iio->accel_scale_x,
-        iio->accel_scale_y,
-        iio->accel_scale_z
+        (*out_iio)->anglvel_scale_x,
+        (*out_iio)->anglvel_scale_y,
+        (*out_iio)->anglvel_scale_z,
+        (*out_iio)->accel_scale_x,
+        (*out_iio)->accel_scale_y,
+        (*out_iio)->accel_scale_z
     );
 
     // give time to change the scale
     sleep(4);
+    res = 0;
 
 dev_iio_create_err:
-    return iio;
+    return res;
 }
 
-void dev_iio_destroy(dev_iio_t* iio) {
+void dev_iio_close(dev_iio_t* iio) {
+    if (iio == NULL) {
+        return;
+    }
+
     fclose(iio->accel_x_fd);
     fclose(iio->accel_y_fd);
     fclose(iio->accel_z_fd);
@@ -327,6 +338,108 @@ const char* dev_iio_get_name(const dev_iio_t* iio) {
 const char* dev_iio_get_path(const dev_iio_t* iio) {
     return iio->path;
 }
+
+static bool iio_matches(
+    const iio_filters_t *const in_filters,
+    dev_iio_t *const in_dev
+) {
+    if (in_dev == NULL) {
+        return false;
+    }
+
+    const char *const name = dev_iio_get_name(in_dev);
+    if ((name == NULL) || (strcmp(name, in_filters->name) != 0)) {
+        return false;
+    }
+
+    return true;
+}
+
+static const char *const iio_hrtrigger_name = "iio-trig-hrtimer";
+
+static const char *const iio_path = "/sys/bus/iio/devices/";
+
+int dev_iio_open(
+    const iio_filters_t *const in_filters,
+    dev_iio_t **const out_dev
+) {
+    int res = -ENOENT;
+
+    char path[MAX_PATH_LEN] = "\0";
+    
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(iio_path);
+    if (d) {
+        while ((dir = readdir(d)) != NULL) {
+            if (dir->d_name[0] == '.') {
+                continue;
+            }
+
+            snprintf(path, MAX_PATH_LEN - 1, "%s%s", iio_path, dir->d_name);
+
+            //printf("Testing for device %s\n", path);
+
+            // try to open the device, if it cannot be opened to go the next
+            int fd = open(path, O_RDWR);
+            if (fd < 0) {
+                fprintf(stderr, "Cannot open %s, device skipped.\n", path);
+                continue;
+            }
+
+            // the device has been found
+            res = 0;
+            break;
+        }
+        closedir(d);
+    }
+
+/*
+    // Load the kernel module
+    int result = syscall(__NR_finit_module, -1, iio_hrtrigger_name, 0);
+
+    if (result == 0) {
+        printf("Kernel module '%s' loaded successfully.\n", iio_hrtrigger_name);
+    } else {
+        perror("Error loading kernel module");
+    }
+*/
+
+dev_iio_open_err:
+    return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int dev_iio_read(
     const dev_iio_t *const iio,
