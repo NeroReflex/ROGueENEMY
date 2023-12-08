@@ -10,10 +10,7 @@ typedef struct dev_in_data {
     uint64_t timeout_ms;
 
     // declarations of devices to monitor
-    input_dev_t **input_dev_decl;
-
-    // number of devices to monitor
-    size_t input_dev_cnt;
+    input_dev_composite_t *input_dev_decl;
 
     // this pipe is reserved for reporting in_message_t
     int in_message_pipe_fd;

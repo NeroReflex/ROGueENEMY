@@ -207,41 +207,43 @@ static void handle_rumble(dev_in_t *const in_devs, size_t in_devs_count, const o
 }
 
 void* dev_in_thread_func(void *ptr) {
-    dev_in_data_t *const devs = (dev_in_data_t*)ptr;
+    dev_in_data_t *const dev_in_data = (dev_in_data_t*)ptr;
 
     struct timeval timeout = {
-        .tv_sec = (__time_t)devs->timeout_ms / (__time_t)1000,
-        .tv_usec = ((__suseconds_t)devs->timeout_ms % (__suseconds_t)1000) * (__suseconds_t)1000000,
+        .tv_sec = (__time_t)dev_in_data->timeout_ms / (__time_t)1000,
+        .tv_usec = ((__suseconds_t)dev_in_data->timeout_ms % (__suseconds_t)1000) * (__suseconds_t)1000000,
     };
 
     fd_set read_fds;
     
-    dev_in_t* const devices = malloc(sizeof(dev_in_t) * devs->input_dev_cnt);
+    const size_t max_devices = dev_in_data->input_dev_decl->dev_count;
+
+    dev_in_t* const devices = malloc(sizeof(dev_in_t) * max_devices);
     if (devices == NULL) {
         fprintf(stderr, "Unable to allocate memory to hold devices -- aborting input thread\n");
         return NULL;
     }
 
     // flag every device as disconnected
-    for (size_t i = 0; i < devs->input_dev_cnt; ++i) {
+    for (size_t i = 0; i < max_devices; ++i) {
         devices[i].type = DEV_IN_TYPE_NONE;
     }
 
     for (;;) {
         FD_ZERO(&read_fds);
-        FD_SET(devs->in_message_pipe_fd, &read_fds);
-        for (size_t i = 0; i < devs->input_dev_cnt; ++i) {
+        FD_SET(dev_in_data->in_message_pipe_fd, &read_fds);
+        for (size_t i = 0; i < max_devices; ++i) {
             if (devices[i].type == DEV_IN_TYPE_EV) {
                 // device is present, query it in select
                 FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
 
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
-                const input_dev_type_t d_type = (*devs->input_dev_decl)[i].dev_type;
+                const input_dev_type_t d_type = dev_in_data->input_dev_decl->dev[i]->dev_type;
                 if (d_type == input_dev_type_uinput) {
-                    fprintf(stderr, "Device (evdev) %zu not found -- Attempt reconnection for device named %s\n", i, (*devs->input_dev_decl)[i].filters.ev.name);
+                    fprintf(stderr, "Device (evdev) %zu not found -- Attempt reconnection for device named %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.ev.name);
 
-                    const int open_res = open_device(&(*devs->input_dev_decl)[i].filters.ev, &devices[i].dev.evdev);
+                    const int open_res = open_device(&dev_in_data->input_dev_decl->dev[i]->filters.ev, &devices[i].dev.evdev);
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_EV;
 
@@ -249,7 +251,7 @@ void* dev_in_thread_func(void *ptr) {
                         FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
                     }
                 } else if (d_type == input_dev_type_iio) {
-                    fprintf(stderr, "Device (iio) %zu not found -- Attempt reconnection for device named %s\n", i, (*devs->input_dev_decl)[i].filters.iio.name);
+                    fprintf(stderr, "Device (iio) %zu not found -- Attempt reconnection for device named %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.iio.name);
                 }
             }
         }
@@ -266,12 +268,12 @@ void* dev_in_thread_func(void *ptr) {
         }
 
         // check for messages incoming like set leds or activate rumble
-        if (FD_ISSET(devs->out_message_pipe_fd, &read_fds)) {
+        if (FD_ISSET(dev_in_data->out_message_pipe_fd, &read_fds)) {
             out_message_t out_msg;
-            const ssize_t out_message_pipe_read_res = read(devs->out_message_pipe_fd, (void*)&out_msg, sizeof(out_message_t));
+            const ssize_t out_message_pipe_read_res = read(dev_in_data->out_message_pipe_fd, (void*)&out_msg, sizeof(out_message_t));
             if (out_message_pipe_read_res == sizeof(out_message_t)) {
                 if (out_msg.type == OUT_MSG_TYPE_RUMBLE) {
-                    handle_rumble(devices, devs->input_dev_cnt, &out_msg.data.rumble);
+                    handle_rumble(devices, max_devices, &out_msg.data.rumble);
                 } else if (out_msg.type == OUT_MSG_TYPE_LEDS) {
                     // TODO: handle LEDs
                 }
@@ -281,7 +283,7 @@ void* dev_in_thread_func(void *ptr) {
         }
 
         // the following is only executed when there is actual data in at least one of the fd
-        for (size_t i = 0; i < devs->input_dev_cnt; ++i) {
+        for (size_t i = 0; i < max_devices; ++i) {
             int fd = -1;
             if (devices[i].type == DEV_IN_TYPE_EV) {
                 fd = libevdev_get_fd(devices[i].dev.evdev.evdev);
@@ -306,7 +308,7 @@ void* dev_in_thread_func(void *ptr) {
                     fprintf(stderr, "Unable to fill input_event(s) for device %zd: %d\n", i, fill_res);
                     continue;
                 } else {
-                    (*devs->input_dev_decl)[i].ev_input_map_fn(&coll, devs->in_message_pipe_fd, (*devs->input_dev_decl)[i].user_data);
+                    dev_in_data->input_dev_decl->dev[i]->ev_input_map_fn(&coll, dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
                 }
             } else if (devices[i].type == DEV_IN_TYPE_EV) {
                 // TODO: implement IIO

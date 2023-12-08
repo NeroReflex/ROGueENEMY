@@ -63,19 +63,22 @@ static input_dev_t in_xbox_dev = {
   .ev_input_map_fn = xbox360_ev_map,
 };
 
-input_dev_t *in_devs[] = {
-  &in_xbox_dev,
-  &in_iio_dev,
-  &in_asus_kb_1_dev,
-  &in_asus_kb_2_dev,
-  &in_asus_kb_3_dev,
+input_dev_t in_devs[] = {
+  
 };
 
-size_t rog_ally_device_def_count(void) {
-  return sizeof(in_devs) / sizeof(input_dev_t*);
-}
+input_dev_composite_t rc71l_composite = {
+  .dev = {
+    &in_xbox_dev,
+    &in_iio_dev,
+    &in_asus_kb_1_dev,
+    &in_asus_kb_2_dev,
+    &in_asus_kb_3_dev,
+  },
+  .dev_count = 5,
+};
 
-input_dev_t **rog_ally_device_def(const controller_settings_t *const settings) {
+input_dev_composite_t* rog_ally_device_def(const controller_settings_t *const settings) {
   in_xbox_dev.user_data = (void*)settings;
-  return in_devs;
+  return &rc71l_composite;
 }

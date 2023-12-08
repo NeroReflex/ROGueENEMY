@@ -7,6 +7,7 @@
 #undef IGNORE_INPUT_SCAN
 
 #define MAX_COLLECTED_EVDEV_EVENTS 16
+#define MAX_INPUT_DEVICES 8
 
 typedef struct evdev_collected {
     struct input_event ev[MAX_COLLECTED_EVDEV_EVENTS];
@@ -45,6 +46,14 @@ typedef struct input_dev {
     ev_map ev_input_map_fn;
 
 } input_dev_t;
+
+typedef struct input_dev_composite {
+
+    const input_dev_t* dev[MAX_INPUT_DEVICES];
+
+    size_t dev_count;
+
+} input_dev_composite_t;
 
 uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags);
 

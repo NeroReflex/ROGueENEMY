@@ -43,8 +43,7 @@ int main(int argc, char ** argv) {
     return EXIT_FAILURE;
   }
 */
-  input_dev_t **in_devs = rog_ally_device_def(&settings);
-  const size_t in_devs_sz = rog_ally_device_def_count();
+  input_dev_composite_t* in_devs = rog_ally_device_def(&settings);
 
   int dev_in_thread_creation = -1;
   int dev_out_thread_creation = -1;
@@ -60,7 +59,6 @@ int main(int argc, char ** argv) {
   dev_in_thread_data.in_message_pipe_fd = in_message_pipes[1];
   dev_in_thread_data.out_message_pipe_fd = out_message_pipes[0];
   dev_in_thread_data.input_dev_decl = in_devs;
-  dev_in_thread_data.input_dev_cnt = in_devs_sz;
   
   // populate the output device thread data
   //dev_out_thread_data.timeout_ms = 400;
