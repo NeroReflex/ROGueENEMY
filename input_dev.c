@@ -728,7 +728,14 @@ static void input_udev(
                     }
                     open_sysfs[open_sysfs_idx] = malloc(sizeof(path));
                     memcpy(open_sysfs[open_sysfs_idx], path, 512);    
-
+                    char deviceNodePath[64];
+                    snprintf(deviceNodePath, sizeof(deviceNodePath), "/dev/input/%s", dir->d_name);
+                    if (chmod(deviceNodePath, 000) != 0) {
+                        perror("Failed to change device node permissions");
+                        // Handle error: You might want to continue, break, or take some other action
+                        printf("Unable to hide device %s\n", deviceNodePath);
+                    }
+                    printf("Hid device %s\n",deviceNodePath );
                     if (libevdev_has_event_type(ctx->dev, EV_FF)) {
                         printf("Opened device %s\n    name: %s\n    rumble: %s\n",
                             path,
