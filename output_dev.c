@@ -764,13 +764,27 @@ void decode_hidraw_to_gamepad(gamepad_status_t *gamepad, const message_t *msg) {
     // Special handling for the combination of Center + Cross
 	}
 	
-	//Toucpad mapping
+	// Toucpad mapping
 	// Disabled; not finished
-	// unsigned char trackpadDataX = msg->data.hidraw.data[27]; //X axis
-	// unsigned char trackpadDataY = msg->data.hidraw.data[29]; //Y axis	
-	// gamepad->touchpadX = trackpadDataX;
-	// gamepad->touchpadY = trackpadDataY;
-	// printf("Touchpad data: X:%d Y:%d\n", trackpadDataX, trackpadDataY);
+	// X/Y is 12bits
+
+	// Combine the counter and data bytes to get the full position
+	// Assuming the counter represents the upper 2 bits
+	unsigned int trackpadDataX = msg->data.hidraw.data[27]; // X axis data
+	unsigned int counterX = msg->data.hidraw.data[26];      // X axis counter
+
+	unsigned int trackpadDataY = msg->data.hidraw.data[29]; // Y axis data
+	unsigned int counterY = msg->data.hidraw.data[28];      // Y axis counter
+
+	// Calculate the cumulative value
+	unsigned int cumulativeX = (counterX * 0xFF) + trackpadDataX;
+	unsigned int cumulativeY = (counterY * 0xFF) + trackpadDataY;
+
+	gamepad->touchpadX = cumulativeX; //Sending a value from 0 - 1000
+	gamepad->touchpadY = cumulativeY; //Sending a value from 0 - 1000
+
+	// Uncomment for debugging
+	// printf("CounterX/Y %d/%d\tCumulative Touchpad Position: X:%d Y:%d\n",counterX,counterY, cumulativeX, cumulativeY);
 
 }
 void update_gs_from_hidraw(gamepad_status_t *gs, const message_t *msg) {

@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "unistd.h": "c",
+        "input.h": "c",
+        "queue.h": "c",
+        "input-event-codes.h": "c"
+    }
+}
