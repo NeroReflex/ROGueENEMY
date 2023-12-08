@@ -1,5 +1,6 @@
 #include <signal.h>
 #include <stdlib.h>
+#include <stdlib.h>
 
 #include "input_dev.h"
 #include "output_dev.h"
@@ -73,13 +74,13 @@ static input_dev_t in_xbox_dev = {
   .ev_input_filter_fn = input_filter_identity,
 };
 
-void sig_handler(int signo)
-{
-  if (signo == SIGINT) {
-    logic_request_termination(&global_logic);
-    printf("received SIGINT\n");
-  }
-}
+// void sig_handler(int signo)
+// {
+//   if (signo == SIGINT) {
+//     logic_request_termination(&global_logic);
+//     printf("received SIGINT\n");
+//   }
+// }
 
 int main(int argc, char ** argv) {
   const int logic_creation_res = logic_create(&global_logic);
@@ -120,6 +121,7 @@ int main(int argc, char ** argv) {
     return EXIT_FAILURE;
   }
 */
+  signal(SIGTERM, sigterm_handler);
 
   int ret = 0;
 
