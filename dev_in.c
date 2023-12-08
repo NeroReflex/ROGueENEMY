@@ -100,7 +100,7 @@ int open_device(
     const uinput_filters_t *const in_filters,
     dev_in_ev_t *const out_dev
 ) {
-    int res = dev_evdev_open(in_filters, out_dev->evdev);
+    int res = dev_evdev_open(in_filters, &out_dev->evdev);
     if (res != 0) {
         fprintf(stderr, "Unable to open the specified device: %d\n", res);
         goto open_device_err;

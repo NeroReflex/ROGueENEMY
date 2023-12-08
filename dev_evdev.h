@@ -4,7 +4,7 @@
 
 int dev_evdev_open(
     const uinput_filters_t *const in_filters,
-    struct libevdev* out_evdev
+    struct libevdev* *const out_evdev
 );
 
 void dev_evdev_close(struct libevdev* out_evdev);

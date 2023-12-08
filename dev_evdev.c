@@ -56,7 +56,7 @@ void dev_evdev_close(struct libevdev* out_evdev) {
 
 int dev_evdev_open(
     const uinput_filters_t *const in_filters,
-    struct libevdev* out_evdev
+    struct libevdev* *const out_evdev
 ) {
     int res = -ENOENT;
 
@@ -114,7 +114,7 @@ int dev_evdev_open(
                 open_fds[open_sysfs_idx] = fd;
             }
 
-            if (libevdev_new_from_fd(fd, &out_evdev) != 0) {
+            if (libevdev_new_from_fd(fd, out_evdev) != 0) {
                 fprintf(stderr, "Cannot initialize libevdev from this device (%s) -- Skipping.\n", path);
                 open_fds[open_sysfs_idx] = -1;
                 close(fd);
@@ -122,11 +122,13 @@ int dev_evdev_open(
             }
 
             // try to open the device
-            if (!ev_matches(out_evdev, in_filters)) {
-                libevdev_free(out_evdev);
+            if (!ev_matches(*out_evdev, in_filters)) {
+                libevdev_free(*out_evdev);
                 open_fds[open_sysfs_idx] = -1;
                 close(fd);
                 continue;
+            } else {
+                printf("post-ev_matches: %s\n", libevdev_get_name(*out_evdev));
             }
 
             // the device has been found
