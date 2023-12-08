@@ -259,7 +259,7 @@ void* dev_in_thread_func(void *ptr) {
 
     for (;;) {
         FD_ZERO(&read_fds);
-        FD_SET(dev_in_data->in_message_pipe_fd, &read_fds);
+        FD_SET(dev_in_data->out_message_pipe_fd, &read_fds);
         for (size_t i = 0; i < max_devices; ++i) {
             if (devices[i].type == DEV_IN_TYPE_EV) {
                 // device is present, query it in select
