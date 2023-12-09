@@ -77,7 +77,7 @@ static int create(int fd)
 
 	memset(&ev, 0, sizeof(ev));
 	ev.type = UHID_CREATE;
-	strcpy((char*)ev.u.create.name, "Sony Corp. DualShock 4 [CUH-ZCT2x]");
+	strcpy((char*)ev.u.create.name, "Wireless Controller");
 	ev.u.create.rd_data = rdesc;
 	ev.u.create.rd_size = sizeof(rdesc);
 	ev.u.create.bus = BUS_USB;
@@ -490,8 +490,8 @@ static int send_data(int fd, logic_t *const logic) {
     }
 
 // Debug: Print original touchpad values
-// printf("Original Touchpad X: %u\n", touchpadX);
-// printf("Original Touchpad Y: %u\n", touchpadY);
+printf("Original Touchpad X: %u\n", touchpadX);
+printf("Original Touchpad Y: %u\n", touchpadY);
 
 // Padding settings
 const uint16_t padding = 100;
@@ -502,7 +502,7 @@ const uint16_t paddedMaxValue = touchpadMaxValue - padding;
 uint16_t adjustedTouchpadX = (touchpadX > padding) ? (touchpadX - padding) : 0;
 uint16_t adjustedTouchpadY = (touchpadY > padding) ? (touchpadY - padding) : 0;
 
-// Scale the adjusted values to fit within a 1920x900 resolution
+// Scale the adjusted values to fit within a 1920x1080 resolution
 uint16_t xScaled = (adjustedTouchpadX * 1920) / (paddedMaxValue - padding);
 uint16_t yScaled = (adjustedTouchpadY * 1000) / (paddedMaxValue - padding);
 
@@ -511,8 +511,8 @@ xScaled = xScaled > 1920 ? 1920 : xScaled;
 yScaled = yScaled > 1000 ? 1000 : yScaled;
 
 // // Debug: Print scaled values
-// printf("Scaled X: %u (Mapped to 1920x900)\n", xScaled);
-// printf("Scaled Y: %u (Mapped to 1920x900)\n", yScaled);
+printf("Scaled X: %u (Mapped to 1920x900)\n", xScaled);
+printf("Scaled Y: %u (Mapped to 1920x900)\n", yScaled);
 
 // Packing the values into buf (if necessary)
 buf[34] = xScaled & 0xFF; // Lower 8 bits of xScaled
@@ -520,9 +520,9 @@ buf[35] = (xScaled >> 8) | ((yScaled & 0x0F) << 4); // Upper 4 bits of xScaled a
 buf[36] = (yScaled >> 4) & 0xFF; // Upper 8 bits of yScaled
 
 // Debug: Print packed values
-// printf("Buf[34]: 0x%X\n", buf[34]);
-// printf("Buf[35]: 0x%X\n", buf[35]);
-// printf("Buf[36]: 0x%X\n", buf[36]);
+printf("Buf[34]: 0x%X\n", buf[34]);
+printf("Buf[35]: 0x%X\n", buf[35]);
+printf("Buf[36]: 0x%X\n", buf[36]);
 
 
  
