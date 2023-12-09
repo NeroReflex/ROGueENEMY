@@ -205,6 +205,10 @@ evdev_open_device_err:
     return res;
 }
 
+void evdev_close_device(dev_in_ev_t *const out_dev) {
+    dev_evdev_close(out_dev->evdev);
+}
+
 static void handle_rumble_device(dev_in_ev_t *const in_dev, const out_message_rumble_t *const in_rumble_msg) {
     if (!in_dev->has_rumble_support) {
         return;
@@ -387,7 +391,9 @@ void* dev_in_thread_func(void *ptr) {
 
                 const int fill_res = fill_message_from_evdev(&devices[i].dev.evdev, &coll);
                 if (fill_res != 0) {
-                    fprintf(stderr, "Unable to fill input_event(s) for device %zd: %d\n", i, fill_res);
+                    fprintf(stderr, "Unable to fill input_event(s) for device %zd: %d -- Will reconnect the device\n", i, fill_res);
+                    evdev_close_device(&devices[i].dev.evdev);
+                    devices[i].type = DEV_IN_TYPE_NONE;
                     continue;
                 } else {
                     dev_in_data->input_dev_decl->dev[i]->ev_input_map_fn(&coll, dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
