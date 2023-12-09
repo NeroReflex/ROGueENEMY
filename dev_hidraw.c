@@ -15,7 +15,7 @@ static bool hidraw_matches(
         printf("DISCARDED: %4x:%4x %d, expected %4x:%4x %d", in_dev->info.vendor, in_dev->info.product, in_dev->rdesc.size, in_filters->vid, in_filters->pid, in_filters->rdesc_size);
         return false;
     } else if (in_dev->rdesc.size != in_filters->rdesc_size) {
-        printf("DISCARDED: %4x:%4x %d, expected %4x:%4x %d", in_dev->info.vendor, in_dev->info.product, in_dev->rdesc.size, in_filters->vid, in_filters->pid, in_filters->rdesc_size);
+        printf("DISCARDED: %4x:%4x %d, expected %4x:%4x %d", in_dev->info.vendor, in_dev->info.product, (int)in_dev->rdesc.size, in_filters->vid, in_filters->pid, (int)in_filters->rdesc_size);
         return false;
     }
 
@@ -42,10 +42,12 @@ static int dev_hidraw_new_from_fd(int fd, dev_hidraw_t **const out_dev) {
         goto dev_hidraw_new_from_fd_err;
     }
 
-    res = ioctl(fd, HIDIOCGRDESC, &(*out_dev)->rdesc);
+    res = ioctl((*out_dev)->fd, HIDIOCGRDESC, &(*out_dev)->rdesc);
     if (res < 0) {
         perror("Error getting Report Descriptor");
         goto dev_hidraw_new_from_fd_err;
+    } else {
+        printf("GOT HIDIOCGRDESC %ld\n",(long) (*out_dev)->rdesc.size);
     }
 
 dev_hidraw_new_from_fd_err:
