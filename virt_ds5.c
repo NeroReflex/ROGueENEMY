@@ -486,6 +486,9 @@ static int send_data(int fd, logic_t *const logic) {
     if (touchpadX == 0 && touchpadY == 0 && gs.touchpad_press) {
         buf[33] = 0x7F;
         printf("TPress: %d\n", gs.touchpad_press);
+        buf[34] = 0x3C;
+        buf[35] = 0x02;
+        buf[36] = 0x1C;
     }
 
     if (touchpadX == 0 && touchpadY == 0) {
@@ -527,7 +530,10 @@ static int send_data(int fd, logic_t *const logic) {
         printf("Buf[35]: 0x%X\n", buf[35]);
         printf("Buf[36]: 0x%X\n", buf[36]);
     }
-
+     // Debug: Print packed values
+        printf("Buf[34]: 0x%X\n", buf[34]);
+        printf("Buf[35]: 0x%X\n", buf[35]);
+        printf("Buf[36]: 0x%X\n", buf[36]);
     
 
  
