@@ -433,8 +433,6 @@ static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 };
 
 void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data) {
-  in_message_t current_message;
-
   if ( // this is what happens at release of the left-screen button of the ROG Ally
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
@@ -444,7 +442,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 		(e->ev[1].code == KEY_F16) &&
 		(e->ev[1].value == 1)
 	) {
-    in_message_t current_message = {
+    const in_message_t current_message = {
       .type = GAMEPAD_ACTION,
       .data = {
         .action = GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
@@ -464,7 +462,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 		(e->ev[1].code == KEY_PROG1) &&
 		(e->ev[1].value == 1)
 	) {
-    in_message_t current_message = {
+    const in_message_t current_message = {
       .type = GAMEPAD_ACTION,
       .data = {
         .action = GAMEPAD_ACTION_OPEN_STEAM_QAM,
@@ -483,7 +481,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 		(e->ev[1].type == EV_KEY) &&
 		(e->ev[1].code == KEY_F17)
 	) {
-    in_message_t current_message = {
+    const in_message_t current_message = {
       .type = GAMEPAD_SET_ELEMENT,
       .data = {
         .gamepad_set = {
@@ -507,7 +505,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 		(e->ev[1].type == EV_KEY) &&
 		(e->ev[1].code == KEY_F18)
 	) {
-		in_message_t current_message = {
+		const in_message_t current_message = {
       .type = GAMEPAD_SET_ELEMENT,
       .data = {
         .gamepad_set = {
