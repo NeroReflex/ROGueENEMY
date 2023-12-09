@@ -487,7 +487,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
       .type = GAMEPAD_SET_ELEMENT,
       .data = {
         .gamepad_set = {
-          .element = GAMEPAD_BTN_L4,
+          .element = GAMEPAD_BTN_L5,
           .status = {
             .btn = e->ev[1].value,
           }
@@ -511,7 +511,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
       .type = GAMEPAD_SET_ELEMENT,
       .data = {
         .gamepad_set = {
-          .element = GAMEPAD_BTN_R4,
+          .element = GAMEPAD_BTN_R5,
           .status = {
             .btn = e->ev[1].value,
           }
