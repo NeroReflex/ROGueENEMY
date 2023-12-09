@@ -659,6 +659,8 @@ static int rc71l_platform_init(void** platform_data) {
 
   const int fd = dev_hidraw_get_fd(platform->platform.hidraw);
 
+  write(fd, hidraw_buf, sizeof(hidraw_buf));
+
   for (int i = 0; i < 23; ++i) {
       const int write_res = write(fd, &rc71l_mode_switch_commands[0][i][0], 64);
       if (write_res != 64) {
@@ -666,8 +668,6 @@ static int rc71l_platform_init(void** platform_data) {
           break;
       }
   }
-
-  //write(fd, hidraw_buf, sizeof(hidraw_buf));
 
   printf("ROG Ally platform will be managed over hidraw. I'm sorry fluke.\n");
 
@@ -701,7 +701,7 @@ static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_d
   };
 
   uint8_t colors_buf[] = {
-    0x5A, 0xBA, 0x00, ROG_ALLY_MODE_BREATHING, r, g, b, ROG_ALLY_SPEED_MAX, ROG_ALLY_DIRECTION_RIGHT, 0x00, r, g, b, 0x00, 0x00, 0x00,
+    0x5A, 0xBA, 0x00, ROG_ALLY_MODE_RAINBOW, r, g, b, ROG_ALLY_SPEED_MAX, ROG_ALLY_DIRECTION_RIGHT, 0x00, r, g, b, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -711,7 +711,7 @@ static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_d
     int fd = dev_hidraw_get_fd(platform->platform.hidraw);
 
     if (write(fd, brightness_buf, sizeof(brightness_buf)) != 64) {
-      fprintf(stderr, "Unable to send LEDs brightness command change\n");
+      fprintf(stderr, "Unable to send LEDs brightness (1) command change\n");
       goto rc71l_platform_leds_err;
     }
 
@@ -724,6 +724,11 @@ static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_d
     colors_buf[0x01] = 0xB5;
     if (write(fd, colors_buf, sizeof(colors_buf)) != 64) {
       fprintf(stderr, "Unable to send LEDs color command change (2)\n");
+      goto rc71l_platform_leds_err;
+    }
+
+	if (write(fd, brightness_buf, sizeof(brightness_buf)) != 64) {
+      fprintf(stderr, "Unable to send LEDs brightness (2) command change\n");
       goto rc71l_platform_leds_err;
     }
 
