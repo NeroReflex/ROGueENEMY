@@ -504,6 +504,40 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
         const uint8_t lightbar_blink_on = ev.u.output.data[9];
         const uint8_t lightbar_blink_off = ev.u.output.data[10];
 
+        if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_LED)) {
+            const out_message_t msg = {
+                .type = OUT_MSG_TYPE_LEDS,
+                .data = {
+                    .leds = {
+                        .r = lightbar_red,
+                        .g = lightbar_green,
+                        .b = lightbar_blue,
+                    }
+                }
+            };
+
+            const int write_res = write(out_message_pipe_fd, (void*)&msg, sizeof(msg));
+            if (write_res != 0) {
+                return write_res;
+            }
+        } else if (valid_flag0 & DS4_OUTPUT_VALID_FLAG0_LED_BLINK) {
+            const out_message_t msg = {
+                .type = OUT_MSG_TYPE_LEDS,
+                .data = {
+                    .leds = {
+                        .r = lightbar_red,
+                        .g = lightbar_green,
+                        .b = lightbar_blue,
+                    }
+                }
+            };
+
+            const int write_res = write(out_message_pipe_fd, (void*)&msg, sizeof(msg));
+            if (write_res != 0) {
+                return write_res;
+            }
+        }
+
         if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_MOTOR)) {    
             out_device_status->motors_intensity[0] = motor_left;
             out_device_status->motors_intensity[1] = motor_right;
