@@ -5,6 +5,7 @@
 #include "dev_evdev.h"
 #include "dev_iio.h"
 #include <libevdev-1.0/libevdev/libevdev.h>
+#include <linux/input-event-codes.h>
 
 typedef enum dev_in_type {
     DEV_IN_TYPE_NONE,
@@ -158,6 +159,7 @@ int evdev_open_device(
     }
 
     out_dev->has_rumble_support = libevdev_has_event_type(out_dev->evdev, EV_FF) && libevdev_has_event_code(out_dev->evdev, EV_FF, FF_RUMBLE);
+    out_dev->has_syn_report = libevdev_has_event_type(out_dev->evdev, EV_SYN) && libevdev_has_event_code(out_dev->evdev, EV_SYN, SYN_REPORT);
 
     const char *const dev_name = libevdev_get_name(out_dev->evdev);
 
