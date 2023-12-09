@@ -739,8 +739,6 @@ static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_d
       goto rc71l_platform_leds_err;
     }
 */
-    printf("RC71L LEDs adjusted: r=%d g=%d b=%d\n", (int)r, (int)g, (int)b);
-
     return 0;
   }
 
