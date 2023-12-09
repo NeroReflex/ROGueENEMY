@@ -487,43 +487,43 @@ static int send_data(int fd, logic_t *const logic) {
         buf[33] = 0x80;
     } else {
         buf[33] = 0x7F;
+        // Debug: Print original touchpad values
+        printf("Original Touchpad X: %u\n", touchpadX);
+        printf("Original Touchpad Y: %u\n", touchpadY);
+
+        // Padding settings
+        const uint16_t padding = 100;
+        const uint16_t touchpadMaxValue = 1000;
+        const uint16_t paddedMaxValue = touchpadMaxValue - padding;
+
+        // Clamp and adjust touchpad values to account for padding
+        uint16_t adjustedTouchpadX = (touchpadX > padding) ? (touchpadX - padding) : 0;
+        uint16_t adjustedTouchpadY = (touchpadY > padding) ? (touchpadY - padding) : 0;
+
+        // Scale the adjusted values to fit within a 1920x1080 resolution
+        uint16_t xScaled = (adjustedTouchpadX * 1920) / (paddedMaxValue - padding);
+        uint16_t yScaled = (adjustedTouchpadY * 1000) / (paddedMaxValue - padding);
+
+        // Clamp the scaled values to the display resolution
+        xScaled = xScaled > 1920 ? 1920 : xScaled;
+        yScaled = yScaled > 1000 ? 1000 : yScaled;
+
+        // // Debug: Print scaled values
+        printf("Scaled X: %u (Mapped to 1920x900)\n", xScaled);
+        printf("Scaled Y: %u (Mapped to 1920x900)\n", yScaled);
+
+        // Packing the values into buf (if necessary)
+        buf[34] = xScaled & 0xFF; // Lower 8 bits of xScaled
+        buf[35] = (xScaled >> 8) | ((yScaled & 0x0F) << 4); // Upper 4 bits of xScaled and lower 4 bits of yScaled
+        buf[36] = (yScaled >> 4) & 0xFF; // Upper 8 bits of yScaled
+
+        // Debug: Print packed values
+        printf("Buf[34]: 0x%X\n", buf[34]);
+        printf("Buf[35]: 0x%X\n", buf[35]);
+        printf("Buf[36]: 0x%X\n", buf[36]);
     }
 
-// Debug: Print original touchpad values
-printf("Original Touchpad X: %u\n", touchpadX);
-printf("Original Touchpad Y: %u\n", touchpadY);
-
-// Padding settings
-const uint16_t padding = 100;
-const uint16_t touchpadMaxValue = 1000;
-const uint16_t paddedMaxValue = touchpadMaxValue - padding;
-
-// Clamp and adjust touchpad values to account for padding
-uint16_t adjustedTouchpadX = (touchpadX > padding) ? (touchpadX - padding) : 0;
-uint16_t adjustedTouchpadY = (touchpadY > padding) ? (touchpadY - padding) : 0;
-
-// Scale the adjusted values to fit within a 1920x1080 resolution
-uint16_t xScaled = (adjustedTouchpadX * 1920) / (paddedMaxValue - padding);
-uint16_t yScaled = (adjustedTouchpadY * 1000) / (paddedMaxValue - padding);
-
-// Clamp the scaled values to the display resolution
-xScaled = xScaled > 1920 ? 1920 : xScaled;
-yScaled = yScaled > 1000 ? 1000 : yScaled;
-
-// // Debug: Print scaled values
-printf("Scaled X: %u (Mapped to 1920x900)\n", xScaled);
-printf("Scaled Y: %u (Mapped to 1920x900)\n", yScaled);
-
-// Packing the values into buf (if necessary)
-buf[34] = xScaled & 0xFF; // Lower 8 bits of xScaled
-buf[35] = (xScaled >> 8) | ((yScaled & 0x0F) << 4); // Upper 4 bits of xScaled and lower 4 bits of yScaled
-buf[36] = (yScaled >> 4) & 0xFF; // Upper 8 bits of yScaled
-
-// Debug: Print packed values
-printf("Buf[34]: 0x%X\n", buf[34]);
-printf("Buf[35]: 0x%X\n", buf[35]);
-printf("Buf[36]: 0x%X\n", buf[36]);
-
+    
 
  
     
