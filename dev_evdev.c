@@ -184,12 +184,10 @@ int dev_evdev_open(
             }
 
             if ((skip) || (open_sysfs_idx == -1)) {
-                free(path);
                 continue;
             }
 
             if (libevdev_new_from_fd(fd, out_evdev) != 0) {
-                free(path);
                 close(fd);
                 continue;
             }
@@ -197,7 +195,6 @@ int dev_evdev_open(
             // try to open the device
             if (!ev_matches(in_filters, *out_evdev)) {
                 libevdev_free(*out_evdev);
-                free(path);
                 close(fd);
                 continue;
             }
