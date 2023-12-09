@@ -12,6 +12,13 @@ typedef struct virt_dualshock {
     int fd;
 
     bool debug;
+
+    uint32_t dt_sum;
+    uint8_t dt_buffer_current;
+    uint32_t dt_buffer[30];
+
+    uint32_t empty_reports;
+    uint64_t last_time;
 } virt_dualshock_t;
 
 int virt_dualshock_init(virt_dualshock_t *const gamepad);

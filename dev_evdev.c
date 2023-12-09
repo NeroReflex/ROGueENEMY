@@ -5,12 +5,76 @@ static const char *input_path = "/dev/input/";
 
 static pthread_mutex_t input_acquire_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static int open_fds[] = {
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
-    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 
+struct open_resource {
+    char* sysfs_path;
+    int fd;
+};
+
+static struct open_resource open_paths[] = {
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
+    {
+        .fd = -1,
+        .sysfs_path = NULL
+    },
 };
 
 static bool ev_matches(
@@ -43,9 +107,13 @@ void dev_evdev_close(struct libevdev* out_evdev) {
     }
 
     int fd = libevdev_get_fd(out_evdev);
-    for (int i = 0; i < sizeof(open_fds) / sizeof(int); ++i) {
-        if (open_fds[i] == fd) {
-            open_fds[i] = -1;
+    for (int i = 0; i < sizeof(open_paths) / sizeof(open_paths[0]); ++i) {
+        if (open_paths[i].fd == fd) {
+            if (open_paths[i].sysfs_path != NULL) {
+                free(open_paths[i].sysfs_path);
+                open_paths[i].sysfs_path = NULL;
+            }
+            open_paths[i].fd = -1;
         }
     }
 
@@ -69,10 +137,14 @@ int dev_evdev_open(
     if (mutex_lock_res != 0) {
         fprintf(stderr, "Cannot lock input mutex: %d\n", mutex_lock_res);
         res = mutex_lock_res;
-        goto dev_evdev_open_err;
+        goto dev_evdev_open_mutex_err;
     }
 
-    char path[MAX_PATH_LEN] = "\0";
+    char *const path = malloc(MAX_PATH_LEN);
+    if (path == NULL) {
+        res = -ENOMEM;
+        goto dev_evdev_open_err;
+    }
     
     DIR *d;
     struct dirent *dir;
@@ -101,25 +173,23 @@ int dev_evdev_open(
             // check if that has been already opened
             // open_sysfs
             int skip = 0;
-            for (int o = 0; o < (sizeof(open_fds) / sizeof(open_fds[0])); ++o) {
-                if ((open_fds[o] != -1) && (open_fds[o] == fd)) {
+            for (int o = 0; o < (sizeof(open_paths) / sizeof(open_paths[0])); ++o) {
+                if ((open_paths[o].fd != -1) && (open_paths[o].sysfs_path != NULL) && (strcmp(open_paths[o].sysfs_path, path) == 0)) {
                     close(fd);
                     skip = 1;
                     break;
-                } else if (open_fds[o] == -1) {
+                } else if ((open_paths[o].sysfs_path == NULL) && (open_paths[o].fd == -1)) {
                     open_sysfs_idx = o;
                 }
             }
 
             if ((skip) || (open_sysfs_idx == -1)) {
+                free(path);
                 continue;
-            } else {
-                open_fds[open_sysfs_idx] = fd;
             }
 
             if (libevdev_new_from_fd(fd, out_evdev) != 0) {
-                //fprintf(stderr, "Cannot initialize libevdev from this device (%s) -- Skipping.\n", path);
-                open_fds[open_sysfs_idx] = -1;
+                free(path);
                 close(fd);
                 continue;
             }
@@ -127,10 +197,14 @@ int dev_evdev_open(
             // try to open the device
             if (!ev_matches(in_filters, *out_evdev)) {
                 libevdev_free(*out_evdev);
-                open_fds[open_sysfs_idx] = -1;
+                free(path);
                 close(fd);
                 continue;
             }
+
+            // register the device as being opened already
+            open_paths[open_sysfs_idx].sysfs_path = path;
+            open_paths[open_sysfs_idx].fd = fd;
 
             // the device has been found
             res = 0;
@@ -140,7 +214,12 @@ int dev_evdev_open(
     }
 
 dev_evdev_open_err:
+    if ((path != NULL) && (res != 0)) {
+        free(path);
+    }
+
     pthread_mutex_unlock(&input_acquire_mutex);
 
+dev_evdev_open_mutex_err:
     return res;
 }

@@ -110,7 +110,13 @@ static void destroy(int fd)
 int virt_dualsense_init(virt_dualsense_t *const out_gamepad) {
     int ret = 0;
 
+    out_gamepad->dt_sum = 0;
+    out_gamepad->dt_buffer_current = 0;
+    memset(out_gamepad->dt_buffer, 0, sizeof(out_gamepad->dt_buffer));
     out_gamepad->debug = false;
+    out_gamepad->empty_reports = 0;
+    out_gamepad->last_time = 0;
+    out_gamepad->seq_num = 0;
 
     out_gamepad->fd = open(path, O_RDWR | O_CLOEXEC /* | O_NONBLOCK */);
     if (out_gamepad->fd < 0) {
@@ -383,118 +389,101 @@ static ds5_dpad_status_t ds5_dpad_from_gamepad(uint8_t dpad) {
     return DPAD_RELEASED;
 }
 
-static void compose_hid_report_buffer(int fd, gamepad_status_t *const gamepad_stats, uint8_t buf[64]) {
-    gamepad_status_t gs = *gamepad_stats;
-
-    static uint8_t seq_num = 0x00;
-
-    const int64_t time_us = gs.last_gyro_motion_time.tv_sec * 1000000 + gs.last_gyro_motion_time.tv_usec;
-
-    static uint32_t empty_reports = 0;
-    static uint64_t last_time = 0;
-    const int delta_time = time_us - last_time;
-    last_time = time_us;
-
-    // find the average Δt in the last 30 non-zero inputs;
-    // this has to run thousands of times a second so i'm trying to do this as fast as possible
-    static uint32_t dt_buffer[30] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    static uint32_t dt_sum = 0;
-    static uint8_t dt_buffer_current = 0; 
-
-    if (delta_time == 0) {
-        empty_reports++;
-    } else if (delta_time < 1000000 && delta_time > 0 ) { // ignore outliers
-        dt_sum -= dt_buffer[dt_buffer_current];
-        dt_sum += delta_time;
-        dt_buffer[dt_buffer_current] = delta_time;
-
-        if (dt_buffer_current == 29) {
-            dt_buffer_current = 0;
-        } else {
-            dt_buffer_current++;
-        }
-    }
-
-    static uint64_t sim_time = 0;
-    const double correction_factor = DS5_SPEC_DELTA_TIME / ((double)dt_sum / 30.f);
-    if (delta_time != 0) {
-        sim_time += (int)((double)delta_time * correction_factor);
-    }
-
-    const uint32_t timestamp = sim_time + (int)((double)empty_reports * DS5_SPEC_DELTA_TIME);
-
-    const int16_t g_x = gs.raw_gyro[0];
-    const int16_t g_y = (int16_t)(-1) * gs.raw_gyro[1];  // Swap Y and Z
-    const int16_t g_z = (int16_t)(-1) * gs.raw_gyro[2];  // Swap Y and Z
-    const int16_t a_x = gs.raw_accel[0];
-    const int16_t a_y = (int16_t)(-1) * gs.raw_accel[1];  // Swap Y and Z
-    const int16_t a_z = (int16_t)(-1) * gs.raw_accel[2];  // Swap Y and Z
-
-
-    buf[0] = DS_INPUT_REPORT_USB;  // [00] report ID (0x01)
-    buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
-    buf[2] = ((uint64_t)((int64_t)gs.joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
-    buf[3] = ((uint64_t)((int64_t)gs.joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
-    buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
-    buf[5] = gs.l2_trigger; // Z
-    buf[6] = gs.r2_trigger; // RZ
-    buf[7] = seq_num++; // seq_number
-    buf[8] = (gs.square ? 0x10 : 0x00) |
-                (gs.cross ? 0x20 : 0x00) |
-                (gs.circle ? 0x40 : 0x00) |
-                (gs.triangle ? 0x80 : 0x00) |
-                (uint8_t)ds5_dpad_from_gamepad(gs.dpad);
-    buf[9] = (gs.l1 ? 0x01 : 0x00) |
-            (gs.r1 ? 0x02 : 0x00) |
-            (gs.l2_trigger >= 225 ? 0x04 : 0x00) |
-            (gs.r2_trigger >= 225 ? 0x08 : 0x00) |
-            (gs.option ? 0x10 : 0x00) |
-            (gs.share ? 0x20 : 0x00) |
-            (gs.l3 ? 0x40 : 0x00) |
-            (gs.r3 ? 0x80 : 0x00);
-
-    // mic button press is 0x04, touchpad press is 0x02
-    buf[10] = (gs.l5 ? 0x40 : 0x00) |
-            (gs.r5 ? 0x80 : 0x00) |
-            (gs.l4 ? 0x10 : 0x00) |
-            (gs.r4 ? 0x20 : 0x00) |
-            (gs.touchpad_press ? 0x02 : 0x00) |
-            (gs.center ? 0x01 : 0x00);
-    //buf[11] = ;
-    
-    //buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
-    memcpy(&buf[16], &g_x, sizeof(int16_t));
-    memcpy(&buf[18], &g_y, sizeof(int16_t));
-    memcpy(&buf[20], &g_z, sizeof(int16_t));
-    memcpy(&buf[22], &a_x, sizeof(int16_t));
-    memcpy(&buf[24], &a_y, sizeof(int16_t));
-    memcpy(&buf[26], &a_z, sizeof(int16_t));
-    memcpy(&buf[28], &timestamp, sizeof(timestamp));
-
-    // TODO: when touch is detected send 0x7F, when not 0x80
-    buf[33] = 0x80; //touch0 active?
-    buf[37] = 0x80; //touch1 active?
-
-/*
-    buf[30] = 0x1b; // no headset attached
-*/
-    buf[62] = 0x80; // IDK... it seems constant...
-    buf[57] = 0x80; // IDK... it seems constant...
-    buf[53] = 0x80; // IDK... it seems constant...
-    buf[48] = 0x80; // IDK... it seems constant...
-    buf[35] = 0x80; // IDK... it seems constant...
-    buf[44] = 0x80; // IDK... it seems constant...
-}
-
 void virt_dualsense_close(virt_dualsense_t *const out_gamepad) {
     destroy(out_gamepad->fd);
 }
 
 void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf) {
-    gamepad_status_qam_quirk(in_device_status);
+    const int64_t time_us = in_device_status->last_gyro_motion_time.tv_sec * 1000000 + in_device_status->last_gyro_motion_time.tv_usec;
 
-    compose_hid_report_buffer(gamepad->fd, in_device_status, out_buf);
+    const int delta_time = time_us - gamepad->last_time;
+    gamepad->last_time = time_us;
+
+    // find the average Δt in the last 30 non-zero inputs;
+    // this has to run thousands of times a second so i'm trying to do this as fast as possible
+    if (delta_time == 0) {
+        gamepad->empty_reports++;
+    } else if (delta_time < 1000000 && delta_time > 0 ) { // ignore outliers
+        gamepad->dt_sum -= gamepad->dt_buffer[gamepad->dt_buffer_current];
+        gamepad->dt_sum += delta_time;
+        gamepad->dt_buffer[gamepad->dt_buffer_current] = delta_time;
+
+        if (gamepad->dt_buffer_current == 29) {
+            gamepad->dt_buffer_current = 0;
+        } else {
+            gamepad->dt_buffer_current++;
+        }
+    }
+
+    static uint64_t sim_time = 0;
+    const double correction_factor = DS5_SPEC_DELTA_TIME / ((double)gamepad->dt_sum / 30.f);
+    if (delta_time != 0) {
+        sim_time += (int)((double)delta_time * correction_factor);
+    }
+
+    const uint32_t timestamp = sim_time + (int)((double)gamepad->empty_reports * DS5_SPEC_DELTA_TIME);
+
+    const int16_t g_x = in_device_status->raw_gyro[0];
+    const int16_t g_y = (int16_t)(-1) * in_device_status->raw_gyro[1];  // Swap Y and Z
+    const int16_t g_z = (int16_t)(-1) * in_device_status->raw_gyro[2];  // Swap Y and Z
+    const int16_t a_x = in_device_status->raw_accel[0];
+    const int16_t a_y = (int16_t)(-1) * in_device_status->raw_accel[1];  // Swap Y and Z
+    const int16_t a_z = (int16_t)(-1) * in_device_status->raw_accel[2];  // Swap Y and Z
+
+
+    out_buf[0] = DS_INPUT_REPORT_USB;  // [00] report ID (0x01)
+    out_buf[1] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
+    out_buf[2] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
+    out_buf[3] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
+    out_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
+    out_buf[5] = in_device_status->l2_trigger; // Z
+    out_buf[6] = in_device_status->r2_trigger; // RZ
+    out_buf[7] = gamepad->seq_num++; // seq_number
+    out_buf[8] = (in_device_status->square ? 0x10 : 0x00) |
+                (in_device_status->cross ? 0x20 : 0x00) |
+                (in_device_status->circle ? 0x40 : 0x00) |
+                (in_device_status->triangle ? 0x80 : 0x00) |
+                (uint8_t)ds5_dpad_from_gamepad(in_device_status->dpad);
+    out_buf[9] = (in_device_status->l1 ? 0x01 : 0x00) |
+            (in_device_status->r1 ? 0x02 : 0x00) |
+            (in_device_status->l2_trigger >= 225 ? 0x04 : 0x00) |
+            (in_device_status->r2_trigger >= 225 ? 0x08 : 0x00) |
+            (in_device_status->option ? 0x10 : 0x00) |
+            (in_device_status->share ? 0x20 : 0x00) |
+            (in_device_status->l3 ? 0x40 : 0x00) |
+            (in_device_status->r3 ? 0x80 : 0x00);
+
+    // mic button press is 0x04, touchpad press is 0x02
+    out_buf[10] = (in_device_status->l5 ? 0x40 : 0x00) |
+            (in_device_status->r5 ? 0x80 : 0x00) |
+            (in_device_status->l4 ? 0x10 : 0x00) |
+            (in_device_status->r4 ? 0x20 : 0x00) |
+            (in_device_status->touchpad_press ? 0x02 : 0x00) |
+            (in_device_status->center ? 0x01 : 0x00);
+    //buf[11] = ;
+    
+    //buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
+    memcpy(&out_buf[16], &g_x, sizeof(int16_t));
+    memcpy(&out_buf[18], &g_y, sizeof(int16_t));
+    memcpy(&out_buf[20], &g_z, sizeof(int16_t));
+    memcpy(&out_buf[22], &a_x, sizeof(int16_t));
+    memcpy(&out_buf[24], &a_y, sizeof(int16_t));
+    memcpy(&out_buf[26], &a_z, sizeof(int16_t));
+    memcpy(&out_buf[28], &timestamp, sizeof(timestamp));
+
+    // TODO: when touch is detected send 0x7F, when not 0x80
+    out_buf[33] = 0x80; //touch0 active?
+    out_buf[37] = 0x80; //touch1 active?
+
+/*
+    buf[30] = 0x1b; // no headset attached
+*/
+    out_buf[62] = 0x80; // IDK... it seems constant...
+    out_buf[57] = 0x80; // IDK... it seems constant...
+    out_buf[53] = 0x80; // IDK... it seems constant...
+    out_buf[48] = 0x80; // IDK... it seems constant...
+    out_buf[35] = 0x80; // IDK... it seems constant...
+    out_buf[44] = 0x80; // IDK... it seems constant...
 }
 
 int virt_dualsense_send(virt_dualsense_t *const gamepad, uint8_t *const out_buf) {

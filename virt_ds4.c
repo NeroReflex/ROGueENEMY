@@ -370,150 +370,15 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
     return DPAD_RELEASED;
 }
 
-/**
- * This function arranges HID packets as described on https://www.psdevwiki.com/ps4/DS4-USB
- */
-static void compose_hid_report_buffer(int fd, gamepad_status_t *const gamepad_stats, uint8_t buf[64]) {
-    gamepad_status_t gs = *gamepad_stats;
-
-    const int64_t time_us = gs.last_gyro_motion_time.tv_sec * 1000000 + gs.last_gyro_motion_time.tv_usec;
-
-    static uint32_t empty_reports = 0;
-    static uint64_t last_time = 0;
-    const int delta_time = time_us - last_time;
-    last_time = time_us;
-
-    // find the average Δt in the last 30 non-zero inputs;
-    // this has to run thousands of times a second so i'm trying to do this as fast as possible
-    static uint32_t dt_buffer[30] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    static uint32_t dt_sum = 0;
-    static uint8_t dt_buffer_current = 0; 
-
-    if (delta_time == 0) {
-        empty_reports++;
-    } else if (delta_time < 1000000 && delta_time > 0 ) { // ignore outliers
-        dt_sum -= dt_buffer[dt_buffer_current];
-        dt_sum += delta_time;
-        dt_buffer[dt_buffer_current] = delta_time;
-
-        if (dt_buffer_current == 29) {
-            dt_buffer_current = 0;
-        } else {
-            dt_buffer_current++;
-        }
-    }
-
-    static uint64_t sim_time = 0;
-    const double correction_factor = DS4_SPEC_DELTA_TIME / ((double)dt_sum / 30.f);
-    if (delta_time != 0) {
-        sim_time += (int)((double)delta_time * correction_factor);
-    }
-
-    const uint16_t timestamp = sim_time + (int)((double)empty_reports * DS4_SPEC_DELTA_TIME);
-
-    /*
-    Example data:
-        0000   c0 e3 af 02 ac 9c ff ff 43 01 84 08 05 00 2d 00
-        0010   93 7b 56 65 00 00 00 00 c2 aa 03 00 00 00 00 00
-        0020   40 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00
-        0030   04 00 00 00 00 00 00 00 04 02 00 00 00 00 00 00
-        // above is useless, just send what is below.
-        0040   01 80 7f 80 7e 08 00 5c 00 00 7e d4 06 3b fe 0c
-        0050   ff 8c fe 6a 05 4f 15 56 e8 00 00 00 00 00 1b 00
-        0060   00 00 00 80 00 00 00 80 00 00 00 00 80 00 00 00
-        0070   80 00 00 00 00 80 00 00 00 80 00 00 00 00 80 00
-    */
-
-    // see https://www.psdevwiki.com/ps4/DS4-USB
-   
-    // buf[12] battery level
-
-    /*
-     * kernel will do:
-     * int calib_data = mult_frac(ds4->gyro_calib_data[i].sens_numer, raw_data, ds4->gyro_calib_data[i].sens_denom);
-     * input_report_abs(ds4->sensors, ds4->gyro_calib_data[i].abs_code, calib_data);
-     * 
-     * as we know sens_numer is 0, hence calib_data is zero.
-     */
-    /*
-    const int16_t g_x = ((gs.gyro[0]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t g_y = ((gs.gyro[1]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t g_z = ((gs.gyro[2]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t a_x = ((gs.accel[0]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    const int16_t a_y = ((gs.accel[1]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    const int16_t a_z = ((gs.accel[2]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    */
-
-    /*
-    const int16_t g_x = (gs.gyro[0]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t g_y = (gs.gyro[1]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t g_z = (gs.gyro[2]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t a_x = (gs.accel[0]) / LSB_PER_16G; // TODO: IDK how to test...
-    const int16_t a_y = (gs.accel[1]) / LSB_PER_16G; // TODO: IDK how to test...
-    const int16_t a_z = (gs.accel[2]) / LSB_PER_16G; // TODO: IDK how to test...
-    */
-
-    const int16_t g_x = gs.raw_gyro[0];
-    const int16_t g_y = (int16_t)(-1) * gs.raw_gyro[1];  // Swap Y and Z
-    const int16_t g_z = (int16_t)(-1) * gs.raw_gyro[2];  // Swap Y and Z
-    const int16_t a_x = gs.raw_accel[0];
-    const int16_t a_y = (int16_t)(-1) * gs.raw_accel[1];  // Swap Y and Z
-    const int16_t a_z = (int16_t)(-1) * gs.raw_accel[2];  // Swap Y and Z
-
-    buf[0] = 0x01;  // [00] report ID (0x01)
-    buf[1] = ((uint64_t)((int64_t)gs.joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
-    buf[2] = ((uint64_t)((int64_t)gs.joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
-    buf[3] = ((uint64_t)((int64_t)gs.joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
-    buf[4] = ((uint64_t)((int64_t)gs.joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
-    buf[5] =
-        (gs.triangle ? 0x80 : 0x00) |
-        (gs.circle ? 0x40 : 0x00) |
-        (gs.cross ? 0x20 : 0x00) |
-        (gs.square ? 0x10 : 0x00) |
-        (uint8_t)ds4_dpad_from_gamepad(gs.dpad);
-    buf[6] =
-        (gs.r3 ? 0x80 : 0x00) |
-        (gs.l3 ? 0x40 : 0x00) | 
-        (gs.share ? 0x20 : 0x00) |
-        (gs.option ? 0x10 : 0x00) | 
-        (gs.r2_trigger > 200 ? 0x08 : 0x00) |
-        (gs.l2_trigger > 200 ? 0x04 : 0x00) |
-        (gs.r1 ? 0x02 : 0x00) |
-        (gs.l1 ? 0x01 : 0x00);
-    
-    /*
-    static uint8_t counter = 0;
-    buf[7] = (((counter++) % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
-    */
-    
-    buf[7] = gs.center ? 0x01 : 0x00;
-
-    buf[8] = gs.l2_trigger;
-    buf[9] = gs.r2_trigger;
-    memcpy(&buf[10], &timestamp, sizeof(timestamp));
-    buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
-    memcpy(&buf[13], &g_x, sizeof(int16_t));
-    memcpy(&buf[15], &g_y, sizeof(int16_t));
-    memcpy(&buf[17], &g_z, sizeof(int16_t));
-    memcpy(&buf[19], &a_x, sizeof(int16_t));
-    memcpy(&buf[21], &a_y, sizeof(int16_t));
-    memcpy(&buf[23], &a_z, sizeof(int16_t));
-
-    buf[30] = 0x1b; // no headset attached
-
-    buf[62] = 0x80; // IDK... it seems constant...
-    buf[57] = 0x80; // IDK... it seems constant...
-    buf[53] = 0x80; // IDK... it seems constant...
-    buf[48] = 0x80; // IDK... it seems constant...
-    buf[35] = 0x80; // IDK... it seems constant...
-    buf[44] = 0x80; // IDK... it seems constant...
-}
-
 int virt_dualshock_init(virt_dualshock_t *const out_gamepad) {
     int ret = 0;
 
+    out_gamepad->dt_sum = 0;
+    out_gamepad->dt_buffer_current = 0;
+    memset(out_gamepad->dt_buffer, 0, sizeof(out_gamepad->dt_buffer));
     out_gamepad->debug = false;
+    out_gamepad->empty_reports = 0;
+    out_gamepad->last_time = 0;
 
     out_gamepad->fd = open(path, O_RDWR | O_CLOEXEC /* | O_NONBLOCK */);
     if (out_gamepad->fd < 0) {
@@ -776,10 +641,135 @@ void virt_dualshock_close(virt_dualshock_t *const out_gamepad) {
     destroy(out_gamepad->fd);
 }
 
+/**
+ * This function arranges HID packets as described on https://www.psdevwiki.com/ps4/DS4-USB
+ */
 void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf) {
-    gamepad_status_qam_quirk(in_device_status);
+    const int64_t time_us = in_device_status->last_gyro_motion_time.tv_sec * 1000000 + in_device_status->last_gyro_motion_time.tv_usec;
 
-    compose_hid_report_buffer(gamepad->fd, in_device_status, out_buf);
+    const int delta_time = time_us - gamepad->last_time;
+    gamepad->last_time = time_us;
+
+    // find the average Δt in the last 30 non-zero inputs;
+    // this has to run thousands of times a second so i'm trying to do this as fast as possible
+    if (delta_time == 0) {
+        gamepad->empty_reports++;
+    } else if (delta_time < 1000000 && delta_time > 0 ) { // ignore outliers
+        gamepad->dt_sum -= gamepad->dt_buffer[gamepad->dt_buffer_current];
+        gamepad->dt_sum += delta_time;
+        gamepad->dt_buffer[gamepad->dt_buffer_current] = delta_time;
+
+        if (gamepad->dt_buffer_current == 29) {
+            gamepad->dt_buffer_current = 0;
+        } else {
+            gamepad->dt_buffer_current++;
+        }
+    }
+
+    static uint64_t sim_time = 0;
+    const double correction_factor = DS4_SPEC_DELTA_TIME / ((double)gamepad->dt_sum / 30.f);
+    if (delta_time != 0) {
+        sim_time += (int)((double)delta_time * correction_factor);
+    }
+
+    const uint16_t timestamp = sim_time + (int)((double)gamepad->empty_reports * DS4_SPEC_DELTA_TIME);
+
+    /*
+    Example data:
+        0000   c0 e3 af 02 ac 9c ff ff 43 01 84 08 05 00 2d 00
+        0010   93 7b 56 65 00 00 00 00 c2 aa 03 00 00 00 00 00
+        0020   40 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00
+        0030   04 00 00 00 00 00 00 00 04 02 00 00 00 00 00 00
+        // above is useless, just send what is below.
+        0040   01 80 7f 80 7e 08 00 5c 00 00 7e d4 06 3b fe 0c
+        0050   ff 8c fe 6a 05 4f 15 56 e8 00 00 00 00 00 1b 00
+        0060   00 00 00 80 00 00 00 80 00 00 00 00 80 00 00 00
+        0070   80 00 00 00 00 80 00 00 00 80 00 00 00 00 80 00
+    */
+
+    // see https://www.psdevwiki.com/ps4/DS4-USB
+   
+    // buf[12] battery level
+
+    /*
+     * kernel will do:
+     * int calib_data = mult_frac(ds4->gyro_calib_data[i].sens_numer, raw_data, ds4->gyro_calib_data[i].sens_denom);
+     * input_report_abs(ds4->sensors, ds4->gyro_calib_data[i].abs_code, calib_data);
+     * 
+     * as we know sens_numer is 0, hence calib_data is zero.
+     */
+    /*
+    const int16_t g_x = ((in_device_status->gyro[0]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
+    const int16_t g_y = ((in_device_status->gyro[1]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
+    const int16_t g_z = ((in_device_status->gyro[2]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
+    const int16_t a_x = ((in_device_status->accel[0]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
+    const int16_t a_y = ((in_device_status->accel[1]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
+    const int16_t a_z = ((in_device_status->accel[2]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
+    */
+
+    /*
+    const int16_t g_x = (in_device_status->gyro[0]) / LSB_PER_RAD_S_2000_DEG_S;
+    const int16_t g_y = (in_device_status->gyro[1]) / LSB_PER_RAD_S_2000_DEG_S;
+    const int16_t g_z = (in_device_status->gyro[2]) / LSB_PER_RAD_S_2000_DEG_S;
+    const int16_t a_x = (in_device_status->accel[0]) / LSB_PER_16G; // TODO: IDK how to test...
+    const int16_t a_y = (in_device_status->accel[1]) / LSB_PER_16G; // TODO: IDK how to test...
+    const int16_t a_z = (in_device_status->accel[2]) / LSB_PER_16G; // TODO: IDK how to test...
+    */
+
+    const int16_t g_x = in_device_status->raw_gyro[0];
+    const int16_t g_y = (int16_t)(-1) * in_device_status->raw_gyro[1];  // Swap Y and Z
+    const int16_t g_z = (int16_t)(-1) * in_device_status->raw_gyro[2];  // Swap Y and Z
+    const int16_t a_x = in_device_status->raw_accel[0];
+    const int16_t a_y = (int16_t)(-1) * in_device_status->raw_accel[1];  // Swap Y and Z
+    const int16_t a_z = (int16_t)(-1) * in_device_status->raw_accel[2];  // Swap Y and Z
+
+    out_buf[0] = 0x01;  // [00] report ID (0x01)
+    out_buf[1] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
+    out_buf[2] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
+    out_buf[3] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
+    out_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
+    out_buf[5] =
+        (in_device_status->triangle ? 0x80 : 0x00) |
+        (in_device_status->circle ? 0x40 : 0x00) |
+        (in_device_status->cross ? 0x20 : 0x00) |
+        (in_device_status->square ? 0x10 : 0x00) |
+        (uint8_t)ds4_dpad_from_gamepad(in_device_status->dpad);
+    out_buf[6] =
+        (in_device_status->r3 ? 0x80 : 0x00) |
+        (in_device_status->l3 ? 0x40 : 0x00) | 
+        (in_device_status->share ? 0x20 : 0x00) |
+        (in_device_status->option ? 0x10 : 0x00) | 
+        (in_device_status->r2_trigger > 200 ? 0x08 : 0x00) |
+        (in_device_status->l2_trigger > 200 ? 0x04 : 0x00) |
+        (in_device_status->r1 ? 0x02 : 0x00) |
+        (in_device_status->l1 ? 0x01 : 0x00);
+    
+    /*
+    static uint8_t counter = 0;
+    buf[7] = (((counter++) % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
+    */
+    
+    out_buf[7] = in_device_status->center ? 0x01 : 0x00;
+
+    out_buf[8] = in_device_status->l2_trigger;
+    out_buf[9] = in_device_status->r2_trigger;
+    memcpy(&out_buf[10], &timestamp, sizeof(timestamp));
+    out_buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
+    memcpy(&out_buf[13], &g_x, sizeof(int16_t));
+    memcpy(&out_buf[15], &g_y, sizeof(int16_t));
+    memcpy(&out_buf[17], &g_z, sizeof(int16_t));
+    memcpy(&out_buf[19], &a_x, sizeof(int16_t));
+    memcpy(&out_buf[21], &a_y, sizeof(int16_t));
+    memcpy(&out_buf[23], &a_z, sizeof(int16_t));
+
+    out_buf[30] = 0x1b; // no headset attached
+
+    out_buf[62] = 0x80; // IDK... it seems constant...
+    out_buf[57] = 0x80; // IDK... it seems constant...
+    out_buf[53] = 0x80; // IDK... it seems constant...
+    out_buf[48] = 0x80; // IDK... it seems constant...
+    out_buf[35] = 0x80; // IDK... it seems constant...
+    out_buf[44] = 0x80; // IDK... it seems constant...
 }
 
 int virt_dualshock_send(virt_dualshock_t *const gamepad, uint8_t *const out_buf) {

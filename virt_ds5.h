@@ -12,6 +12,15 @@ typedef struct virt_dualsense {
     int fd;
 
     bool debug;
+
+    uint8_t seq_num;
+
+    uint32_t dt_sum;
+    uint8_t dt_buffer_current;
+    uint32_t dt_buffer[30];
+
+    uint32_t empty_reports;
+    uint64_t last_time;
 } virt_dualsense_t;
 
 int virt_dualsense_init(virt_dualsense_t *const gamepad);
