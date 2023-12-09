@@ -373,8 +373,8 @@ echo 1 > buffer0/in_anglvel_x_en
 echo 1 > buffer0/in_anglvel_y_en
 echo 1 > buffer0/in_anglvel_z_en
 echo 1 > buffer0/in_accel_x_en
-echo 1 > buffer0/in_accel_x_en
-echo 1 > buffer0/in_accel_x_en
+echo 1 > buffer0/in_accel_y_en
+echo 1 > buffer0/in_accel_z_en
 echo 1 > buffer0/enable
 echo 1 > buffer/enable
 cd ..
