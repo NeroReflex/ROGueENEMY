@@ -447,7 +447,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 static hidraw_filters_t n_key_hidraw_filters = {
   .pid = 0x1abe,
   .vid = 0x0b05,
-  .rdesc_size = 64,
+  .rdesc_size = 83,
 };
 
 static input_dev_t in_iio_dev = {
