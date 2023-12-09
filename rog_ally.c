@@ -433,8 +433,6 @@ static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 };
 
 void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data) {
-  printf("ASUSKBD: ev_count=%d ev[1].type=%d ev[1].code=%d ev[1].value=%d\n", (int)e->ev_count, (int)e->ev[1].type, (int)e->ev[1].code, (int)e->ev[1].value);
-
   if ( // this is what happens at release of the left-screen button of the ROG Ally
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
