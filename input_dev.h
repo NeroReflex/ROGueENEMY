@@ -39,6 +39,8 @@ typedef struct input_dev {
 
 } input_dev_t;
 
+void sigterm_handler(int signum);
+
 void *input_dev_thread_func(void *ptr);
 
 int open_and_hide_input(void);

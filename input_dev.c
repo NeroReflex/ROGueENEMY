@@ -658,6 +658,9 @@ static void input_iio(
     }
 }
 // Debug function to reduce CPU usage
+char globalDeviceNodePath[512];
+mode_t globalOriginalPermissions;
+
 static void input_udev(
     input_dev_t *const in_dev,
     struct input_ctx *const ctx
@@ -722,13 +725,29 @@ static void input_udev(
                 // try to open the device
                 ctx->dev = ev_matches(path, in_dev->ev_filters);
                 if (ctx->dev != NULL) {
+                    snprintf(globalDeviceNodePath, sizeof(globalDeviceNodePath), "/dev/input/%s", dir->d_name);
+
+                    struct stat original_stat;
+                    if(stat(globalDeviceNodePath, &original_stat) == 0) {
+                        globalOriginalPermissions = original_stat.st_mode;
+                        //Hide device
+                        if(chmod(globalDeviceNodePath, 000) !=0) {
+                            perror("Failed to change device node permissions");
+                        }
+                        printf("Hid device %s\n",globalDeviceNodePath );
+
+                    }
+
+
+
+
                     open_sysfs_idx = 0;
                     while (open_sysfs[open_sysfs_idx] != NULL) {
                         ++open_sysfs_idx;
                     }
                     open_sysfs[open_sysfs_idx] = malloc(sizeof(path));
                     memcpy(open_sysfs[open_sysfs_idx], path, 512);    
-
+                    
                     if (libevdev_has_event_type(ctx->dev, EV_FF)) {
                         printf("Opened device %s\n    name: %s\n    rumble: %s\n",
                             path,
@@ -883,6 +902,16 @@ static void input_udev(
     }
 }
 
+void sigterm_handler(int signum){
+  printf("SIGTERM received, performing cleanup...\n");
+
+  if (chmod(globalDeviceNodePath, globalOriginalPermissions) != 0) {
+        perror("Failed to restore device node permissions");
+  }
+
+  exit(0);
+}
+
 void *input_dev_thread_func(void *ptr) {
     input_dev_t *in_dev = (input_dev_t*)ptr;
 
@@ -924,5 +953,8 @@ void *input_dev_thread_func(void *ptr) {
         input_hidraw(in_dev, &ctx);
     }
     free(ctx.messages);
+    if(chmod(globalDeviceNodePath, globalOriginalPermissions) != 0) {
+        perror("Failed to restore device node permissions");
+    }
     return NULL;
 }

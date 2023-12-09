@@ -77,7 +77,7 @@ static int create(int fd)
 
 	memset(&ev, 0, sizeof(ev));
 	ev.type = UHID_CREATE;
-	strcpy((char*)ev.u.create.name, "Sony Corp. DualShock 4 [CUH-ZCT2x]");
+	strcpy((char*)ev.u.create.name, "Wireless Controller");
 	ev.u.create.rd_data = rdesc;
 	ev.u.create.rd_size = sizeof(rdesc);
 	ev.u.create.bus = BUS_USB;
@@ -467,37 +467,77 @@ static int send_data(int fd, logic_t *const logic) {
 /*
     buf[30] = 0x1b; // no headset attached
 */  
-    buf[35] = 0x80; // IDK... it seems constant...
 
     //Trackpad stuff
-    //Example packets
-// 0x04,                        buf[36]
-// 0x01,                        buf[37]
-// 0x04, 0x69, 0x91, 0x1a,      buf[38]buf[39]buf[40]buf[41]
-// 0x06, 0x15, 0x45, 0x1a,
-// 0x05,
-// 0x04, 0x66, 0x11, 0x1a,
-// 0x06, 0x10, 0x15, 0x1a,
-// 0x0a,
-// 0x04, 0x63, 0x81, 0x19,
-// 0x06, 0x0c, 0xe5, 0x19,
-// 0x0f,
-// 0x04, 0x5f, 0xf1, 0x18,
-// 0x06, 0x08, 0xc5, 0x19
-    // buf[36] = 0x01; //Num of finger 0x00->0x04
-    // buf[37] = 0x01; //Packet counter
-    // buf[38] = 0x00; //Active low?
-    // buf[39] = gs.touchpadY;
-    // buf[40] = gs.touchpadX;
-    // buf[41] = ;;
-    // # Trackpad touch 1: id, active, x, y
-    //         buf[35] & 0x7f, (buf[35] >> 7) == 0,
-    //         ((buf[37] & 0x0f) << 8) | buf[36],
-    //         buf[38] << 4 | ((buf[37] & 0xf0) >> 4),
 
-    // buf[48] = 0x00;
-    // buf[49] = 0x00;
-    // buf[50] = 0x00;
+    // let touch00 = report.getUint8(33);
+    // let touch01 = report.getUint8(34); 
+    // let touch02 = report.getUint8(35);
+    // let touch03 = report.getUint8(36);
+    // let touch10 = report.getUint8(37);
+    // let touch11 = report.getUint8(38);
+    // let touch12 = report.getUint8(39);
+    // let touch13 = report.getUint8(40);
+    buf[37] = 0x80; //Touch1 active (disabled)
+
+    uint16_t touchpadX = gs.touchpadX;
+    uint16_t touchpadY = gs.touchpadY;
+    // ? 0x02 : 0x00
+    if (touchpadX == 0 && touchpadY == 0 && gs.touchpad_press) {
+        buf[33] = 0x7F;
+        printf("TPress: %d\n", gs.touchpad_press);
+        buf[34] = 0x3C;
+        buf[35] = 0x02;
+        buf[36] = 0x1C;
+    }
+
+    if (touchpadX == 0 && touchpadY == 0) {
+        buf[33] = 0x80;
+    } else {
+        buf[33] = 0x7F;
+        // Debug: Print original touchpad values
+        printf("Original Touchpad X: %u\n", touchpadX);
+        printf("Original Touchpad Y: %u\n", touchpadY);
+
+        // Padding settings
+        const uint16_t padding = 100;
+        const uint16_t touchpadMaxValue = 1000;
+        const uint16_t paddedMaxValue = touchpadMaxValue - padding;
+
+        // Clamp and adjust touchpad values to account for padding
+        uint16_t adjustedTouchpadX = (touchpadX > padding) ? (touchpadX - padding) : 0;
+        uint16_t adjustedTouchpadY = (touchpadY > padding) ? (touchpadY - padding) : 0;
+
+        // Scale the adjusted values to fit within a 1920x1080 resolution
+        uint16_t xScaled = (adjustedTouchpadX * 1920) / (paddedMaxValue - padding);
+        uint16_t yScaled = (adjustedTouchpadY * 1000) / (paddedMaxValue - padding);
+
+        // Clamp the scaled values to the display resolution
+        xScaled = xScaled > 1920 ? 1920 : xScaled;
+        yScaled = yScaled > 1000 ? 1000 : yScaled;
+
+        // // Debug: Print scaled values
+        printf("Scaled X: %u (Mapped to 1920x900)\n", xScaled);
+        printf("Scaled Y: %u (Mapped to 1920x900)\n", yScaled);
+
+        // Packing the values into buf (if necessary)
+        buf[34] = xScaled & 0xFF; // Lower 8 bits of xScaled
+        buf[35] = (xScaled >> 8) | ((yScaled & 0x0F) << 4); // Upper 4 bits of xScaled and lower 4 bits of yScaled
+        buf[36] = (yScaled >> 4) & 0xFF; // Upper 8 bits of yScaled
+
+        // Debug: Print packed values
+        printf("Buf[34]: 0x%X\n", buf[34]);
+        printf("Buf[35]: 0x%X\n", buf[35]);
+        printf("Buf[36]: 0x%X\n", buf[36]);
+    }
+     // Debug: Print packed values
+        printf("Buf[34]: 0x%X\n", buf[34]);
+        printf("Buf[35]: 0x%X\n", buf[35]);
+        printf("Buf[36]: 0x%X\n", buf[36]);
+    
+
+ 
+    
     //buf[62] = 0x80; // IDK... it seems constant...
     //buf[57] = 0x80; // IDK... it seems constant...
     //buf[53] = 0x80; // IDK... it seems constant...
