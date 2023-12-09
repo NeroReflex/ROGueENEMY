@@ -38,6 +38,7 @@ rm -f "$INSTALL_DIR/rogue-enemy"
 # Remove udev rules
 echo "Removing udev rules..."
 rm -f "$UDEV_RULES_DIR/99-rogue.rules"
+rm -f "$UDEV_RULES_DIR/99-disable-sonypad.rules"
 
 # Remove configuration directory
 echo "Removing configuration files..."

@@ -31,6 +31,9 @@ git clone "$REPO_URL" "$BUILD_DIR"
 
 echo "Copying udev rule..."
 cp "$BUILD_DIR/99-rogue.rules" "$UDEV_RULES_DIR"
+cp "$BUILD_DIR/99-disable-sonypad.rules" "$UDEV_RULES_DIR"
+
+
 
 echo "Downloading the latest release..."
 echo "Downloading the latest release..."

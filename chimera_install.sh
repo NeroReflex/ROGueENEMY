@@ -41,6 +41,7 @@ git clone "$REPO_URL" "$BUILD_DIR"
 
 echo "Copying udev rule..."
 cp "$BUILD_DIR/99-rogue.rules" "$UDEV_RULES_DIR"
+cp "$BUILD_DIR/99-disable-sonypad.rules" "$UDEV_RULES_DIR"
 
 echo "Downloading the latest release..."
 curl -L $(curl -s https://api.github.com/repos/corando98/ROGueENEMY/releases/latest | grep "browser_download_url" | cut -d '"' -f 4) -o $BUILD_DIR/rogue-enemy
