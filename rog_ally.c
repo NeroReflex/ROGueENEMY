@@ -435,13 +435,95 @@ static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data) {
   in_message_t current_message;
 
-  
-  /*
-  const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-  if (in_message_pipe_write_res != sizeof(in_message_t)) {
-      fprintf(stderr, "Unable to write data to the in_message pipe: %zu\n", in_message_pipe_write_res);
-  }
-  */
+  if ( // this is what happens at release of the left-screen button of the ROG Ally
+		(e->ev_count == 2) &&
+		(e->ev[0].type == EV_MSC) &&
+		(e->ev[0].code == MSC_SCAN) &&
+		(e->ev[0].value == -13565786) &&
+		(e->ev[1].type == EV_KEY) &&
+		(e->ev[1].code == KEY_F16) &&
+		(e->ev[1].value == 1)
+	) {
+    in_message_t current_message = {
+      .type = GAMEPAD_ACTION,
+      .data = {
+        .action = GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
+      }
+    };
+
+    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
+    if (in_message_pipe_write_res != sizeof(in_message_t)) {
+      fprintf(stderr, "Unable to write data for MENU to the in_message pipe: %zu\n", in_message_pipe_write_res);
+    }
+	} else if ( // this is what happens at release of the right-screen button of the ROG Ally
+		(e->ev_count == 2) &&
+		(e->ev[0].type == EV_MSC) &&
+		(e->ev[0].code == MSC_SCAN) &&
+		(e->ev[0].value == -13565896) &&
+		(e->ev[1].type == EV_KEY) &&
+		(e->ev[1].code == KEY_PROG1) &&
+		(e->ev[1].value == 1)
+	) {
+    in_message_t current_message = {
+      .type = GAMEPAD_ACTION,
+      .data = {
+        .action = GAMEPAD_ACTION_OPEN_STEAM_QAM,
+      }
+    };
+
+    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
+    if (in_message_pipe_write_res != sizeof(in_message_t)) {
+      fprintf(stderr, "Unable to write data for QAM to the in_message pipe: %zu\n", in_message_pipe_write_res);
+    }
+	} else if (
+		(e->ev_count == 2) &&
+		(e->ev[0].type == EV_MSC) &&
+		(e->ev[0].code == MSC_SCAN) &&
+		(e->ev[0].value == 458860) &&
+		(e->ev[1].type == EV_KEY) &&
+		(e->ev[1].code == KEY_F17)
+	) {
+    in_message_t current_message = {
+      .type = GAMEPAD_SET_ELEMENT,
+      .data = {
+        .gamepad_set = {
+          .element = GAMEPAD_BTN_L4,
+          .status = {
+            .btn = e->ev[1].code,
+          }
+        }
+      }
+    };
+
+    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
+    if (in_message_pipe_write_res != sizeof(in_message_t)) {
+      fprintf(stderr, "Unable to write data for L4 to the in_message pipe: %zu\n", in_message_pipe_write_res);
+    }
+  } else if (
+		(e->ev_count == 2) &&
+		(e->ev[0].type == EV_MSC) &&
+		(e->ev[0].code == MSC_SCAN) &&
+		(e->ev[0].value == 458861) &&
+		(e->ev[1].type == EV_KEY) &&
+		(e->ev[1].code == KEY_F18)
+	) {
+		in_message_t current_message = {
+      .type = GAMEPAD_SET_ELEMENT,
+      .data = {
+        .gamepad_set = {
+          .element = GAMEPAD_BTN_R4,
+          .status = {
+            .btn = e->ev[1].code,
+          }
+        }
+      }
+    };
+
+    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
+    if (in_message_pipe_write_res != sizeof(in_message_t)) {
+        fprintf(stderr, "Unable to write data for R4 to the in_message pipe: %zu\n", in_message_pipe_write_res);
+    }
+	}
 }
 
 static hidraw_filters_t n_key_hidraw_filters = {

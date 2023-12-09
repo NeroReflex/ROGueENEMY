@@ -19,6 +19,10 @@ typedef enum in_message_gamepad_btn {
     GAMEPAD_BTN_R2_TRIGGER,
     GAMEPAD_BTN_L3,
     GAMEPAD_BTN_R3,
+    GAMEPAD_BTN_L4,
+    GAMEPAD_BTN_R4,
+    GAMEPAD_BTN_L5,
+    GAMEPAD_BTN_R5,
     GAMEPAD_BTN_TOUCHPAD,
 
     GAMEPAD_LEFT_JOYSTICK_X,
@@ -41,6 +45,7 @@ typedef struct in_message_gamepad_set_element {
 
 typedef enum in_message_gamepad_action {
     GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
+    GAMEPAD_ACTION_OPEN_STEAM_QAM,
 } in_message_gamepad_action_t;
 
 typedef enum in_in_message_type {

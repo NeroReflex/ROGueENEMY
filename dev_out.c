@@ -1,5 +1,6 @@
 #include "dev_out.h"
 
+#include "devices_status.h"
 #include "virt_ds4.h"
 #include "virt_ds5.h"
 
@@ -7,9 +8,11 @@ static void handle_incoming_message_gamepad_action(
     const in_message_gamepad_action_t *const msg_payload,
     gamepad_status_t *const inout_gamepad
 ) {
-    if (msg_payload == GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER) {
+    if (*msg_payload == GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER) {
         inout_gamepad->flags |= GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER;
-    }    
+    } else if (*msg_payload == GAMEPAD_ACTION_OPEN_STEAM_QAM) {
+        inout_gamepad->flags |= GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
+    } 
 }
 
 static void handle_incoming_message_gamepad_set(
@@ -63,6 +66,22 @@ static void handle_incoming_message_gamepad_set(
         }
         case GAMEPAD_BTN_R3: {
             inout_gamepad->r3 = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_L4: {
+            inout_gamepad->l4 = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_R4: {
+            inout_gamepad->r4 = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_L5: {
+            inout_gamepad->l5 = msg_payload->status.btn;
+            break;
+        }
+        case GAMEPAD_BTN_R5: {
+            inout_gamepad->r5 = msg_payload->status.btn;
             break;
         }
         case GAMEPAD_BTN_TOUCHPAD: {
