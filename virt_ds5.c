@@ -482,6 +482,11 @@ static int send_data(int fd, logic_t *const logic) {
 
     uint16_t touchpadX = gs.touchpadX;
     uint16_t touchpadY = gs.touchpadY;
+    // ? 0x02 : 0x00
+    if (touchpadX == 0 && touchpadY == 0 && gs.touchpad_press) {
+        buf[33] = 0x7F;
+        printf("TPress: %d\n", gs.touchpad_press);
+    }
 
     if (touchpadX == 0 && touchpadY == 0) {
         buf[33] = 0x80;
