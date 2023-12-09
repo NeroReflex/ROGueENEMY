@@ -358,6 +358,34 @@ static bool iio_matches(
     return true;
 }
 
+/*
+modprobe industrialio-sw-trigger
+modprobe iio-trig-sysfs
+modprobe iio-trig-hrtimer
+
+# sysfs-trigger
+echo 1 > /sys/bus/iio/devices/iio_sysfs_trigger/add_trigger
+cat  /sys/bus/iio/devices/trigger0/name # I got sysfstrig1
+cd /sys/bus/iio/devices
+cd iio\:device0
+echo "sysfstrig1" > trigger/current_trigger
+echo 1 > buffer0/in_anglvel_x_en
+echo 1 > buffer0/in_anglvel_y_en
+echo 1 > buffer0/in_anglvel_z_en
+echo 1 > buffer0/in_accel_x_en
+echo 1 > buffer0/in_accel_x_en
+echo 1 > buffer0/in_accel_x_en
+echo 1 > buffer0/enable
+echo 1 > buffer/enable
+cd ..
+cd trigger0
+echo 1 > trigger_now
+
+# hrtimer
+mkdir /config/iio/triggers/hrtimer/rogue
+mount -t configfs none /config
+mkdir /config
+*/
 static const char *const iio_hrtrigger_name = "iio-trig-hrtimer";
 
 static const char *const iio_path = "/sys/bus/iio/devices/";
