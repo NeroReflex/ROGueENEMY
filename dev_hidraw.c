@@ -49,8 +49,6 @@ static int dev_hidraw_new_from_fd(int fd, dev_hidraw_t **const out_dev) {
     if (res < 0) {
         perror("Error getting Report Descriptor");
         goto dev_hidraw_new_from_fd_err;
-    } else {
-        printf("GOT HIDIOCGRDESC %ld\n",(long) (*out_dev)->rdesc.size);
     }
 
 dev_hidraw_new_from_fd_err:

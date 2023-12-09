@@ -447,7 +447,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 static hidraw_filters_t n_key_hidraw_filters = {
   .pid = 0x1abe,
   .vid = 0x0b05,
-  .rdesc_size = 48,
+  .rdesc_size = 167, // 48 83 167
 };
 
 static input_dev_t in_iio_dev = {
@@ -540,12 +540,6 @@ enum rc71l_leds_direction {
 } rc71l_leds_direction_t;
 
 static int rc71l_platform_init(void** platform_data) {
-/*
-GOT HIDIOCGRDESC 83 => DISCARDED:  b05:1abe 83, expected  b05:1abe 167
-GOT HIDIOCGRDESC 48 => DISCARDED:  b05:1abe 48, expected  b05:1abe 167
-GOT HIDIOCGRDESC 167 => taken
-*/
-
   int res = -EINVAL;
 
   rc71l_platform_t *const platform = malloc(sizeof(rc71l_platform_t));
@@ -581,12 +575,6 @@ GOT HIDIOCGRDESC 167 => taken
     goto rc71l_platform_init_err;
   }
 
-  if ((rdesc[7] != (uint8_t)0x85) || (rdesc[8] != (uint8_t)0x5a)) {
-    fprintf(stderr, "Wrong MCU endpoint selected\n");
-    res = -EINVAL;
-    goto rc71l_platform_init_err;
-  }
-
   platform->platform_mode = rc71l_platform_mode_hidraw;
 
   const int fd = dev_hidraw_get_fd(platform->platform.hidraw);
@@ -599,7 +587,7 @@ GOT HIDIOCGRDESC 167 => taken
       }
   }
 
-  write(fd, hidraw_buf, sizeof(hidraw_buf));
+  //write(fd, hidraw_buf, sizeof(hidraw_buf));
 
   printf("ROG Ally platform will be managed over hidraw. I'm sorry fluke.\n");
 
