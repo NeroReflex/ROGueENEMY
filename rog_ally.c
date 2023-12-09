@@ -433,6 +433,8 @@ static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 };
 
 void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data) {
+  printf("ASUSKBD: ev_count=%d ev[1].type=%d ev[1].type=%d ev[1].code=%d ev[1].value=\n", (int)e->ev_count, (int)e->ev[1].type, (int)e->ev[1].code, (int)e->ev[1].value);
+
   if ( // this is what happens at release of the left-screen button of the ROG Ally
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
@@ -487,7 +489,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
         .gamepad_set = {
           .element = GAMEPAD_BTN_L4,
           .status = {
-            .btn = e->ev[1].code,
+            .btn = e->ev[1].value,
           }
         }
       }
@@ -511,7 +513,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
         .gamepad_set = {
           .element = GAMEPAD_BTN_R4,
           .status = {
-            .btn = e->ev[1].code,
+            .btn = e->ev[1].value,
           }
         }
       }
@@ -701,7 +703,7 @@ static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_d
   };
 
   uint8_t colors_buf[] = {
-    0x5A, 0xBA, 0x00, ROG_ALLY_MODE_DIRECT, r, g, b, ROG_ALLY_SPEED_MAX, ROG_ALLY_DIRECTION_RIGHT, 0x00, r, g, b, 0x00, 0x00, 0x00,
+    0x5A, 0xBA, 0x00, ROG_ALLY_MODE_BREATHING, r, g, b, ROG_ALLY_SPEED_MAX, ROG_ALLY_DIRECTION_RIGHT, 0x00, r, g, b, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
