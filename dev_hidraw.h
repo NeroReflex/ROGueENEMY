@@ -17,8 +17,10 @@ int dev_hidraw_open(
 
 void dev_hidraw_close(dev_hidraw_t *const inout_dev);
 
-int dev_hidraw_get_fd(const dev_hidraw_t* in_dev);
+int dev_hidraw_get_fd(const dev_hidraw_t *const in_dev);
 
-int16_t dev_hidraw_get_pid(const dev_hidraw_t* in_dev);
+int16_t dev_hidraw_get_pid(const dev_hidraw_t *const in_dev);
 
-int16_t dev_hidraw_get_vid(const dev_hidraw_t* in_dev);
+int16_t dev_hidraw_get_vid(const dev_hidraw_t *const in_dev);
+
+int dev_hidraw_get_rdesc(const dev_hidraw_t *const in_dev, uint8_t *const out_buf_sz, size_t in_buf_sz, size_t *const out_rdesc_size);

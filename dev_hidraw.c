@@ -117,7 +117,7 @@ void dev_hidraw_close(dev_hidraw_t *const inout_dev) {
     free(inout_dev);
 }
 
-int dev_hidraw_get_fd(const dev_hidraw_t* in_dev) {
+int dev_hidraw_get_fd(const dev_hidraw_t *const in_dev) {
     if (in_dev == NULL) {
         return -EINVAL;
     }
@@ -125,10 +125,28 @@ int dev_hidraw_get_fd(const dev_hidraw_t* in_dev) {
     return in_dev->fd;
 }
 
-int16_t dev_hidraw_get_pid(const dev_hidraw_t* in_dev) {
+int16_t dev_hidraw_get_pid(const dev_hidraw_t *const in_dev) {
     return in_dev->info.product;
 }
 
-int16_t dev_hidraw_get_vid(const dev_hidraw_t* in_dev) {
+int16_t dev_hidraw_get_vid(const dev_hidraw_t *const in_dev) {
     return in_dev->info.vendor;
+}
+
+int dev_hidraw_get_rdesc(const dev_hidraw_t *const in_dev, uint8_t *const out_buf_sz, size_t in_buf_sz, size_t *const out_rdesc_size) {
+    int res = -EINVAL;
+    if (in_dev == NULL) {
+        goto dev_hidraw_get_rdesc;
+    }
+
+    if (in_dev->rdesc.size < in_buf_sz) {
+        goto dev_hidraw_get_rdesc;
+    }
+
+    memcpy((void*)out_buf_sz, (const void*)in_dev->rdesc.value, in_dev->rdesc.size);
+    *out_rdesc_size = in_dev->rdesc.size;
+    res = 0;
+
+dev_hidraw_get_rdesc:
+    return res;
 }

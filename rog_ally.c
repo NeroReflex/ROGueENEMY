@@ -573,6 +573,20 @@ GOT HIDIOCGRDESC 167 => taken
     goto rc71l_platform_init_err;
   }
 
+  uint8_t rdesc[256];
+  size_t rdesc_sz;
+  res = dev_hidraw_get_rdesc(platform->platform.hidraw, rdesc, sizeof(rdesc), &rdesc_sz);
+  if (res != 0) {
+    fprintf(stderr, "Unable to get rc71l rdesc\n");
+    goto rc71l_platform_init_err;
+  }
+
+  if ((rdesc[7] != (uint8_t)0x85) || (rdesc[8] != (uint8_t)0x5a)) {
+    fprintf(stderr, "Wrong MCU endpoint selected\n");
+    res = -EINVAL;
+    goto rc71l_platform_init_err;
+  }
+
   platform->platform_mode = rc71l_platform_mode_hidraw;
 
   const int fd = dev_hidraw_get_fd(platform->platform.hidraw);
