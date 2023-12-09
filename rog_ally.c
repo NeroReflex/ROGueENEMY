@@ -700,8 +700,8 @@ static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_d
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
   };
 
-  const uint8_t colors_buf[] = {
-    0x5A, 0xBA, 0x00, ROG_ALLY_MODE_STATIC, r, g, b, ROG_ALLY_SPEED_MAX, ROG_ALLY_DIRECTION_RIGHT, r, g, b, 0x00, 0x00, 0x00, 0x00,
+  uint8_t colors_buf[] = {
+    0x5A, 0xBA, 0x00, ROG_ALLY_MODE_DIRECT, r, g, b, ROG_ALLY_SPEED_MAX, ROG_ALLY_DIRECTION_RIGHT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
@@ -712,15 +712,27 @@ static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_d
 
     if (write(fd, brightness_buf, sizeof(brightness_buf)) != 64) {
       fprintf(stderr, "Unable to send LEDs brightness command change\n");
+      goto rc71l_platform_leds_err;
     }
 
     if (write(fd, colors_buf, sizeof(colors_buf)) != 64) {
-      fprintf(stderr, "Unable to send LEDs color command change\n");
+      fprintf(stderr, "Unable to send LEDs color command change (1)\n");
+      goto rc71l_platform_leds_err;
     }
+
+    colors_buf[0x00] = 0x5A;
+    colors_buf[0x01] = 0xB5;
+    if (write(fd, colors_buf, sizeof(colors_buf)) != 64) {
+      fprintf(stderr, "Unable to send LEDs color command change (2)\n");
+      goto rc71l_platform_leds_err;
+    }
+
+    printf("RC71L LEDs adjusted: r=%d g=%d b=%d\n", (int)r, (int)g, (int)b);
 
     return 0;
   }
 
+rc71l_platform_leds_err:
   return -EINVAL;
 }
 
