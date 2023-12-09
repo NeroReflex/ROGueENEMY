@@ -158,6 +158,8 @@ int evdev_open_device(
         goto evdev_open_device_err;
     }
 
+    out_dev->ignore_timestamp = true;
+    out_dev->ignore_msc_scan = false;
     out_dev->has_rumble_support = libevdev_has_event_type(out_dev->evdev, EV_FF) && libevdev_has_event_code(out_dev->evdev, EV_FF, FF_RUMBLE);
     out_dev->has_syn_report = libevdev_has_event_type(out_dev->evdev, EV_SYN) && libevdev_has_event_code(out_dev->evdev, EV_SYN, SYN_REPORT);
 
