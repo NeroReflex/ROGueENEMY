@@ -139,7 +139,7 @@ int dev_hidraw_get_rdesc(const dev_hidraw_t *const in_dev, uint8_t *const out_bu
         goto dev_hidraw_get_rdesc;
     }
 
-    if (in_dev->rdesc.size < in_buf_sz) {
+    if (in_dev->rdesc.size > in_buf_sz) {
         goto dev_hidraw_get_rdesc;
     }
 
