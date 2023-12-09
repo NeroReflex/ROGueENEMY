@@ -540,6 +540,12 @@ enum rc71l_leds_direction {
 } rc71l_leds_direction_t;
 
 static int rc71l_platform_init(void** platform_data) {
+/*
+GOT HIDIOCGRDESC 83 => DISCARDED:  b05:1abe 83, expected  b05:1abe 167
+GOT HIDIOCGRDESC 48 => DISCARDED:  b05:1abe 48, expected  b05:1abe 167
+GOT HIDIOCGRDESC 167 => taken
+*/
+
   int res = -EINVAL;
 
   rc71l_platform_t *const platform = malloc(sizeof(rc71l_platform_t));
@@ -568,7 +574,18 @@ static int rc71l_platform_init(void** platform_data) {
   }
 
   platform->platform_mode = rc71l_platform_mode_hidraw;
-  write(dev_hidraw_get_fd(platform->platform.hidraw), hidraw_buf, sizeof(hidraw_buf));
+
+  const int fd = dev_hidraw_get_fd(platform->platform.hidraw);
+
+  for (int i = 0; i < 23; ++i) {
+      const int write_res = write(fd, &rc71l_mode_switch_commands[0][i][0], 64);
+      if (write_res != 64) {
+          fprintf(stderr, "Error writing packet %d/23: %d bytes sent, 64 expected\n", i, write_res);
+          break;
+      }
+  }
+
+  write(fd, hidraw_buf, sizeof(hidraw_buf));
 
   printf("ROG Ally platform will be managed over hidraw. I'm sorry fluke.\n");
 
