@@ -388,7 +388,7 @@ void* dev_in_thread_func(void *ptr) {
                 } else {
                     dev_in_data->input_dev_decl->dev[i]->ev_input_map_fn(&coll, dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
                 }
-            } else if (devices[i].type == DEV_IN_TYPE_EV) {
+            } else if (devices[i].type == DEV_IN_TYPE_IIO) {
                 // TODO: implement IIO
                 //fill_message_from_iio(&devices[i].dev.iio, out_msg);
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
