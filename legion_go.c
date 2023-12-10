@@ -118,7 +118,7 @@ input_dev_composite_t legion_composite = {
         &in_xbox_dev,
         // &in_iio_dev,
     },
-    .dev_count = 1,
+    .dev_count = 2,
     .init_fn = legion_platform_init,
     .leds_fn = legion_platform_leds,
     .deinit_fn = legion_platform_deinit,
