@@ -380,6 +380,8 @@ void* dev_in_thread_func(void *ptr) {
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
                 // TODO: implement IIO
                 continue;
+            } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
+                fd = dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev);
             } else {
                 continue;
             }
