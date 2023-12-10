@@ -29,7 +29,9 @@ add_executable(${EXECUTABLE_NAME}
                   virt_evdev.c
                   devices_status.c
                   rog_ally.c
+                  legion_go.c
                   xbox360.c
+                  rogue_enemy.c
 )
 
 set_property(TARGET ${EXECUTABLE_NAME} PROPERTY C_STANDARD 17)

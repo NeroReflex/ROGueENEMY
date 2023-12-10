@@ -63,13 +63,9 @@ const char* dev_iio_get_name(const dev_iio_t* iio);
 
 const char* dev_iio_get_path(const dev_iio_t* iio);
 
-inline int dev_iio_has_anglvel(const dev_iio_t* iio) {
-    return (iio->flags & DEV_IIO_HAS_ANGLVEL) != 0;
-}
+int dev_iio_has_anglvel(const dev_iio_t* iio);
 
-inline int dev_iio_has_accel(const dev_iio_t* iio) {
-    return (iio->flags & DEV_IIO_HAS_ACCEL) != 0;
-}
+int dev_iio_has_accel(const dev_iio_t* iio);
 
 int dev_iio_read(
     const dev_iio_t *const iio,

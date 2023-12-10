@@ -784,3 +784,11 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_in_message_t *const out) {
 
     return 0;
 }
+
+int dev_iio_has_anglvel(const dev_iio_t* iio) {
+    return (iio->flags & DEV_IIO_HAS_ANGLVEL) != 0;
+}
+
+int dev_iio_has_accel(const dev_iio_t* iio) {
+    return (iio->flags & DEV_IIO_HAS_ACCEL) != 0;
+}
