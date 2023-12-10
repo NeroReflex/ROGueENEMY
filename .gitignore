@@ -5,3 +5,4 @@
 /depends
 /debug
 /.cache
+*.patch
