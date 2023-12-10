@@ -105,7 +105,7 @@ fill_message_from_evdev_err_completed:
     return res;
 }
 
-int hidraw_open_device(
+static int hidraw_open_device(
     const hidraw_filters_t *const in_filters,
     dev_in_hidraw_t *const out_dev
 ) {
@@ -125,7 +125,7 @@ iio_open_device_err:
     return res;
 }
 
-int iio_open_device(
+static int iio_open_device(
     const iio_filters_t *const in_filters,
     dev_in_iio_t *const out_dev
 ) {
@@ -148,7 +148,7 @@ iio_open_device_err:
     return res;
 }
 
-int evdev_open_device(
+static int evdev_open_device(
     const uinput_filters_t *const in_filters,
     dev_in_ev_t *const out_dev
 ) {
@@ -205,8 +205,12 @@ evdev_open_device_err:
     return res;
 }
 
-void evdev_close_device(dev_in_ev_t *const out_dev) {
+static void evdev_close_device(dev_in_ev_t *const out_dev) {
     dev_evdev_close(out_dev->evdev);
+}
+
+static void hidraw_close_device(dev_in_hidraw_t *const out_hidraw) {
+    dev_hidraw_close(out_hidraw->hidrawdev);
 }
 
 static void handle_rumble_device(dev_in_ev_t *const in_dev, const out_message_rumble_t *const in_rumble_msg) {
@@ -404,6 +408,7 @@ void* dev_in_thread_func(void *ptr) {
                 const int hidraw_op_res = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
                 if (hidraw_op_res != 0) {
                     fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, hidraw_op_res);
+                    hidraw_close_device(&devices[i].dev.hidraw.hidrawdev);
                     devices[i].type = DEV_IN_TYPE_NONE;
                 }
             }
