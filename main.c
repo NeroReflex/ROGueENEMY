@@ -60,7 +60,7 @@ int main(int argc, char ** argv) {
     printf("Running in an Asus ROG Ally device\n");
     in_devs = rog_ally_device_def(&settings);
   } else if (strstr(bname, "LNVNB161216")) {
-    printf("Running in an Asus ROG Ally device\n");
+    printf("Running in an Lenovo Legion Go device\n");
     in_devs = legion_go_device_def(&settings);
   }
   close(dmi_name_fd);
