@@ -495,7 +495,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 
     const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
     if (in_message_pipe_write_res != sizeof(in_message_t)) {
-      fprintf(stderr, "Unable to write data for L4 to the in_message pipe: %zu\n", in_message_pipe_write_res);
+      fprintf(stderr, "Unable to write data for L5 to the in_message pipe: %zu\n", in_message_pipe_write_res);
     }
   } else if (
 		(e->ev_count == 2) &&
@@ -506,21 +506,21 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 		(e->ev[1].code == KEY_F18)
 	) {
 		const in_message_t current_message = {
-      .type = GAMEPAD_SET_ELEMENT,
-      .data = {
-        .gamepad_set = {
-          .element = GAMEPAD_BTN_R5,
-          .status = {
-            .btn = e->ev[1].value,
-          }
-        }
-      }
-    };
+			.type = GAMEPAD_SET_ELEMENT,
+			.data = {
+				.gamepad_set = {
+				.element = GAMEPAD_BTN_R5,
+				.status = {
+					.btn = e->ev[1].value,
+				}
+				}
+			}
+		};
 
-    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-    if (in_message_pipe_write_res != sizeof(in_message_t)) {
-        fprintf(stderr, "Unable to write data for R4 to the in_message pipe: %zu\n", in_message_pipe_write_res);
-    }
+		const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
+		if (in_message_pipe_write_res != sizeof(in_message_t)) {
+			fprintf(stderr, "Unable to write data for R5 to the in_message pipe: %zu\n", in_message_pipe_write_res);
+		}
 	}
 }
 
@@ -548,7 +548,9 @@ static input_dev_t in_asus_kb_1_dev = {
       .name = "Asus Keyboard"
     }
   },
-  .ev_input_map_fn = asus_kbd_ev_map,
+  .map = {
+	.ev_input_map_fn = asus_kbd_ev_map,
+  }
 };
 
 static input_dev_t in_asus_kb_2_dev = {
@@ -558,7 +560,9 @@ static input_dev_t in_asus_kb_2_dev = {
       .name = "Asus Keyboard"
     }
   },
-  .ev_input_map_fn = asus_kbd_ev_map,
+  .map = {
+	.ev_input_map_fn = asus_kbd_ev_map,
+  }
 };
 
 static input_dev_t in_asus_kb_3_dev = {
@@ -568,7 +572,9 @@ static input_dev_t in_asus_kb_3_dev = {
       .name = "Asus Keyboard"
     }
   },
-  .ev_input_map_fn = asus_kbd_ev_map,
+  .map = {
+	.ev_input_map_fn = asus_kbd_ev_map,
+  }
 };
 
 static input_dev_t in_xbox_dev = {
@@ -578,7 +584,9 @@ static input_dev_t in_xbox_dev = {
       .name = "Microsoft X-Box 360 pad"
     }
   },
-  .ev_input_map_fn = xbox360_ev_map,
+  .map = {
+	.ev_input_map_fn = xbox360_ev_map,
+  }
 };
 
 static xbox360_settings_t x360_cfg;

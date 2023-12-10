@@ -10,7 +10,9 @@ static input_dev_t in_xbox_dev = {
           .name = "Generic X-Box pad"
         }
     },
-    .ev_input_map_fn = xbox360_ev_map,
+    .map = {
+        .ev_input_map_fn = xbox360_ev_map,
+    }
 };
 
 static xbox360_settings_t x360_cfg;
@@ -24,28 +26,107 @@ static input_dev_t in_iio_dev = {
     },
 };
 
-static int legion_platform_init(void** platform_data) {
-    int res = -EINVAL;
+static struct llg_hidraw_data {
+    uint8_t last_packet[64];
+} llg_hidraw_user_data;
+
+static int llg_hidraw_map(int hidraw_fd, int in_messages_pipe_fd, void* user_data) {
+    struct llg_hidraw_data *const llg_data = (struct llg_hidraw_data*)user_data;
+
+    int read_res = read(hidraw_fd, llg_data->last_packet, sizeof(llg_data->last_packet));
+    if (read_res != 64) {
+        fprintf(stderr, "Error reading from hidraw device\n");
+        return -EINVAL;
+    }
+
+    // here we have llg_data->last_packet filled with 64 bytes from the input device
+
+    const in_message_t current_message = {
+      .type = GAMEPAD_SET_ELEMENT,
+      .data = {
+        .gamepad_set = {
+          .element = GAMEPAD_BTN_L5,
+          .status = {
+            .btn = 1,
+          }
+        }
+      }
+    };
+
+    /*
+    // this does send messages to the output device
+
+    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
+    if (in_message_pipe_write_res != sizeof(in_message_t)) {
+      fprintf(stderr, "Unable to write data for L4 to the in_message pipe: %zu\n", in_message_pipe_write_res);
+      return -EINVAL;
+    }
+    */
+
+    // successful return
     return 0;
 }
-static void legion_platform_deinit(void** platform_data) {
 
-    // free(platform);
+static input_dev_t in_hidraw_dev = {
+    .dev_type = input_dev_type_hidraw,
+    .filters = {
+        .hidraw = {
+            .pid = 0x6182,
+            .vid = 0x17ef,
+            .rdesc_size = 44,
+        }
+    },
+    .user_data = (void*)&llg_hidraw_user_data,
+    .map = {
+        .hidraw_input_map_fn = llg_hidraw_map,
+    },
+};
+
+typedef struct legion_go_platform {
+    int _pad;
+} legion_go_platform_t;
+
+static int legion_platform_init(void** platform_data) {
+    int res = -EINVAL;
+
+    legion_go_platform_t *const llg_platform = malloc(sizeof(legion_go_platform_t));
+    if (llg_platform == NULL) {
+        fprintf(stderr, "Unable to allocate memory for the platform data\n");
+        res = -ENOMEM;
+        goto legion_platform_init_err;
+    }
+
+    *platform_data = (void*)llg_platform;
+    res = 0;
+
+legion_platform_init_err:
+    return res;
+}
+
+static void legion_platform_deinit(void** platform_data) {
+    free(*platform_data);
     *platform_data = NULL;
 }
+
+int legion_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
+    return 0;
+}
+
 input_dev_composite_t legion_composite = {
     .dev = {
+        &in_hidraw_dev,
         &in_xbox_dev,
         // &in_iio_dev,
     },
     .dev_count = 1,
     .init_fn = legion_platform_init,
+    .leds_fn = legion_platform_leds,
     .deinit_fn = legion_platform_deinit,
 };
 
 
 input_dev_composite_t* legion_go_device_def(const controller_settings_t *const settings) {
-    // x360_cfg.nintendo_layout = settings->nintendo_layout;
+    x360_cfg.nintendo_layout = settings->nintendo_layout;
 
     in_xbox_dev.user_data = (void*)&x360_cfg;
     return &legion_composite;
