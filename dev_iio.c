@@ -3,8 +3,17 @@
 
 #define MAX_PATH_LEN 512
 
-static char* read_file(const char* base_path, const char *file) {
-    char* res = NULL;
+struct read_file_res {
+    char* buf;
+    unsigned long len;
+};
+
+static struct read_file_res read_file(const char* base_path, const char *file) {
+    struct read_file_res res = {
+        .buf = NULL,
+        .len = 0,
+    };
+
     char* fdir = NULL;
     long len = 0;
 
@@ -25,10 +34,10 @@ static char* read_file(const char* base_path, const char *file) {
             rewind(fp);
 
             len += 1;
-            res = malloc(len);
-            if (res != NULL) {
-                unsigned long read_bytes = fread(res, 1, len, fp);
-                printf("Read %lu bytes from file %s\n", read_bytes, fdir);
+            res.buf = malloc(len);
+            if (res.buf != NULL) {
+                res.len = fread(res.buf, 1, len, fp);
+                //printf("Read %lu bytes from file %s\n", read_bytes, fdir);
             } else {
                 fprintf(stderr, "Cannot allocate %ld bytes for %s content.\n", len, fdir);
             }
@@ -120,8 +129,6 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
     (*out_iio)->path = malloc(path_len);
     if ((*out_iio)->path == NULL) {
         fprintf(stderr, "Cannot allocate %ld bytes for device name, device skipped.\n", path_len);
-        free(*out_iio);
-        *out_iio = NULL;
         goto dev_iio_create_err;
     }
     strcpy((*out_iio)->path, path);
@@ -130,19 +137,23 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
     (*out_iio)->dev_path = malloc(dev_path_len);
     if ((*out_iio)->dev_path == NULL) {
         fprintf(stderr, "Cannot allocate %ld bytes for device /dev path, device skipped.\n", path_len);
-        free((*out_iio)->path);
-        free(*out_iio);
-        *out_iio = NULL;
         goto dev_iio_create_err;
     }
     strcpy((*out_iio)->dev_path, dev_path);
 
+    (*out_iio)->fd = open((*out_iio)->dev_path, O_RDONLY);
+    if ((*out_iio)->fd < 0) {
+        fprintf(stderr, "Error opening %s: %d", (*out_iio)->dev_path, errno);
+        goto dev_iio_create_err;
+    }
+
+    struct read_file_res rr;
+
     // ============================================= DEVICE NAME ================================================
-    (*out_iio)->name = read_file((*out_iio)->path, "/name");
+    rr = read_file((*out_iio)->path, "/name");
+    (*out_iio)->name = rr.buf;
     if ((*out_iio)->name == NULL) {
         fprintf(stderr, "Unable to read iio device name.\n");
-        free(*out_iio);
-        *out_iio = NULL;
         goto dev_iio_create_err;
     } else {
         int idx = strlen((*out_iio)->name) - 1;
@@ -155,7 +166,8 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
     // ========================================== in_anglvel_scale ==============================================
     {
         const char *scale_main_file = "/in_anglvel_scale";
-        char* const anglvel_scale = read_file((*out_iio)->path, scale_main_file);
+        rr = read_file((*out_iio)->path, scale_main_file);
+        char* const anglvel_scale = rr.buf;
         if (anglvel_scale != NULL) {
             (*out_iio)->flags |= DEV_IIO_HAS_ANGLVEL;
             (*out_iio)->anglvel_scale_x = (*out_iio)->anglvel_scale_y = (*out_iio)->anglvel_scale_z = strtod(anglvel_scale, NULL);
@@ -163,9 +175,6 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
         } else {
             // TODO: what about if those are split in in_anglvel_{x,y,z}_scale?
             fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", (*out_iio)->path, scale_main_file);
-
-            free(*out_iio);
-            *out_iio = NULL;
             goto dev_iio_create_err;
         }
     }
@@ -174,7 +183,8 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
     // =========================================== in_accel_scale ===============================================
     {
         const char *scale_main_file = "/in_accel_scale";
-        char* const accel_scale = read_file((*out_iio)->path, scale_main_file);
+        rr = read_file((*out_iio)->path, scale_main_file);
+        char* const accel_scale = rr.buf;
         if (accel_scale != NULL) {
             (*out_iio)->flags |= DEV_IIO_HAS_ACCEL;
             (*out_iio)->accel_scale_x = (*out_iio)->accel_scale_y = (*out_iio)->accel_scale_z = strtod(accel_scale, NULL);
@@ -182,9 +192,6 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
         } else {
             // TODO: what about if those are plit in in_accel_{x,y,z}_scale?
             fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", (*out_iio)->path, scale_main_file);
-
-            free(*out_iio);
-            *out_iio = NULL;
             goto dev_iio_create_err;
         }
     }
@@ -194,15 +201,13 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
     {
         const char *scale_main_file = "/in_temp_scale";
 
-        char* const accel_scale = read_file((*out_iio)->path, scale_main_file);
+        rr = read_file((*out_iio)->path, scale_main_file);
+        char* const accel_scale = rr.buf;
         if (accel_scale != NULL) {
             (*out_iio)->temp_scale = strtod(accel_scale, NULL);
             free((void*)accel_scale);
         } else {
             fprintf(stderr, "Unable to read in_temp_scale file from path %s%s.\n", (*out_iio)->path, scale_main_file);
-
-            free(*out_iio);
-            *out_iio = NULL;
             goto dev_iio_create_err;
         }
     }
@@ -211,6 +216,22 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
     res = 0;
 
 dev_iio_create_err:
+    if (res != 0) {
+        if ((*out_iio)->fd > 0) {
+            close((*out_iio)->fd);
+        }
+        
+        if ((*out_iio)->path != NULL) {
+            free((*out_iio)->path);
+            (*out_iio)->path = NULL;
+        }
+        
+        if (*out_iio == NULL) {
+            free(*out_iio);
+            *out_iio = NULL;
+        }
+    }
+
     return res;
 }
 
@@ -351,6 +372,8 @@ int dev_iio_open(
         while ((dir = readdir(d)) != NULL) {
             if (dir->d_name[0] == '.') {
                 continue;
+            } else if (strstr(dir->d_name, "iio_sysfs_trigger") != NULL) {
+                continue;
             }
 
             snprintf(path, MAX_PATH_LEN - 1, "%s%s", iio_path, dir->d_name);
@@ -386,18 +409,6 @@ int dev_iio_has_accel(const dev_iio_t* iio) {
     return (iio->flags & DEV_IIO_HAS_ACCEL) != 0;
 }
 
-int dev_iio_get_buffer_fd(dev_iio_t *const iio) {
-    if (iio->fd < 0) {
-        printf("iio fd invalid, opening %s\n", iio->dev_path);
-    
-        const int open_res = open(iio->dev_path, O_RDONLY);
-        if (open_res < 0) {
-            fprintf(stderr, "Error opening %s: %d", iio->dev_path, errno);
-            return open_res;
-        }
-
-        iio->fd = open_res;
-    }
-
+int dev_iio_get_buffer_fd(const dev_iio_t *const iio) {
     return iio->fd;
 }
