@@ -135,7 +135,7 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
         *out_iio = NULL;
         goto dev_iio_create_err;
     }
-    strcpy((*out_iio)->path, path);
+    strcpy((*out_iio)->dev_path, dev_path);
 
     // ============================================= DEVICE NAME ================================================
     (*out_iio)->name = read_file((*out_iio)->path, "/name");
