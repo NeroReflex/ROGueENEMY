@@ -84,7 +84,7 @@ int main(int argc, char ** argv) {
   //dev_out_thread_data.timeout_ms = 400;
   dev_out_thread_data.in_message_pipe_fd = in_message_pipes[0];
   dev_out_thread_data.out_message_pipe_fd = out_message_pipes[1];
-  dev_out_thread_data.gamepad = GAMEPAD_DUALSHOCK;
+  dev_out_thread_data.gamepad = GAMEPAD_DUALSENSE;
 
   pthread_t dev_in_thread;
   dev_in_thread_creation = pthread_create(&dev_in_thread, NULL, dev_in_thread_func, (void*)(&dev_in_thread_data));
