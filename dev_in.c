@@ -417,6 +417,19 @@ void* dev_in_thread_func(void *ptr) {
         }
     }
 
+    // close every opened device
+    for (size_t i = 0; i < max_devices; ++i) {
+        if (devices[i].type == DEV_IN_TYPE_EV) {
+            evdev_close_device(&devices[i].dev.evdev);
+            devices[i].type = DEV_IN_TYPE_NONE;
+        } else if (devices[i].type == DEV_IN_TYPE_IIO) {
+            // TODO: close the IIO device
+        } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
+            hidraw_close_device(&devices[i].dev.hidraw);
+            devices[i].type = DEV_IN_TYPE_NONE;
+        }
+    }
+
     if (platform_init_res != 0) {
         dev_in_data->input_dev_decl->deinit_fn(&platform_data);
     }
