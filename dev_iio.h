@@ -12,6 +12,7 @@
 
 typedef struct dev_iio {
     char* path;
+    char* dev_path;
     char* name;
     uint32_t flags;
     int fd;
@@ -44,7 +45,7 @@ int dev_iio_open(
 
 void dev_iio_close(dev_iio_t *const iio);
 
-int dev_iio_get_buffer_fd(const dev_iio_t *const iio);
+int dev_iio_get_buffer_fd(dev_iio_t *const iio);
 
 const char* dev_iio_get_name(const dev_iio_t* iio);
 

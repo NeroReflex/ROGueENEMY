@@ -87,7 +87,7 @@ write_file_err:
     return res;
 }
 
-static int dev_iio_create(int fd, const char* path, dev_iio_t **const out_iio) {
+static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const out_iio) {
     int res = -ENOENT;
 
     *out_iio = malloc(sizeof(dev_iio_t));
@@ -98,7 +98,7 @@ static int dev_iio_create(int fd, const char* path, dev_iio_t **const out_iio) {
     }
 
     (*out_iio)->flags = 0x00000000U;
-    (*out_iio)->fd = fd;
+    (*out_iio)->fd = -1;
 
     (*out_iio)->accel_scale_x = 0.0f;
     (*out_iio)->accel_scale_y = 0.0f;
@@ -120,6 +120,17 @@ static int dev_iio_create(int fd, const char* path, dev_iio_t **const out_iio) {
     (*out_iio)->path = malloc(path_len);
     if ((*out_iio)->path == NULL) {
         fprintf(stderr, "Cannot allocate %ld bytes for device name, device skipped.\n", path_len);
+        free(*out_iio);
+        *out_iio = NULL;
+        goto dev_iio_create_err;
+    }
+    strcpy((*out_iio)->path, path);
+
+    const long dev_path_len = strlen(dev_path) + 1;
+    (*out_iio)->dev_path = malloc(dev_path_len);
+    if ((*out_iio)->dev_path == NULL) {
+        fprintf(stderr, "Cannot allocate %ld bytes for device /dev path, device skipped.\n", path_len);
+        free((*out_iio)->path);
         free(*out_iio);
         *out_iio = NULL;
         goto dev_iio_create_err;
@@ -234,9 +245,13 @@ void dev_iio_close(dev_iio_t *const iio) {
         return;
     }
 
-    close(iio->fd);
+    if (iio->fd > 0) {
+        close(iio->fd);
+    }
+
     free(iio->name);
     free(iio->path);
+    free(iio->dev_path);
     free(iio);
 }
 
@@ -341,13 +356,8 @@ int dev_iio_open(
             snprintf(path, MAX_PATH_LEN - 1, "%s%s", iio_path, dir->d_name);
             snprintf(dev_path, MAX_PATH_LEN - 1, "/dev/%s", dir->d_name);
 
-            int fd = open(dev_path, O_RDONLY);
-            if (fd < 0) {
-                continue;
-            }
-
             // try to open the device, if it cannot be opened to go the next
-            const int iio_creation_res = dev_iio_create(fd, path, out_dev);
+            const int iio_creation_res = dev_iio_create(dev_path, path, out_dev);
             if (iio_creation_res != 0) {
                 //fprintf(stderr, "Cannot open %s, device skipped.\n", path);
                 continue;
@@ -376,6 +386,17 @@ int dev_iio_has_accel(const dev_iio_t* iio) {
     return (iio->flags & DEV_IIO_HAS_ACCEL) != 0;
 }
 
-int dev_iio_get_buffer_fd(const dev_iio_t *const iio) {
+int dev_iio_get_buffer_fd(dev_iio_t *const iio) {
+    if (iio->fd < 0) {
+        printf("iio fd invalid, opening %s\n", iio->dev_path);
+    
+        const int open_res = open(iio->dev_path, O_RDONLY);
+        if (open_res < 0) {
+            return open_res;
+        }
+
+        iio->fd = open_res;
+    }
+
     return iio->fd;
 }
