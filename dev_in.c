@@ -55,8 +55,55 @@ typedef struct dev_in {
 
 } dev_in_t;
 
-static int send_message_from_iio(dev_in_iio_t *const in_evdev) {
-    return -EINVAL;
+static int send_message_from_iio(dev_in_iio_t *const in_iio) {
+    int res = -EIO;
+
+    /*
+     *  data layout is:
+     *    - [0][0...2] => [gyro][x...z]
+     *    - [1][0...2] => [acce][x...z]
+     *
+     */
+    uint16_t data[2][3];
+
+    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[0][0], sizeof(uint16_t));
+    if (res != sizeof(uint16_t)) {
+        fprintf(stderr, "Error reading from %s\n", dev_iio_get_name(in_iio->iiodev));
+        goto send_message_from_iio_err;
+    }
+
+    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[0][1], sizeof(uint16_t));
+    if (res != sizeof(uint16_t)) {
+        fprintf(stderr, "Error reading from %s\n", dev_iio_get_name(in_iio->iiodev));
+        goto send_message_from_iio_err;
+    }
+
+    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[0][2], sizeof(uint16_t));
+    if (res != sizeof(uint16_t)) {
+        fprintf(stderr, "Error reading from %s\n", dev_iio_get_name(in_iio->iiodev));
+        goto send_message_from_iio_err;
+    }
+
+    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[1][0], sizeof(uint16_t));
+    if (res != sizeof(uint16_t)) {
+        fprintf(stderr, "Error reading from %s\n", dev_iio_get_name(in_iio->iiodev));
+        goto send_message_from_iio_err;
+    }
+
+    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[1][1], sizeof(uint16_t));
+    if (res != sizeof(uint16_t)) {
+        fprintf(stderr, "Error reading from %s\n", dev_iio_get_name(in_iio->iiodev));
+        goto send_message_from_iio_err;
+    }
+
+    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[1][2], sizeof(uint16_t));
+    if (res != sizeof(uint16_t)) {
+        fprintf(stderr, "Error reading from %s\n", dev_iio_get_name(in_iio->iiodev));
+        goto send_message_from_iio_err;
+    }
+
+send_message_from_iio_err:
+    return res;
 }
 
 static int fill_message_from_evdev(dev_in_ev_t *const in_evdev, evdev_collected_t *const out_coll) {
@@ -382,8 +429,7 @@ void* dev_in_thread_func(void *ptr) {
             if (devices[i].type == DEV_IN_TYPE_EV) {
                 fd = libevdev_get_fd(devices[i].dev.evdev.evdev);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
-                // TODO: implement IIO
-                continue;
+                fd = dev_iio_get_buffer_fd(devices[i].dev.iio.iiodev);
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
                 fd = dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev);
             } else {
@@ -408,7 +454,6 @@ void* dev_in_thread_func(void *ptr) {
                     dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(&coll, dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
                 }
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
-                // TODO: implement IIO
                 const int fill_res = send_message_from_iio(&devices[i].dev.iio);
                 if (fill_res != 0) {
                     fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, fill_res);
