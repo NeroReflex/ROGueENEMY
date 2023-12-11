@@ -50,8 +50,7 @@ typedef struct hidraw_callbacks {
 } hidraw_callbacks_t;
 
 typedef struct iio_settings {
-    uint16_t sampling_freq_hz;
-    uint16_t sampling_freq_hz_frac;
+    const char* const sampling_freq_hz;
     int8_t post_matrix[3][3];
 } iio_settings_t;
 

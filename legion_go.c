@@ -24,6 +24,16 @@ static input_dev_t in_iio_dev = {
             .name = "gyro_3d",
         }
     },
+    .map = {
+        .iio_settings = {
+            .sampling_freq_hz = "70.000",
+            .post_matrix = {
+                {1, 0, 0},
+                {0, 1, 0},
+                {0, 0, 1}
+            }
+        }
+    }
 };
 
 static struct llg_hidraw_data {
@@ -40,7 +50,7 @@ static int llg_hidraw_map(int hidraw_fd, int in_messages_pipe_fd, void* user_dat
     }
 
     // here we have llg_data->last_packet filled with 64 bytes from the input device
-
+    /*
     const in_message_t current_message = {
       .type = GAMEPAD_SET_ELEMENT,
       .data = {
@@ -53,7 +63,6 @@ static int llg_hidraw_map(int hidraw_fd, int in_messages_pipe_fd, void* user_dat
       }
     };
 
-    /*
     // this does send messages to the output device
 
     const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
@@ -116,9 +125,9 @@ input_dev_composite_t legion_composite = {
     .dev = {
         &in_hidraw_dev,
         &in_xbox_dev,
-        // &in_iio_dev,
+        &in_iio_dev,
     },
-    .dev_count = 2,
+    .dev_count = 3,
     .init_fn = legion_platform_init,
     .leds_fn = legion_platform_leds,
     .deinit_fn = legion_platform_deinit,

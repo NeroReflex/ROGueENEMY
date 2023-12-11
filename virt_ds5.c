@@ -31,7 +31,7 @@
 
 static const char* path = "/dev/uhid";
 
-static const char* const MAC_ADDR_STR = "e8:47:3a:d6:e7:74";
+//static const char* const MAC_ADDR_STR = "e8:47:3a:d6:e7:74";
 static const uint8_t MAC_ADDR[] = { 0x74, 0xe7, 0xd6, 0x3a, 0x47, 0xe8 };
 
 static unsigned char rdesc[] = {
@@ -93,6 +93,8 @@ static int create(int fd)
 	ev.u.create.product = 0x0df2;
 	ev.u.create.version = 0;
 	ev.u.create.country = 0;
+    memset(&ev.u.create.uniq, 0, sizeof(ev.u.create.uniq));
+    memcpy(&ev.u.create.uniq, (void*)MAC_ADDR, sizeof(MAC_ADDR));
 
 	return uhid_write(fd, &ev);
 }

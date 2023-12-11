@@ -106,7 +106,6 @@ int dev_hidraw_open(
         closedir(d);
     }
 
-dev_hidraw_open_err:
     return res;
 }
 

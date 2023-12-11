@@ -54,6 +54,6 @@ int dev_iio_has_anglvel(const dev_iio_t* iio);
 
 int dev_iio_has_accel(const dev_iio_t* iio);
 
-int dev_iio_change_anglvel_sampling_freq(const dev_iio_t *const iio, uint16_t freq_hz, uint16_t freq_hz_frac);
+int dev_iio_change_anglvel_sampling_freq(const dev_iio_t *const iio, const char *const freq_str_hz);
 
-int dev_iio_change_accel_sampling_freq(const dev_iio_t *const iio, uint16_t freq_hz, uint16_t freq_hz_frac);
+int dev_iio_change_accel_sampling_freq(const dev_iio_t *const iio, const char *const freq_str_hz);

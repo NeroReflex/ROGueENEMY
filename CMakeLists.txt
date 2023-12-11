@@ -25,8 +25,6 @@ add_executable(${EXECUTABLE_NAME}
                   settings.c
                   virt_ds4.c
                   virt_ds5.c
-                  virt_mouse_kbd.c
-                  virt_evdev.c
                   devices_status.c
                   rog_ally.c
                   legion_go.c

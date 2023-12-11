@@ -143,21 +143,12 @@ static int dev_iio_create(int fd, const char* path, dev_iio_t **const out_iio) {
 
     // ========================================== in_anglvel_scale ==============================================
     {
-        const char* preferred_scale = LSB_PER_RAD_S_2000_DEG_S_STR;
         const char *scale_main_file = "/in_anglvel_scale";
-
         char* const anglvel_scale = read_file((*out_iio)->path, scale_main_file);
         if (anglvel_scale != NULL) {
             (*out_iio)->flags |= DEV_IIO_HAS_ANGLVEL;
             (*out_iio)->anglvel_scale_x = (*out_iio)->anglvel_scale_y = (*out_iio)->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
-
-            if (write_file((*out_iio)->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
-                (*out_iio)->anglvel_scale_x = (*out_iio)->anglvel_scale_y = (*out_iio)->anglvel_scale_z = LSB_PER_RAD_S_2000_DEG_S;
-                printf("anglvel scale changed to %f for device %s\n", (*out_iio)->anglvel_scale_x, (*out_iio)->name);
-            } else {
-                fprintf(stderr, "Unable to set preferred in_anglvel_scale for device %s.\n", (*out_iio)->name);
-            }
         } else {
             // TODO: what about if those are split in in_anglvel_{x,y,z}_scale?
             fprintf(stderr, "Unable to read in_anglvel_scale from path %s%s.\n", (*out_iio)->path, scale_main_file);
@@ -171,21 +162,12 @@ static int dev_iio_create(int fd, const char* path, dev_iio_t **const out_iio) {
 
     // =========================================== in_accel_scale ===============================================
     {
-        const char* preferred_scale = LSB_PER_16G_STR;
         const char *scale_main_file = "/in_accel_scale";
-
         char* const accel_scale = read_file((*out_iio)->path, scale_main_file);
         if (accel_scale != NULL) {
             (*out_iio)->flags |= DEV_IIO_HAS_ACCEL;
             (*out_iio)->accel_scale_x = (*out_iio)->accel_scale_y = (*out_iio)->accel_scale_z = strtod(accel_scale, NULL);
             free((void*)accel_scale);
-
-            if (write_file((*out_iio)->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
-                (*out_iio)->accel_scale_x = (*out_iio)->accel_scale_y = (*out_iio)->accel_scale_z = LSB_PER_16G;
-                printf("accel scale changed to %f for device %s\n", (*out_iio)->accel_scale_x, (*out_iio)->name);
-            } else {
-                fprintf(stderr, "Unable to set preferred in_accel_scale for device %s.\n", (*out_iio)->name);
-            }
         } else {
             // TODO: what about if those are plit in in_accel_{x,y,z}_scale?
             fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", (*out_iio)->path, scale_main_file);
@@ -221,45 +203,27 @@ dev_iio_create_err:
     return res;
 }
 
-int dev_iio_change_anglvel_sampling_freq(const dev_iio_t *const iio, uint16_t freq_hz, uint16_t freq_hz_frac) {
+int dev_iio_change_anglvel_sampling_freq(const dev_iio_t *const iio, const char *const freq_str_hz) {
     int res = -EINVAL;
     if (!dev_iio_has_anglvel(iio)) {
         res = -ENOENT;
         goto dev_iio_change_anglvel_sampling_freq_err;
     }
 
-    char freq_str[16] = {};
-    snprintf(freq_str, sizeof(freq_str), "%u.%u", (unsigned)freq_hz, (unsigned)freq_hz_frac);
-
-    const char* const preferred_samplig_freq = " 1600.000000";
-    const size_t preferred_samplig_freq_len = strlen(preferred_samplig_freq);
-
-    if (write_file(iio->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
-        printf("Accel sampling frequency changed to %s\n", preferred_samplig_freq);
-    } else {
-        fprintf(stderr, "Could not change accel sampling frequency\n");
-    }
-
-    res = write_file(iio->path, "/in_anglvel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len);
+    res = write_file(iio->path, "/in_anglvel_sampling_frequency", freq_str_hz, strlen(freq_str_hz));
 
 dev_iio_change_anglvel_sampling_freq_err:
     return res;
 }
 
-int dev_iio_change_accel_sampling_freq(const dev_iio_t *const iio, uint16_t freq_hz, uint16_t freq_hz_frac) {
+int dev_iio_change_accel_sampling_freq(const dev_iio_t *const iio, const char *const freq_str_hz) {
     int res = -EINVAL;
     if (!dev_iio_has_anglvel(iio)) {
         res = -ENOENT;
         goto dev_iio_change_accel_sampling_freq_err;
     }
 
-    char freq_str[16] = {};
-    snprintf(freq_str, sizeof(freq_str), "%u.%u", (unsigned)freq_hz, (unsigned)freq_hz_frac);
-
-    const char* const preferred_samplig_freq = " 1600.000000";
-    const size_t preferred_samplig_freq_len = strlen(preferred_samplig_freq);
-
-    res = write_file(iio->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len);
+    res = write_file(iio->path, "/in_accel_sampling_frequency", freq_str_hz, strlen(freq_str_hz));
 
 dev_iio_change_accel_sampling_freq_err:
     return res;
@@ -301,6 +265,16 @@ static bool iio_matches(
 }
 
 /*
+
+// Load the kernel module
+int result = syscall(__NR_finit_module, -1, "iio-trig-hrtimer", 0);
+if (result == 0) {
+    printf("Kernel module '%s' loaded successfully.\n", "iio-trig-hrtimer");
+} else {
+    perror("Error loading kernel module");
+}
+
+
 modprobe industrialio-sw-trigger
 modprobe iio-trig-sysfs
 modprobe iio-trig-hrtimer
@@ -328,7 +302,7 @@ mount -t configfs none /home/config
 mkdir /home/config
 mkdir /home/config/iio/triggers/hrtimer/rogue
 */
-static const char *const iio_hrtrigger_name = "iio-trig-hrtimer";
+//static const char *const iio_hrtrigger_name = "iio-trig-hrtimer";
 
 static const char *const iio_path = "/sys/bus/iio/devices/";
 
@@ -377,196 +351,8 @@ int dev_iio_open(
         closedir(d);
     }
 
-/*
-    // Load the kernel module
-    int result = syscall(__NR_finit_module, -1, iio_hrtrigger_name, 0);
-
-    if (result == 0) {
-        printf("Kernel module '%s' loaded successfully.\n", iio_hrtrigger_name);
-    } else {
-        perror("Error loading kernel module");
-    }
-*/
-
-dev_iio_open_err:
     return res;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-static void multiplyMatrixVector(const double matrix[3][3], const double vector[3], double result[3]) {
-    result[0] = matrix[0][0] * vector[0] + matrix[1][0] * vector[1] + matrix[2][0] * vector[2];
-    result[1] = matrix[0][1] * vector[0] + matrix[1][1] * vector[1] + matrix[2][1] * vector[2];
-    result[2] = matrix[0][2] * vector[0] + matrix[1][2] * vector[1] + matrix[2][2] * vector[2];
-}
-/*
-int dev_iio_read_imu(const dev_iio_t *const iio, imu_in_message_t *const out) {
-    struct timeval read_time;
-    gettimeofday(&read_time, NULL);
-
-    out->flags = 0x00000000U;
-
-    char tmp[128];
-
-    double gyro_in[3];
-    double accel_in[3];
-
-    double gyro_out[3];
-    double accel_out[3];
-
-    if (iio->accel_x_fd != NULL) {
-        rewind(iio->accel_x_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_x_fd);
-        if (tmp_read >= 0) {
-            out->accel_x_raw = strtol(&tmp[0], NULL, 10);
-            accel_in[0] = (double)out->accel_x_raw * iio->accel_scale_x;
-            if ((out->flags & IMU_MESSAGE_FLAGS_ACCEL) == 0) {
-                out->accel_read_time = read_time;
-                out->flags |= IMU_MESSAGE_FLAGS_ACCEL;
-            }
-        } else {
-            fprintf(stderr, "While reading accel(x): %d\n", tmp_read);
-            return tmp_read;
-        }
-    }
-
-    if (iio->accel_y_fd != NULL) {
-        rewind(iio->accel_y_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_y_fd);
-        if (tmp_read >= 0) {
-            out->accel_y_raw = strtol(&tmp[0], NULL, 10);
-            accel_in[1] = (double)out->accel_y_raw * iio->accel_scale_y;
-            if ((out->flags & IMU_MESSAGE_FLAGS_ACCEL) == 0) {
-                out->accel_read_time = read_time;
-                out->flags |= IMU_MESSAGE_FLAGS_ACCEL;
-            }
-        } else {
-            fprintf(stderr, "While reading accel(y): %d\n", tmp_read);
-            return tmp_read;
-        }
-    }
-
-    if (iio->accel_z_fd != NULL) {
-        rewind(iio->accel_z_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_z_fd);
-        if (tmp_read >= 0) {
-            out->accel_z_raw = strtol(&tmp[0], NULL, 10);
-            accel_in[2] = (double)out->accel_z_raw * iio->accel_scale_z;
-            if ((out->flags & IMU_MESSAGE_FLAGS_ACCEL) == 0) {
-                out->accel_read_time = read_time;
-                out->flags |= IMU_MESSAGE_FLAGS_ACCEL;
-            }
-        } else {
-            fprintf(stderr, "While reading accel(z): %d\n", tmp_read);
-            return tmp_read;
-        }
-    }
-
-    if (iio->anglvel_x_fd != NULL) {
-        rewind(iio->anglvel_x_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_x_fd);
-        if (tmp_read >= 0) {
-            out->gyro_x_raw = strtol(&tmp[0], NULL, 10);
-            gyro_in[0] = (double)out->gyro_x_raw * iio->anglvel_scale_x;
-            if ((out->flags & IMU_MESSAGE_FLAGS_ANGLVEL) == 0) {
-                out->gyro_read_time = read_time;
-                out->flags |= IMU_MESSAGE_FLAGS_ANGLVEL;
-            }
-        } else {
-            fprintf(stderr, "While reading anglvel(x): %d\n", tmp_read);
-            return tmp_read;
-        }
-    }
-
-    if (iio->anglvel_y_fd != NULL) {
-        rewind(iio->anglvel_y_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_y_fd);
-        if (tmp_read >= 0) {
-            out->gyro_y_raw = strtol(&tmp[0], NULL, 10);
-            gyro_in[1] = (double)out->gyro_y_raw *iio->anglvel_scale_y;
-            if ((out->flags & IMU_MESSAGE_FLAGS_ANGLVEL) == 0) {
-                out->gyro_read_time = read_time;
-                out->flags |= IMU_MESSAGE_FLAGS_ANGLVEL;
-            }
-        } else {
-            fprintf(stderr, "While reading anglvel(y): %d\n", tmp_read);
-            return tmp_read;
-        }
-    }
-
-    if (iio->anglvel_z_fd != NULL) {
-        rewind(iio->anglvel_z_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_z_fd);
-        if (tmp_read >= 0) {
-            out->gyro_z_raw = strtol(&tmp[0], NULL, 10);
-            gyro_in[2] = (double)out->gyro_z_raw *iio->anglvel_scale_z;
-            if ((out->flags & IMU_MESSAGE_FLAGS_ANGLVEL) == 0) {
-                out->gyro_read_time = read_time;
-                out->flags |= IMU_MESSAGE_FLAGS_ANGLVEL;
-            }
-        } else {
-            fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
-            return tmp_read;
-        }
-    }
-
-    if (iio->temp_fd != NULL) {
-        rewind(iio->temp_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->temp_fd);
-        if (tmp_read >= 0) {
-            out->temp_raw = strtol(&tmp[0], NULL, 10);
-            out->temp_in_k = (double)out->temp_raw *iio->temp_scale;
-        } else {
-            fprintf(stderr, "While reading temp: %d\n", tmp_read);
-            return tmp_read;
-        }
-    }
-
-    multiplyMatrixVector(iio->mount_matrix, gyro_in, gyro_out);
-    multiplyMatrixVector(iio->mount_matrix, accel_in, accel_out);
-
-    memcpy(out->accel_m2s, accel_out, sizeof(double[3]));
-    memcpy(out->gyro_rad_s, gyro_out, sizeof(double[3]));
-
-    return 0;
-}
-*/
 
 int dev_iio_has_anglvel(const dev_iio_t* iio) {
     return (iio->flags & DEV_IIO_HAS_ANGLVEL) != 0;

@@ -539,8 +539,7 @@ static input_dev_t in_iio_dev = {
   },
   .map = {
 	.iio_settings = {
-		.sampling_freq_hz = 1600,
-		.sampling_freq_hz_frac = 000,
+		.sampling_freq_hz = "1600.000",
 		.post_matrix =
 				/*
 				// this is the testing but "wrong" mount matrix
