@@ -374,6 +374,8 @@ int dev_iio_open(
                 continue;
             } else if (strstr(dir->d_name, "iio_sysfs_trigger") != NULL) {
                 continue;
+            } else if (strstr(dir->d_name, "trigger") != NULL) {
+                continue;
             }
 
             snprintf(path, MAX_PATH_LEN - 1, "%s%s", iio_path, dir->d_name);
