@@ -392,6 +392,7 @@ int dev_iio_get_buffer_fd(dev_iio_t *const iio) {
     
         const int open_res = open(iio->dev_path, O_RDONLY);
         if (open_res < 0) {
+            fprintf(stderr, "Error opening %s: %d", iio->dev_path, errno);
             return open_res;
         }
 
