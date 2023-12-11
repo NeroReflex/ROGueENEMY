@@ -87,7 +87,7 @@ write_file_err:
     return res;
 }
 
-static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
+static int dev_iio_create(int fd, const char* path, dev_iio_t **const out_iio) {
     int res = -ENOENT;
 
     *out_iio = malloc(sizeof(dev_iio_t));
@@ -98,13 +98,7 @@ static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
     }
 
     (*out_iio)->flags = 0x00000000U;
-    (*out_iio)->anglvel_x_fd = NULL;
-    (*out_iio)->anglvel_y_fd = NULL;
-    (*out_iio)->anglvel_z_fd = NULL;
-    (*out_iio)->accel_x_fd = NULL;
-    (*out_iio)->accel_y_fd = NULL;
-    (*out_iio)->accel_z_fd = NULL;
-    (*out_iio)->temp_fd = NULL;
+    (*out_iio)->fd = fd;
 
     (*out_iio)->accel_scale_x = 0.0f;
     (*out_iio)->accel_scale_y = 0.0f;
@@ -121,25 +115,6 @@ static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
     (*out_iio)->outer_anglvel_scale_y = GYRO_SCALE;
     (*out_iio)->outer_anglvel_scale_z = GYRO_SCALE;
     (*out_iio)->outer_temp_scale = 0.0;
-
-    double mm[3][3] = 
-    /*
-    // this is the testing but "wrong" mount matrix
-    {
-        {0.0f, 0.0f, -1.0f},
-        {0.0f, 1.0f, 0.0f},
-        {-1.0f, 0.0f, 0.0f}
-    };
-    */
-    // this is the correct matrix:
-    {
-        {-1.0, 0.0, 0.0},
-        {0.0, 1.0, 0.0},
-        {0.0, 0.0, -1.0}
-    };
-
-    // store the mount matrix
-    memcpy((*out_iio)->mount_matrix, mm, sizeof(mm));
 
     const long path_len = strlen(path) + 1;
     (*out_iio)->path = malloc(path_len);
@@ -240,95 +215,62 @@ static int dev_iio_create(const char* path, dev_iio_t **const out_iio) {
     }
     // ==========================================================================================================
 
-    // ============================================ samplig_freq ================================================
-    {
-        const char* const preferred_samplig_freq = " 1600.000000";
-        const size_t preferred_samplig_freq_len = strlen(preferred_samplig_freq);
-
-        if (write_file((*out_iio)->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
-            printf("Accel sampling frequency changed to %s\n", preferred_samplig_freq);
-        } else {
-            fprintf(stderr, "Could not change accel sampling frequency\n");
-        }
-
-        if (write_file((*out_iio)->path, "/in_anglvel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
-            printf("Gyro sampling frequency changed to %s\n", preferred_samplig_freq);
-        } else {
-            fprintf(stderr, "Could not change gyro sampling frequency\n");
-        }
-    }
-    // ==========================================================================================================
-
-    const size_t tmp_sz = path_len + 128 + 1;
-    char* const tmp = malloc(tmp_sz);
-
-    memset(tmp, 0, tmp_sz);
-    strcat(tmp, (*out_iio)->path);
-    strcat(tmp, "/in_accel_x_raw");
-    (*out_iio)->accel_x_fd = fopen(tmp, "r");
-
-    memset(tmp, 0, tmp_sz);
-    strcat(tmp, (*out_iio)->path);
-    strcat(tmp, "/in_accel_y_raw");
-    (*out_iio)->accel_y_fd = fopen(tmp, "r");
-
-    memset(tmp, 0, tmp_sz);
-    strcat(tmp, (*out_iio)->path);
-    strcat(tmp, "/in_accel_z_raw");
-    (*out_iio)->accel_z_fd = fopen(tmp, "r");
-
-    memset(tmp, 0, tmp_sz);
-    strcat(tmp, (*out_iio)->path);
-    strcat(tmp, "/in_anglvel_x_raw");
-    (*out_iio)->anglvel_x_fd = fopen(tmp, "r");
-
-    memset(tmp, 0, tmp_sz);
-    strcat(tmp, (*out_iio)->path);
-    strcat(tmp, "/in_anglvel_y_raw");
-    (*out_iio)->anglvel_y_fd = fopen(tmp, "r");
-
-    memset(tmp, 0, tmp_sz);
-    strcat(tmp, (*out_iio)->path);
-    strcat(tmp, "/in_anglvel_z_raw");
-    (*out_iio)->anglvel_z_fd = fopen(tmp, "r");
-
-    memset(tmp, 0, tmp_sz);
-    strcat(tmp, (*out_iio)->path);
-    strcat(tmp, "/in_temp_raw");
-    (*out_iio)->temp_fd = fopen(tmp, "r");
-
-    free(tmp);
-
-/*
-    printf(
-        "anglvel scale: x=%f, y=%f, z=%f | accel scale: x=%f, y=%f, z=%f\n",
-        (*out_iio)->anglvel_scale_x,
-        (*out_iio)->anglvel_scale_y,
-        (*out_iio)->anglvel_scale_z,
-        (*out_iio)->accel_scale_x,
-        (*out_iio)->accel_scale_y,
-        (*out_iio)->accel_scale_z
-    );
-*/
-
     res = 0;
 
 dev_iio_create_err:
     return res;
 }
 
-void dev_iio_close(dev_iio_t* iio) {
+int dev_iio_change_anglvel_sampling_freq(const dev_iio_t *const iio, uint16_t freq_hz, uint16_t freq_hz_frac) {
+    int res = -EINVAL;
+    if (!dev_iio_has_anglvel(iio)) {
+        res = -ENOENT;
+        goto dev_iio_change_anglvel_sampling_freq_err;
+    }
+
+    char freq_str[16] = {};
+    snprintf(freq_str, sizeof(freq_str), "%u.%u", (unsigned)freq_hz, (unsigned)freq_hz_frac);
+
+    const char* const preferred_samplig_freq = " 1600.000000";
+    const size_t preferred_samplig_freq_len = strlen(preferred_samplig_freq);
+
+    if (write_file(iio->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len) >= 0) {
+        printf("Accel sampling frequency changed to %s\n", preferred_samplig_freq);
+    } else {
+        fprintf(stderr, "Could not change accel sampling frequency\n");
+    }
+
+    res = write_file(iio->path, "/in_anglvel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len);
+
+dev_iio_change_anglvel_sampling_freq_err:
+    return res;
+}
+
+int dev_iio_change_accel_sampling_freq(const dev_iio_t *const iio, uint16_t freq_hz, uint16_t freq_hz_frac) {
+    int res = -EINVAL;
+    if (!dev_iio_has_anglvel(iio)) {
+        res = -ENOENT;
+        goto dev_iio_change_accel_sampling_freq_err;
+    }
+
+    char freq_str[16] = {};
+    snprintf(freq_str, sizeof(freq_str), "%u.%u", (unsigned)freq_hz, (unsigned)freq_hz_frac);
+
+    const char* const preferred_samplig_freq = " 1600.000000";
+    const size_t preferred_samplig_freq_len = strlen(preferred_samplig_freq);
+
+    res = write_file(iio->path, "/in_accel_sampling_frequency", preferred_samplig_freq, preferred_samplig_freq_len);
+
+dev_iio_change_accel_sampling_freq_err:
+    return res;
+}
+
+void dev_iio_close(dev_iio_t *const iio) {
     if (iio == NULL) {
         return;
     }
 
-    fclose(iio->accel_x_fd);
-    fclose(iio->accel_y_fd);
-    fclose(iio->accel_z_fd);
-    fclose(iio->anglvel_x_fd);
-    fclose(iio->anglvel_y_fd);
-    fclose(iio->anglvel_z_fd);
-    fclose(iio->temp_fd);
+    close(iio->fd);
     free(iio->name);
     free(iio->path);
     free(iio);
@@ -382,9 +324,9 @@ cd trigger0
 echo 1 > trigger_now
 
 # hrtimer
-mkdir /config/iio/triggers/hrtimer/rogue
-mount -t configfs none /config
-mkdir /config
+mount -t configfs none /home/config
+mkdir /home/config
+mkdir /home/config/iio/triggers/hrtimer/rogue
 */
 static const char *const iio_hrtrigger_name = "iio-trig-hrtimer";
 
@@ -396,6 +338,7 @@ int dev_iio_open(
 ) {
     int res = -ENOENT;
 
+    char dev_path[MAX_PATH_LEN] = "\n";
     char path[MAX_PATH_LEN] = "\0";
     
     DIR *d;
@@ -408,11 +351,15 @@ int dev_iio_open(
             }
 
             snprintf(path, MAX_PATH_LEN - 1, "%s%s", iio_path, dir->d_name);
+            snprintf(dev_path, MAX_PATH_LEN - 1, "/dev/%s", dir->d_name);
 
-            //printf("Testing for device %s\n", path);
+            int fd = open(dev_path, O_RDONLY);
+            if (fd < 0) {
+                continue;
+            }
 
             // try to open the device, if it cannot be opened to go the next
-            const int iio_creation_res = dev_iio_create(path, out_dev);
+            const int iio_creation_res = dev_iio_create(fd, path, out_dev);
             if (iio_creation_res != 0) {
                 //fprintf(stderr, "Cannot open %s, device skipped.\n", path);
                 continue;
@@ -476,177 +423,12 @@ dev_iio_open_err:
 
 
 
-
-int dev_iio_read(
-    const dev_iio_t *const iio,
-    struct input_event *const buf,
-    size_t buf_sz,
-    uint32_t *const buf_out
-) {
-    *buf_out = 0;
-    char tmp[128];
-
-    struct timeval now = {0};
-
-    if (*buf_out == buf_sz) {
-        return -ENOMEM;
-    } else if (iio->accel_x_fd != NULL) {
-        rewind(iio->accel_x_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_x_fd);
-        if (tmp_read >= 0) {
-            gettimeofday(&now, NULL);
-            const double val = strtod(&tmp[0], NULL);
-            const double val_in_m2s = val * iio->accel_scale_x;
-
-            struct input_event* ev = &buf[*buf_out];
-
-            ev->time = now;
-            ev->type = EV_ABS;
-            ev->code = ABS_X;
-            ev->value = (__s32)(val_in_m2s * iio->outer_accel_scale_x);
-        } else {
-            fprintf(stderr, "While reading accel(x): %d\n", tmp_read);
-            return tmp_read;
-        }
-
-        ++(*buf_out);
-    }
-
-    if (*buf_out == buf_sz) {
-        return -ENOMEM;
-    } else if (iio->accel_y_fd != NULL) {
-        rewind(iio->accel_y_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_y_fd);
-        if (tmp_read >= 0) {
-            gettimeofday(&now, NULL);
-            const double val = strtod(&tmp[0], NULL);
-            const double val_in_m2s = val * iio->accel_scale_y;
-
-            struct input_event* ev = &buf[*buf_out];
-
-            ev->time = now;
-            ev->type = EV_ABS;
-            ev->code = ABS_Y;
-            ev->value = (__s32)(val_in_m2s * iio->outer_accel_scale_y);
-        } else {
-            fprintf(stderr, "While reading accel(y): %d\n", tmp_read);
-            return tmp_read;
-        }
-
-        ++(*buf_out);
-    }
-
-    if (*buf_out == buf_sz) {
-        return -ENOMEM;
-    } else if (iio->accel_z_fd != NULL) {
-        rewind(iio->accel_z_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->accel_z_fd);
-        if (tmp_read >= 0) {
-            gettimeofday(&now, NULL);
-            const double val = strtod(&tmp[0], NULL);
-            const double val_in_m2s = val * iio->accel_scale_z;
-
-            struct input_event* ev = &buf[*buf_out];
-
-            ev->time = now;
-            ev->type = EV_ABS;
-            ev->code = ABS_Z;
-            ev->value = (__s32)(val_in_m2s * iio->outer_accel_scale_z);
-        } else {
-            fprintf(stderr, "While reading accel(z): %d\n", tmp_read);
-            return tmp_read;
-        }
-
-        ++(*buf_out);
-    }
-
-    if (*buf_out == buf_sz) {
-        return -ENOMEM;
-    } else if (iio->anglvel_x_fd != NULL) {
-        rewind(iio->anglvel_x_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_x_fd);
-        if (tmp_read >= 0) {
-            gettimeofday(&now, NULL);
-            const double val = strtod(&tmp[0], NULL);
-            const double val_in_m2s = val * iio->anglvel_scale_x;
-
-            struct input_event* ev = &buf[*buf_out];
-
-            ev->time = now;
-            ev->type = EV_ABS;
-            ev->code = ABS_RX;
-            ev->value = (__s32)(val_in_m2s * iio->outer_anglvel_scale_x);
-        } else {
-            fprintf(stderr, "While reading anglvel(x): %d\n", tmp_read);
-            return tmp_read;
-        }
-
-        ++(*buf_out);
-    }
-
-    if (*buf_out == buf_sz) {
-        return -ENOMEM;
-    } else if (iio->anglvel_y_fd != NULL) {
-        rewind(iio->anglvel_y_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_y_fd);
-        if (tmp_read >= 0) {
-            gettimeofday(&now, NULL);
-            const double val = strtod(&tmp[0], NULL);
-            const double val_in_m2s = val * iio->anglvel_scale_y;
-
-            struct input_event* ev = &buf[*buf_out];
-
-            ev->time = now;
-            ev->type = EV_ABS;
-            ev->code = ABS_RY;
-            ev->value = (__s32)(val_in_m2s * iio->outer_anglvel_scale_y);
-        } else {
-            fprintf(stderr, "While reading anglvel(y): %d\n", tmp_read);
-            return tmp_read;
-        }
-
-        ++(*buf_out);
-    }
-
-    if (*buf_out == buf_sz) {
-        return -ENOMEM;
-    } else if (iio->anglvel_z_fd != NULL) {
-        rewind(iio->anglvel_z_fd);
-        memset((void*)&tmp[0], 0, sizeof(tmp));
-        const int tmp_read = fread((void*)&tmp[0], 1, sizeof(tmp), iio->anglvel_z_fd);
-        if (tmp_read >= 0) {
-            gettimeofday(&now, NULL);
-            const double val = strtod(&tmp[0], NULL);
-            const double val_in_m2s = val * iio->anglvel_scale_z;
-
-            struct input_event* ev = &buf[*buf_out];
-
-            ev->time = now;
-            ev->type = EV_ABS;
-            ev->code = ABS_RZ;
-            ev->value = (__s32)(val_in_m2s * iio->outer_anglvel_scale_z);
-        } else {
-            fprintf(stderr, "While reading anglvel(z): %d\n", tmp_read);
-            return tmp_read;
-        }
-
-        ++(*buf_out);
-    }
-
-    return 0;
-}
-
 static void multiplyMatrixVector(const double matrix[3][3], const double vector[3], double result[3]) {
     result[0] = matrix[0][0] * vector[0] + matrix[1][0] * vector[1] + matrix[2][0] * vector[2];
     result[1] = matrix[0][1] * vector[0] + matrix[1][1] * vector[1] + matrix[2][1] * vector[2];
     result[2] = matrix[0][2] * vector[0] + matrix[1][2] * vector[1] + matrix[2][2] * vector[2];
 }
-
+/*
 int dev_iio_read_imu(const dev_iio_t *const iio, imu_in_message_t *const out) {
     struct timeval read_time;
     gettimeofday(&read_time, NULL);
@@ -784,6 +566,7 @@ int dev_iio_read_imu(const dev_iio_t *const iio, imu_in_message_t *const out) {
 
     return 0;
 }
+*/
 
 int dev_iio_has_anglvel(const dev_iio_t* iio) {
     return (iio->flags & DEV_IIO_HAS_ANGLVEL) != 0;
@@ -791,4 +574,8 @@ int dev_iio_has_anglvel(const dev_iio_t* iio) {
 
 int dev_iio_has_accel(const dev_iio_t* iio) {
     return (iio->flags & DEV_IIO_HAS_ACCEL) != 0;
+}
+
+int dev_iio_get_buffer_fd(const dev_iio_t *const iio) {
+    return iio->fd;
 }

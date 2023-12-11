@@ -534,9 +534,30 @@ static input_dev_t in_iio_dev = {
   .dev_type = input_dev_type_iio,
   .filters = {
     .iio = {
-      .name = "bmi323",
+      .name = "bmi323-imu",
     }
   },
+  .map = {
+	.iio_settings = {
+		.sampling_freq_hz = 1600,
+		.sampling_freq_hz_frac = 000,
+		.post_matrix =
+				/*
+				// this is the testing but "wrong" mount matrix
+				{
+					{0.0f, 0.0f, -1.0f},
+					{0.0f, 1.0f, 0.0f},
+					{-1.0f, 0.0f, 0.0f}
+				};
+				*/
+				// this is the correct matrix:
+				{
+					{-1, 0, 0},
+					{0, 1, 0},
+					{0, 0, -1}
+				},
+	}
+  }
   //.logic = &global_logic,
   //.input_filter_fn = input_filter_imu_identity,
 };

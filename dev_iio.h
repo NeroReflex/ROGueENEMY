@@ -14,10 +14,7 @@ typedef struct dev_iio {
     char* path;
     char* name;
     uint32_t flags;
-
-    FILE* accel_x_fd;
-    FILE* accel_y_fd;
-    FILE* accel_z_fd;
+    int fd;
 
     double accel_scale_x;
     double accel_scale_y;
@@ -27,10 +24,6 @@ typedef struct dev_iio {
     double outer_accel_scale_y;
     double outer_accel_scale_z;
 
-    FILE* anglvel_x_fd;
-    FILE* anglvel_y_fd;
-    FILE* anglvel_z_fd;
-
     double anglvel_scale_x;
     double anglvel_scale_y;
     double anglvel_scale_z;
@@ -39,15 +32,9 @@ typedef struct dev_iio {
     double outer_anglvel_scale_y;
     double outer_anglvel_scale_z;
 
-    FILE* temp_fd;
-
     double temp_scale;
     
     double outer_temp_scale;
-
-    double mount_matrix[3][3];
-
-    double sampling_rate_hz;
 } dev_iio_t;
 
 int dev_iio_open(
@@ -55,9 +42,9 @@ int dev_iio_open(
     dev_iio_t **const out_dev
 );
 
-void dev_iio_close(dev_iio_t* iio);
+void dev_iio_close(dev_iio_t *const iio);
 
-int dev_iio_get_buffer_fd(const dev_iio_t* iio);
+int dev_iio_get_buffer_fd(const dev_iio_t *const iio);
 
 const char* dev_iio_get_name(const dev_iio_t* iio);
 
@@ -67,14 +54,6 @@ int dev_iio_has_anglvel(const dev_iio_t* iio);
 
 int dev_iio_has_accel(const dev_iio_t* iio);
 
-int dev_iio_read(
-    const dev_iio_t *const iio,
-    struct input_event *const buf,
-    size_t buf_sz,
-    uint32_t *const buf_out
-);
+int dev_iio_change_anglvel_sampling_freq(const dev_iio_t *const iio, uint16_t freq_hz, uint16_t freq_hz_frac);
 
-int dev_iio_read_imu(
-    const dev_iio_t *const iio,
-    imu_in_message_t *const out
-);
+int dev_iio_change_accel_sampling_freq(const dev_iio_t *const iio, uint16_t freq_hz, uint16_t freq_hz_frac);

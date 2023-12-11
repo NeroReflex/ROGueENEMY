@@ -55,7 +55,7 @@ typedef struct dev_in {
 
 } dev_in_t;
 
-static int fill_message_from_iio(dev_in_iio_t *const in_evdev, in_message_t *const out_msg) {
+static int send_message_from_iio(dev_in_iio_t *const in_evdev) {
     return -EINVAL;
 }
 
@@ -209,6 +209,10 @@ static void evdev_close_device(dev_in_ev_t *const out_dev) {
     dev_evdev_close(out_dev->evdev);
 }
 
+static void iio_close_device(dev_in_iio_t *const out_dev) {
+    dev_iio_close(out_dev->iiodev);
+}
+
 static void hidraw_close_device(dev_in_hidraw_t *const out_hidraw) {
     dev_hidraw_close(out_hidraw->hidrawdev);
 }
@@ -307,7 +311,7 @@ void* dev_in_thread_func(void *ptr) {
                 // device is present, query it in select
                 FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
-                
+                FD_SET(dev_iio_get_buffer_fd(devices[i].dev.iio.iiodev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
                 FD_SET(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
@@ -405,11 +409,16 @@ void* dev_in_thread_func(void *ptr) {
                 }
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
                 // TODO: implement IIO
-                //fill_message_from_iio(&devices[i].dev.iio, out_msg);
+                const int fill_res = send_message_from_iio(&devices[i].dev.iio);
+                if (fill_res != 0) {
+                    fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, fill_res);
+                    iio_close_device(&devices[i].dev.iio);
+                    devices[i].type = DEV_IN_TYPE_NONE;
+                }
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
-                const int hidraw_op_res = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
-                if (hidraw_op_res != 0) {
-                    fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, hidraw_op_res);
+                const int fill_res = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
+                if (fill_res != 0) {
+                    fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, fill_res);
                     hidraw_close_device(&devices[i].dev.hidraw);
                     devices[i].type = DEV_IN_TYPE_NONE;
                 }
@@ -423,19 +432,20 @@ void* dev_in_thread_func(void *ptr) {
             evdev_close_device(&devices[i].dev.evdev);
             devices[i].type = DEV_IN_TYPE_NONE;
         } else if (devices[i].type == DEV_IN_TYPE_IIO) {
-            // TODO: close the IIO device
+            iio_close_device(&devices[i].dev.iio);
+            devices[i].type = DEV_IN_TYPE_NONE;
         } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
             hidraw_close_device(&devices[i].dev.hidraw);
             devices[i].type = DEV_IN_TYPE_NONE;
         }
     }
 
+    // TODO: free every fd
+    free(devices);
+
     if (platform_init_res != 0) {
         dev_in_data->input_dev_decl->deinit_fn(&platform_data);
     }
-
-    // TODO: free every fd
-    free(devices);
 
     return NULL;
 }

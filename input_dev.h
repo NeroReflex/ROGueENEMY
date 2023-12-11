@@ -49,6 +49,12 @@ typedef struct hidraw_callbacks {
     hidraw_rumble rumble_callback;
 } hidraw_callbacks_t;
 
+typedef struct iio_settings {
+    uint16_t sampling_freq_hz;
+    uint16_t sampling_freq_hz_frac;
+    int8_t post_matrix[3][3];
+} iio_settings_t;
+
 typedef struct input_dev {
     input_dev_type_t dev_type;
 
@@ -61,6 +67,7 @@ typedef struct input_dev {
     void* user_data;
 
     union input_dev_map {
+        iio_settings_t iio_settings;
         ev_map ev_input_map_fn;
         hidraw_map hidraw_input_map_fn;
     } map;
