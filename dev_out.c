@@ -1,8 +1,10 @@
 #include "dev_out.h"
 
 #include "devices_status.h"
+#include "message.h"
 #include "virt_ds4.h"
 #include "virt_ds5.h"
+#include <pthread.h>
 
 static void handle_incoming_message_gamepad_action(
     const in_message_gamepad_action_t *const msg_payload,
@@ -219,7 +221,22 @@ void *dev_out_thread_func(void *ptr) {
             }
         } else {
             FD_ZERO(&read_fds);
-            FD_SET(dev_out->in_message_pipe_fd, &read_fds);
+
+            if (dev_out->communication.type == ipc_unix_pipe) {
+                FD_SET(dev_out->communication.endpoint.pipe.in_message_pipe_fd, &read_fds);
+            } else if (dev_out->communication.type == ipc_server_sockets) {
+                if (pthread_mutex_lock(&dev_out->communication.endpoint.ssocket.mutex) == 0) {
+                    for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                        const int fd = dev_out->communication.endpoint.ssocket.clients[i];
+                        if (fd > 0) {
+                            FD_SET(fd, &read_fds);
+                        }
+                    }
+                
+                    pthread_mutex_unlock(&dev_out->communication.endpoint.ssocket.mutex);
+                }
+            }
+
             // TODO: FD_SET(current_mouse_fd, &read_fds);
             // TODO: FD_SET(current_keyboard_fd, &read_fds);
             FD_SET(current_gamepad_fd, &read_fds);
@@ -242,23 +259,93 @@ void *dev_out_thread_func(void *ptr) {
                 continue;
             }
 
+            
             if (FD_ISSET(current_gamepad_fd, &read_fds)) {
+                const uint64_t prev_leds_events_count = dev_out->dev_stats.gamepad.leds_events_count;
+                const uint64_t prev_motors_events_count = dev_out->dev_stats.gamepad.rumble_events_count;
+
+                out_message_t out_msgs[4];
+                size_t out_msgs_count = 0;
                 if (current_gamepad == GAMEPAD_DUALSENSE) {
-                    virt_dualsense_event(&controller_data.ds5, &dev_out->dev_stats.gamepad, dev_out->out_message_pipe_fd);
+                    virt_dualsense_event(&controller_data.ds5, &dev_out->dev_stats.gamepad);
                 } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
-                    virt_dualshock_event(&controller_data.ds4, &dev_out->dev_stats.gamepad, dev_out->out_message_pipe_fd);
+                    virt_dualshock_event(&controller_data.ds4, &dev_out->dev_stats.gamepad);
+                }
+
+                const uint64_t current_leds_events_count = dev_out->dev_stats.gamepad.leds_events_count;
+                const uint64_t current_motors_events_count = dev_out->dev_stats.gamepad.rumble_events_count;
+
+                if (current_leds_events_count != prev_leds_events_count) {
+                    const out_message_t msg = {
+                        .type = OUT_MSG_TYPE_LEDS,
+                        .data = {
+                            .leds = {
+                                .r = dev_out->dev_stats.gamepad.leds_colors[0],
+                                .g = dev_out->dev_stats.gamepad.leds_colors[1],
+                                .b = dev_out->dev_stats.gamepad.leds_colors[2],
+                            }
+                        }
+                    };
+
+                    out_msgs[out_msgs_count++] = msg;
+                }
+
+                if (current_motors_events_count != prev_motors_events_count) {
+                    const out_message_t msg = {
+                        .type = OUT_MSG_TYPE_RUMBLE,
+                        .data = {
+                            .rumble = {
+                                .motors_left = dev_out->dev_stats.gamepad.motors_intensity[0],
+                                .motors_right = dev_out->dev_stats.gamepad.motors_intensity[1],
+                            }
+                        }
+                    };
+
+                    out_msgs[out_msgs_count++] = msg;
+                }
+
+                // send out game-generated events to sockets
+                int fd = -1;
+                if (dev_out->communication.type == ipc_unix_pipe) {
+                    fd = dev_out->communication.endpoint.pipe.out_message_pipe_fd;
+                } else if (dev_out->communication.type == ipc_server_sockets) {
+                    
                 }
             }
 
-            if (FD_ISSET(dev_out->in_message_pipe_fd, &read_fds)) {
-                in_message_t incoming_message;
-                size_t in_message_pipe_read_res = read(dev_out->in_message_pipe_fd, (void*)&incoming_message, sizeof(in_message_t));
-                if (in_message_pipe_read_res == sizeof(in_message_t)) {
-                    handle_incoming_message(&incoming_message, &dev_out->dev_stats);
-                } else {
-                    fprintf(stderr, "Error reading from in_message_pipe_fd: got %zu bytes, expected %zu butes\n", in_message_pipe_read_res, sizeof(in_message_t));
+            // read and handle incoming data: this data is packed into in_message_t
+            if (dev_out->communication.type == ipc_unix_pipe) {
+                if (FD_ISSET(dev_out->communication.endpoint.pipe.in_message_pipe_fd, &read_fds)) {
+                    in_message_t incoming_message;
+                    const size_t in_message_pipe_read_res = read(dev_out->communication.endpoint.pipe.in_message_pipe_fd, (void*)&incoming_message, sizeof(in_message_t));
+                    if (in_message_pipe_read_res == sizeof(in_message_t)) {
+                        handle_incoming_message(&incoming_message, &dev_out->dev_stats);
+                    } else {
+                        fprintf(stderr, "Error reading from in_message_pipe_fd: got %zu bytes, expected %zu butes\n", in_message_pipe_read_res, sizeof(in_message_t));
+                    }
+                }
+            } else if (dev_out->communication.type == ipc_server_sockets) {
+                if (pthread_mutex_lock(&dev_out->communication.endpoint.ssocket.mutex) == 0) {
+                    for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                        const int fd = dev_out->communication.endpoint.ssocket.clients[i];
+                        if ((fd > 0) && (FD_ISSET(fd, &read_fds))) {
+                            in_message_t incoming_message;
+                            const size_t in_message_pipe_read_res = read(fd, (void*)&incoming_message, sizeof(in_message_t));
+                            if (in_message_pipe_read_res == sizeof(in_message_t)) {
+                                handle_incoming_message(&incoming_message, &dev_out->dev_stats);
+                            } else {
+                                fprintf(stderr, "Error reading from in_message_pipe_fd: got %zu bytes, expected %zu butes\n", in_message_pipe_read_res, sizeof(in_message_t));
+                                dev_out->communication.endpoint.ssocket.clients[i] = -1;
+                                close(fd);
+                            }
+                        }
+                    }
+                
+                    pthread_mutex_unlock(&dev_out->communication.endpoint.ssocket.mutex);
                 }
             }
+
+            
         }
     }
 

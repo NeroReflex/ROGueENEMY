@@ -23,6 +23,8 @@
 #include <sys/ioctl.h>
 #include <sys/select.h>
 #include <sys/syscall.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #include <linux/hidraw.h>
 #include <linux/input-event-codes.h>

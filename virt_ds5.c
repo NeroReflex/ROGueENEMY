@@ -142,7 +142,7 @@ int virt_dualsense_get_fd(virt_dualsense_t *const in_gamepad) {
     return in_gamepad->fd;
 }
 
-int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *const out_device_status, int out_message_pipe_fd)
+int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *const out_device_status)
 {
 	struct uhid_event ev;
 	ssize_t ret;
@@ -235,21 +235,6 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
                 out_device_status->motors_intensity[1] = motor_right;
                 ++out_device_status->rumble_events_count;
 
-                const out_message_t msg = {
-                    .type = OUT_MSG_TYPE_RUMBLE,
-                    .data = {
-                        .rumble = {
-                            .motors_left = motor_left,
-                            .motors_right = motor_right,
-                        }
-                    }
-                };
-
-                const int write_res = write(out_message_pipe_fd, (void*)&msg, sizeof(msg));
-                if (write_res != 0) {
-                    return write_res;
-                }
-
                 if (gamepad->debug) {
                     printf(
                         "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
@@ -263,21 +248,10 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
         }
 
         if (valid_flag1 & DS_OUTPUT_VALID_FLAG1_LIGHTBAR_CONTROL_ENABLE) {
-            const out_message_t msg = {
-                .type = OUT_MSG_TYPE_LEDS,
-                .data = {
-                    .leds = {
-                        .r = lightbar_red,
-                        .g = lightbar_green,
-                        .b = lightbar_blue,
-                    }
-                }
-            };
-
-            const int write_res = write(out_message_pipe_fd, (void*)&msg, sizeof(msg));
-            if (write_res != 0) {
-                return write_res;
-            }
+            out_device_status->leds_colors[0] = lightbar_red;
+            out_device_status->leds_colors[1] = lightbar_green;
+            out_device_status->leds_colors[2] = lightbar_blue;
+            out_device_status->leds_events_count++;
         }
 
 		break;

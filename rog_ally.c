@@ -432,7 +432,9 @@ static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 	}
 };
 
-void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data) {
+int asus_kbd_ev_map(const evdev_collected_t *const e, in_message_t *const messages, size_t messages_len, void* user_data) {
+	int written_msg = 0;
+
   if ( // this is what happens at release of the left-screen button of the ROG Ally
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
@@ -449,10 +451,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
       }
     };
 
-    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-    if (in_message_pipe_write_res != sizeof(in_message_t)) {
-      fprintf(stderr, "Unable to write data for MENU to the in_message pipe: %zu\n", in_message_pipe_write_res);
-    }
+	messages[written_msg++] = current_message;
 	} else if ( // this is what happens at release of the right-screen button of the ROG Ally
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
@@ -469,10 +468,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
       }
     };
 
-    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-    if (in_message_pipe_write_res != sizeof(in_message_t)) {
-      fprintf(stderr, "Unable to write data for QAM to the in_message pipe: %zu\n", in_message_pipe_write_res);
-    }
+    messages[written_msg++] = current_message;
 	} else if (
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
@@ -493,10 +489,7 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
       }
     };
 
-    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-    if (in_message_pipe_write_res != sizeof(in_message_t)) {
-      fprintf(stderr, "Unable to write data for L5 to the in_message pipe: %zu\n", in_message_pipe_write_res);
-    }
+    messages[written_msg++] = current_message;
   } else if (
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
@@ -517,11 +510,10 @@ void asus_kbd_ev_map(const evdev_collected_t *const e, int in_messages_pipe_fd, 
 			}
 		};
 
-		const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-		if (in_message_pipe_write_res != sizeof(in_message_t)) {
-			fprintf(stderr, "Unable to write data for R5 to the in_message pipe: %zu\n", in_message_pipe_write_res);
-		}
+		messages[written_msg++] = current_message;
 	}
+	
+	return written_msg;
 }
 
 static hidraw_filters_t n_key_hidraw_filters = {

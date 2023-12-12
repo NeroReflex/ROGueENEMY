@@ -9,33 +9,46 @@ project(
   VERSION 1.0
   LANGUAGES C)
 
-set(EXECUTABLE_NAME "rogue-enemy")
+set(ROGUE_EXECUTABLE_NAME "rogue-enemy")
+set(STRAY_EXECUTABLE_NAME "stray-ally")
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-# Adding something we can run - Output name matches target name
-add_executable(${EXECUTABLE_NAME}
+add_executable(${ROGUE_EXECUTABLE_NAME}
                   dev_evdev.c
                   dev_iio.c
                   dev_hidraw.c
                   dev_in.c
-                  dev_out.c
                   main.c
                   settings.c
-                  virt_ds4.c
-                  virt_ds5.c
-                  devices_status.c
                   rog_ally.c
                   legion_go.c
                   xbox360.c
                   rogue_enemy.c
 )
 
-set_property(TARGET ${EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
+add_executable(${STRAY_EXECUTABLE_NAME}
+                  dev_out.c
+                  stray_ally.c
+                  settings.c
+                  virt_ds4.c
+                  virt_ds5.c
+                  devices_status.c
+)
 
-target_link_libraries(${EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm)
+set_property(TARGET ${ROGUE_EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
 
-set_target_properties(${EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
+target_link_libraries(${ROGUE_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm)
 
-install(TARGETS ${EXECUTABLE_NAME} DESTINATION bin)
+set_target_properties(${ROGUE_EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS ${ROGUE_EXECUTABLE_NAME} DESTINATION bin)
+
+set_property(TARGET ${STRAY_EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
+
+target_link_libraries(${STRAY_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm)
+
+set_target_properties(${STRAY_EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS ${STRAY_EXECUTABLE_NAME} DESTINATION bin)

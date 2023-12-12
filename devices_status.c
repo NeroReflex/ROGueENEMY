@@ -35,6 +35,10 @@ void gamepad_status_init(gamepad_status_t *const stats) {
     stats->accel[0] = 0;
     stats->accel[1] = 0;
     stats->accel[2] = 0;
+    stats->leds_events_count = 0;
+    stats->leds_colors[0] = 0;
+    stats->leds_colors[1] = 0;
+    stats->leds_colors[2] = 0;
     stats->flags = 0;
 }
 

@@ -58,6 +58,9 @@ typedef struct gamepad_status {
     uint64_t rumble_events_count;
     uint8_t motors_intensity[2]; // 0 = left, 1 = right
 
+    uint64_t leds_events_count;
+    uint8_t leds_colors[3]; // r | g | b
+
     volatile uint32_t flags;
 
 } gamepad_status_t;

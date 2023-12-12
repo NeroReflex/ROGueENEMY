@@ -17,8 +17,8 @@ typedef struct evdev_collected {
  * A function with this signature grapbs input_event data and sends to the pipe messages
  * constructed from that data.
  */
-typedef void (*ev_map)(const evdev_collected_t *const e, int in_messages_pipe_fd, void* user_data);
-typedef int (*hidraw_map)(int hidraw_fd, int in_messages_pipe_fd, void* user_data);
+typedef int (*ev_map)(const evdev_collected_t *const e, in_message_t *const messages, size_t messages_len, void* user_data);
+typedef int (*hidraw_map)(int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data);
 
 typedef enum input_dev_type {
     input_dev_type_uinput,
@@ -92,9 +92,3 @@ typedef struct input_dev_composite {
     platform_deinit deinit_fn;
 
 } input_dev_composite_t;
-
-uint32_t input_filter_imu_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags);
-
-uint32_t input_filter_identity(struct input_event* events, size_t* size, uint32_t* count, uint32_t* flags);
-
-uint32_t input_filter_asus_kb(struct input_event*, size_t*, uint32_t*, uint32_t* flags);

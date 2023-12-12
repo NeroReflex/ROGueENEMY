@@ -40,8 +40,10 @@ static struct llg_hidraw_data {
     uint8_t last_packet[64];
 } llg_hidraw_user_data;
 
-static int llg_hidraw_map(int hidraw_fd, int in_messages_pipe_fd, void* user_data) {
+static int llg_hidraw_map(int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data) {
     struct llg_hidraw_data *const llg_data = (struct llg_hidraw_data*)user_data;
+
+    int msg_count = 0;
 
     int read_res = read(hidraw_fd, llg_data->last_packet, sizeof(llg_data->last_packet));
     if (read_res != 64) {
@@ -64,16 +66,11 @@ static int llg_hidraw_map(int hidraw_fd, int in_messages_pipe_fd, void* user_dat
     };
 
     // this does send messages to the output device
-
-    const ssize_t in_message_pipe_write_res = write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t));
-    if (in_message_pipe_write_res != sizeof(in_message_t)) {
-      fprintf(stderr, "Unable to write data for L4 to the in_message pipe: %zu\n", in_message_pipe_write_res);
-      return -EINVAL;
-    }
+    messages[msg_count++] = current_message;
     */
 
     // successful return
-    return 0;
+    return msg_count;
 }
 
 static input_dev_t in_hidraw_dev = {

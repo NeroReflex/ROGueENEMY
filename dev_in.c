@@ -1,6 +1,7 @@
 #include "dev_in.h"
 #include "dev_hidraw.h"
 #include "input_dev.h"
+#include "ipc.h"
 #include "message.h"
 #include "dev_evdev.h"
 #include "dev_iio.h"
@@ -55,7 +56,7 @@ typedef struct dev_in {
 
 } dev_in_t;
 
-static int send_message_from_iio(dev_in_iio_t *const in_iio) {
+static int map_message_from_iio(dev_in_iio_t *const in_iio, in_message_t *const messages, size_t messages_len) {
     int res = -EIO;
 
     /*
@@ -333,6 +334,15 @@ static void handle_rumble(dev_in_t *const in_devs, size_t in_devs_count, const o
     }
 }
 
+static int open_socket(void) {
+    int res = -ENODEV;
+
+
+
+open_socket_err:
+    return res;
+}
+
 void* dev_in_thread_func(void *ptr) {
     dev_in_data_t *const dev_in_data = (dev_in_data_t*)ptr;
 
@@ -364,7 +374,20 @@ void* dev_in_thread_func(void *ptr) {
 
     for (;;) {
         FD_ZERO(&read_fds);
-        FD_SET(dev_in_data->out_message_pipe_fd, &read_fds);
+
+        if (dev_in_data->communication.type == ipc_unix_pipe) {
+            FD_SET(dev_in_data->communication.endpoint.pipe.out_message_pipe_fd, &read_fds);
+        } else if (dev_in_data->communication.type == ipc_client_socket) {
+            dev_in_data->communication.endpoint.socket = open_socket();
+
+            // do not do a thing! that will consume messages and they won't be available anymore!
+            if (dev_in_data->communication.endpoint.socket < 0) {
+                fprintf(stderr, "Unable to connect to server: %d -- will retry connection\n", dev_in_data->communication.endpoint.socket);
+                usleep(500000);
+                continue;
+            }
+        }
+
         for (size_t i = 0; i < max_devices; ++i) {
             if (devices[i].type == DEV_IN_TYPE_EV) {
                 // device is present, query it in select
@@ -415,9 +438,16 @@ void* dev_in_thread_func(void *ptr) {
         }
 
         // check for messages incoming like set leds or activate rumble
-        if (FD_ISSET(dev_in_data->out_message_pipe_fd, &read_fds)) {
+        int out_message_fd = -1;
+        if (dev_in_data->communication.type == ipc_unix_pipe) {
+            out_message_fd = dev_in_data->communication.endpoint.pipe.out_message_pipe_fd;
+        } else if (dev_in_data->communication.type == ipc_client_socket) {
+
+        }
+
+        if (FD_ISSET(out_message_fd, &read_fds)) {
             out_message_t out_msg;
-            const ssize_t out_message_pipe_read_res = read(dev_in_data->out_message_pipe_fd, (void*)&out_msg, sizeof(out_message_t));
+            const ssize_t out_message_pipe_read_res = read(out_message_fd, (void*)&out_msg, sizeof(out_message_t));
             if (out_message_pipe_read_res == sizeof(out_message_t)) {
                 if (out_msg.type == OUT_MSG_TYPE_RUMBLE) {
                     handle_rumble(devices, max_devices, &out_msg.data.rumble);
@@ -432,6 +462,12 @@ void* dev_in_thread_func(void *ptr) {
                 }
             } else {
                 fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu butes\n", out_message_pipe_read_res, sizeof(out_message_t));
+
+                // in case of an error reschedule to socket for reconnection
+                if (dev_in_data->communication.type == ipc_client_socket) {
+                    close(out_message_fd);
+                    dev_in_data->communication.endpoint.socket = -1;
+                }
             }
         }
 
@@ -452,32 +488,61 @@ void* dev_in_thread_func(void *ptr) {
                 continue;
             }
 
+            in_message_t controller_msg[MAX_IN_MESSAGES];
+            size_t controller_msg_avail = sizeof(controller_msg) / sizeof(in_message_t);
+            int controller_msg_count = -EIO;
+
+            // the following part fills controller_msg and writes in controller_msg_count an error or the number of messages to be sent to the output device
             if (devices[i].type == DEV_IN_TYPE_EV) {
                 evdev_collected_t coll = {
                     .ev_count = 0
                 };
 
-                const int fill_res = fill_message_from_evdev(&devices[i].dev.evdev, &coll);
-                if (fill_res != 0) {
-                    fprintf(stderr, "Unable to fill input_event(s) for device %zd: %d -- Will reconnect the device\n", i, fill_res);
+                controller_msg_count = fill_message_from_evdev(&devices[i].dev.evdev, &coll);
+                if (controller_msg_count != 0) {
+                    fprintf(stderr, "Unable to fill input_event(s) for device %zd: %d -- Will reconnect the device\n", i, controller_msg_count);
                     evdev_close_device(&devices[i].dev.evdev);
                     devices[i].type = DEV_IN_TYPE_NONE;
-                } else {
-                    dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(&coll, dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
+                    continue;
                 }
+
+                dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(&coll, &controller_msg[0], controller_msg_avail, dev_in_data->input_dev_decl->dev[i]->user_data);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
-                const int fill_res = send_message_from_iio(&devices[i].dev.iio);
-                if (fill_res != 0) {
-                    fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, fill_res);
+                controller_msg_count = map_message_from_iio(&devices[i].dev.iio, &controller_msg[0], controller_msg_avail);
+                if (controller_msg_count != 0) {
+                    fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
                     iio_close_device(&devices[i].dev.iio);
                     devices[i].type = DEV_IN_TYPE_NONE;
+                    continue;
                 }
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
-                const int fill_res = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), dev_in_data->in_message_pipe_fd, dev_in_data->input_dev_decl->dev[i]->user_data);
-                if (fill_res != 0) {
-                    fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, fill_res);
+                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), &controller_msg[0], controller_msg_avail, dev_in_data->input_dev_decl->dev[i]->user_data);
+                if (controller_msg_count != 0) {
+                    fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
                     hidraw_close_device(&devices[i].dev.hidraw);
                     devices[i].type = DEV_IN_TYPE_NONE;
+                    continue;
+                }
+            }
+
+            // send messages (if any)
+            if (controller_msg_count > 0) {
+                int in_message_fd = -1;
+                if (dev_in_data->communication.type == ipc_client_socket) {
+                    in_message_fd = dev_in_data->communication.endpoint.socket;
+                } else if (dev_in_data->communication.type == ipc_unix_pipe) {
+                    in_message_fd = dev_in_data->communication.endpoint.pipe.in_message_pipe_fd;
+                }
+
+                const int write_res = write(in_message_fd, (void*)&controller_msg[0], controller_msg_count);
+                if (write_res < 0) {
+                    fprintf(stderr, "Error in writing input event messages: %d\n", write_res);
+
+                    // in case of an error reschedule to socket for reconnection
+                    if (dev_in_data->communication.type == ipc_client_socket) {
+                        close(in_message_fd);
+                        dev_in_data->communication.endpoint.socket = -1;
+                    }
                 }
             }
         }

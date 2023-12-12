@@ -27,7 +27,7 @@ int virt_dualsense_init(virt_dualsense_t *const gamepad);
 
 int virt_dualsense_get_fd(virt_dualsense_t *const gamepad);
 
-int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *const out_device_status, int out_message_pipe_fd);
+int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *const out_device_status);
 
 void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf);
 

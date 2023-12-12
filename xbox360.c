@@ -1,8 +1,9 @@
 #include "xbox360.h"
 #include "message.h"
 
-void xbox360_ev_map(const evdev_collected_t *const coll, int in_messages_pipe_fd, void* user_data) {
+int xbox360_ev_map(const evdev_collected_t *const coll, in_message_t *const messages, size_t messages_len, void* user_data) {
 	const xbox360_settings_t *const settings = (xbox360_settings_t*)user_data;
+	int written_msg = 0;
 
     for (uint32_t i = 0; i < coll->ev_count; ++i) {
 		if (coll->ev[i].type == EV_KEY) {
@@ -45,10 +46,11 @@ void xbox360_ev_map(const evdev_collected_t *const coll, int in_messages_pipe_fd
 				current_message.data.action = GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER;
 			}
 
-			// send the button event over the pipe
-			if (write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t)) != sizeof(in_message_t)) {
-				fprintf(stderr, "Unable to write gamepad data to the in_message pipe\n");
+			if (written_msg == (messages_len-1)) {
+				return -ENOMEM;
 			}
+
+			messages[written_msg++] = current_message;
 		} else if (coll->ev[i].type == EV_ABS) {
 			in_message_t current_message = {
 				.type = GAMEPAD_SET_ELEMENT,
@@ -80,10 +82,11 @@ void xbox360_ev_map(const evdev_collected_t *const coll, int in_messages_pipe_fd
 				current_message.data.gamepad_set.status.btn = coll->ev[i].value;
 			}
 
-			// send the button event over the pipe
-			if (write(in_messages_pipe_fd, (void*)&current_message, sizeof(in_message_t)) != sizeof(in_message_t)) {
-				fprintf(stderr, "Unable to write gamepad data to the in_message pipe\n");
+			if (written_msg == (messages_len-1)) {
+				return -ENOMEM;
 			}
+
+			messages[written_msg++] = current_message;
 		}
 	}
 }

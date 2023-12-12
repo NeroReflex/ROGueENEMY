@@ -25,7 +25,7 @@ int virt_dualshock_init(virt_dualshock_t *const gamepad);
 
 int virt_dualshock_get_fd(virt_dualshock_t *const gamepad);
 
-int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *const out_device_status, int out_message_pipe_fd);
+int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *const out_device_status);
 
 void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ipc.h"
 #include "message.h"
 #include "devices_status.h"
 
@@ -11,11 +12,7 @@ typedef enum dev_out_gamepad_device {
 
 typedef struct dev_out_data {
 
-    // this pipe is reserved for reporting in_message_t
-    int in_message_pipe_fd;
-
-    // this messages is reserved for receiving out_message_t
-    int out_message_pipe_fd;
+    ipc_t communication;
 
     dev_out_gamepad_device_t gamepad;
 
