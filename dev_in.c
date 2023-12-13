@@ -340,6 +340,11 @@ void* dev_in_thread_func(void *ptr) {
     }
 
     for (;;) {
+        if (dev_in_data->flags & DEV_IN_FLAG_EXIT) {
+            printf("Termination signal received -- exiting dev_in\n");
+            break;
+        }
+
         FD_ZERO(&read_fds);
 
         if (dev_in_data->communication.type == ipc_unix_pipe) {

@@ -39,13 +39,6 @@ int main(int argc, char ** argv) {
   init_config(&settings);
   fill_config(&settings, configuration_file);
 
-/*
-  const int logic_creation_res = logic_create(&global_logic);
-  if (logic_creation_res < 0) {
-    fprintf(stderr, "Unable to create logic: %d", logic_creation_res);
-    return EXIT_FAILURE;
-  }
-*/
   input_dev_composite_t* in_devs = NULL;
   
   int dmi_name_fd = open("/sys/class/dmi/id/board_name", O_RDONLY | O_NONBLOCK);
@@ -74,6 +67,24 @@ int main(int argc, char ** argv) {
 
   int in_message_pipes[2];
   pipe(in_message_pipes);
+
+  // Create a signal set containing only SIGTERM
+  sigset_t mask;
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGTERM);
+
+  // Block SIGTERM for the current thread
+  if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
+      perror("sigprocmask");
+      exit(EXIT_FAILURE);
+  }
+
+  // Create a signalfd for the specified signals
+  int sfd = signalfd(-1, &mask, 0);
+  if (sfd == -1) {
+      perror("signalfd");
+      exit(EXIT_FAILURE);
+  }
 
   // populate the input device thread data
   dev_in_thread_data.timeout_ms = 400;
@@ -106,14 +117,35 @@ int main(int argc, char ** argv) {
     goto main_err;
   }
 
-/*
-  // TODO: once the application is able to exit de-comment this
-  __sighandler_t sigint_hndl = signal(SIGINT, sig_handler); 
-  if (sigint_hndl == SIG_ERR) {
-    fprintf(stderr, "Error registering SIGINT handler\n");
-    return EXIT_FAILURE;
+  struct pollfd sigpoll = {
+    .fd = sfd,
+    .events = POLL_IN,
+  };
+
+  for (;;) {
+    sigpoll.revents = 0;
+
+    poll(&sigpoll, 1, 400);
+ 
+    if (sigpoll.revents & POLL_IN) {
+      // Read signals from the signalfd
+      struct signalfd_siginfo si;
+      ssize_t s = read(sfd, &si, sizeof(struct signalfd_siginfo));
+
+      if (s != sizeof(struct signalfd_siginfo)) {
+          perror("Error reading signalfd\n");
+          exit(EXIT_FAILURE);
+      }
+
+      // Check the signal received
+      if (si.ssi_signo == SIGTERM) {
+          printf("Received SIGTERM -- propagating signal\n");
+          dev_in_thread_data.flags |= DEV_IN_FLAG_EXIT;
+          dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
+          break;
+      }
+    }
   }
-*/
 
 main_err:
   if (dev_in_thread_creation == 0) {

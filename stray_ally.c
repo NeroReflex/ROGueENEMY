@@ -68,6 +68,9 @@ int main(int argc, char ** argv) {
     int    sd=-1;
     struct sockaddr_un serveraddr;
     do {
+        poll_fds[0].revents = 0;
+        poll_fds[1].revents = 0;
+
         sd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
         if (sd < 0)
         {

@@ -6,6 +6,8 @@
 
 #define MAX_IN_MESSAGES 8
 
+#define DEV_IN_FLAG_EXIT 0x00000001U
+
 typedef struct dev_in_data {
     size_t max_messages_in_flight;
 
@@ -16,6 +18,8 @@ typedef struct dev_in_data {
     input_dev_composite_t *input_dev_decl;
 
     ipc_t communication;
+
+    volatile uint32_t flags;
 
 } dev_in_data_t;
 
