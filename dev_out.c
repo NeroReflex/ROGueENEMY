@@ -306,10 +306,22 @@ void *dev_out_thread_func(void *ptr) {
 
                 // send out game-generated events to sockets
                 int fd = -1;
+                const size_t bytes_to_send = sizeof(out_message_t) * out_msgs_count;
+
                 if (dev_out->communication.type == ipc_unix_pipe) {
-                    fd = dev_out->communication.endpoint.pipe.out_message_pipe_fd;
+                    const int write_res = write(dev_out->communication.endpoint.pipe.out_message_pipe_fd, (void*)&out_msgs, bytes_to_send);
+                    if (write_res != bytes_to_send) {
+                        fprintf(stderr, "Error in writing out_message to out_message_pipe: %d\n", write_res);
+                    }
                 } else if (dev_out->communication.type == ipc_server_sockets) {
-                    
+                    for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                        const int write_res = write(dev_out->communication.endpoint.ssocket.clients[i], (void*)&out_msgs, bytes_to_send);
+                        if (write_res != bytes_to_send) {
+                            fprintf(stderr, "Error in writing out_message to socket number %d: %d\n", i, write_res);
+                            close(dev_out->communication.endpoint.ssocket.clients[i]);
+                            dev_out->communication.endpoint.ssocket.clients[i] = -1;
+                        }
+                    }
                 }
             }
 

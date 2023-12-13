@@ -454,7 +454,7 @@ void* dev_in_thread_func(void *ptr) {
         if (dev_in_data->communication.type == ipc_unix_pipe) {
             out_message_fd = dev_in_data->communication.endpoint.pipe.out_message_pipe_fd;
         } else if (dev_in_data->communication.type == ipc_client_socket) {
-
+            out_message_fd = dev_in_data->communication.endpoint.socket.fd;
         }
 
         if (FD_ISSET(out_message_fd, &read_fds)) {
@@ -546,7 +546,7 @@ void* dev_in_thread_func(void *ptr) {
                     in_message_fd = dev_in_data->communication.endpoint.pipe.in_message_pipe_fd;
                 }
 
-                const int write_res = write(in_message_fd, (void*)&controller_msg[0], controller_msg_count);
+                const int write_res = write(in_message_fd, (void*)&controller_msg[0], sizeof(in_message_t) * controller_msg_count);
                 if (write_res < 0) {
                     fprintf(stderr, "Error in writing input event messages: %d\n", write_res);
 
