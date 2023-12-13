@@ -1,6 +1,7 @@
 #include "dev_out.h"
 
 #include "devices_status.h"
+#include "ipc.h"
 #include "message.h"
 #include "virt_ds4.h"
 #include "virt_ds5.h"
@@ -378,14 +379,23 @@ void *dev_out_thread_func(void *ptr) {
         virt_dualshock_close(&controller_data.ds4);
     }
 
-    // close every thread
-    if (pthread_mutex_lock(&dev_out_data->communication.endpoint.ssocket.mutex) == 0) {
-        for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
-            close(dev_out_data->communication.endpoint.ssocket.clients[i]);
-            dev_out_data->communication.endpoint.ssocket.clients[i] = -1;
-        }
+    // end communication
+    if (dev_out_data->communication.type == ipc_server_sockets) {
+        // close every client socket
+        if (pthread_mutex_lock(&dev_out_data->communication.endpoint.ssocket.mutex) == 0) {
+            for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                close(dev_out_data->communication.endpoint.ssocket.clients[i]);
+                dev_out_data->communication.endpoint.ssocket.clients[i] = -1;
+            }
 
-        pthread_mutex_unlock(&dev_out_data->communication.endpoint.ssocket.mutex);
+            pthread_mutex_unlock(&dev_out_data->communication.endpoint.ssocket.mutex);
+        }
+    } else if (dev_out_data->communication.type == ipc_unix_pipe) {
+        close(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd);
+        close(dev_out_data->communication.endpoint.pipe.out_message_pipe_fd);
+    } else if (dev_out_data->communication.type == ipc_client_socket) {
+        close(dev_out_data->communication.endpoint.socket.fd);
+        dev_out_data->communication.endpoint.socket.fd = -1;
     }
 
     return NULL;

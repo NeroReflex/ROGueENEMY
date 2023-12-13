@@ -520,6 +520,25 @@ void* dev_in_thread_func(void *ptr) {
         }
     }
 
+    // end communication
+    if (dev_in_data->communication.type == ipc_server_sockets) {
+        // close every client socket
+        if (pthread_mutex_lock(&dev_in_data->communication.endpoint.ssocket.mutex) == 0) {
+            for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                close(dev_in_data->communication.endpoint.ssocket.clients[i]);
+                dev_in_data->communication.endpoint.ssocket.clients[i] = -1;
+            }
+
+            pthread_mutex_unlock(&dev_in_data->communication.endpoint.ssocket.mutex);
+        }
+    } else if (dev_in_data->communication.type == ipc_unix_pipe) {
+        close(dev_in_data->communication.endpoint.pipe.in_message_pipe_fd);
+        close(dev_in_data->communication.endpoint.pipe.out_message_pipe_fd);
+    } else if (dev_in_data->communication.type == ipc_client_socket) {
+        close(dev_in_data->communication.endpoint.socket.fd);
+        dev_in_data->communication.endpoint.socket.fd = -1;
+    }
+
     // close every opened device
     for (size_t i = 0; i < max_devices; ++i) {
         if (devices[i].type == DEV_IN_TYPE_EV) {
