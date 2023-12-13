@@ -316,11 +316,13 @@ void *dev_out_thread_func(void *ptr) {
                 } else if (dev_out->communication.type == ipc_server_sockets) {
                     if (pthread_mutex_lock(&dev_out->communication.endpoint.ssocket.mutex) == 0) {
                         for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
-                            const int write_res = write(dev_out->communication.endpoint.ssocket.clients[i], (void*)&out_msgs, bytes_to_send);
-                            if (write_res != bytes_to_send) {
-                                fprintf(stderr, "Error in writing out_message to socket number %d: %d\n", i, write_res);
-                                close(dev_out->communication.endpoint.ssocket.clients[i]);
-                                dev_out->communication.endpoint.ssocket.clients[i] = -1;
+                            if (dev_out->communication.endpoint.ssocket.clients[i] > 0) {
+                                const int write_res = write(dev_out->communication.endpoint.ssocket.clients[i], (void*)&out_msgs, bytes_to_send);
+                                if (write_res != bytes_to_send) {
+                                    fprintf(stderr, "Error in writing out_message to socket number %d: %d\n", i, write_res);
+                                    close(dev_out->communication.endpoint.ssocket.clients[i]);
+                                    dev_out->communication.endpoint.ssocket.clients[i] = -1;
+                                }
                             }
                         }
 
