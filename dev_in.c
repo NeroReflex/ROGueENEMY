@@ -350,13 +350,16 @@ void* dev_in_thread_func(void *ptr) {
         if (dev_in_data->communication.type == ipc_unix_pipe) {
             FD_SET(dev_in_data->communication.endpoint.pipe.out_message_pipe_fd, &read_fds);
         } else if (dev_in_data->communication.type == ipc_client_socket) {
-            dev_in_data->communication.endpoint.socket.fd = open_socket(&dev_in_data->communication.endpoint.socket.serveraddr);
-
-            // do not do a thing! that will consume messages and they won't be available anymore!
+            // only reconnect if the fd is invalid
             if (dev_in_data->communication.endpoint.socket.fd < 0) {
-                fprintf(stderr, "Unable to connect to server: %d -- will retry connection\n", dev_in_data->communication.endpoint.socket.fd);
-                usleep(500000);
-                continue;
+                dev_in_data->communication.endpoint.socket.fd = open_socket(&dev_in_data->communication.endpoint.socket.serveraddr);
+
+                // do not do a thing! that will consume messages and they won't be available anymore!
+                if (dev_in_data->communication.endpoint.socket.fd < 0) {
+                    fprintf(stderr, "Unable to connect to server: %d -- will retry connection\n", dev_in_data->communication.endpoint.socket.fd);
+                    usleep(500000);
+                    continue;
+                }
             }
         }
 
