@@ -143,7 +143,9 @@ static int dev_iio_create(char* dev_path, const char* path, dev_iio_t **const ou
 
     (*out_iio)->fd = open((*out_iio)->dev_path, O_RDONLY);
     if ((*out_iio)->fd < 0) {
-        fprintf(stderr, "Error opening %s: %d", (*out_iio)->dev_path, errno);
+        fprintf(stderr, "Error opening %s: %d\n", (*out_iio)->dev_path, errno);
+        res = errno;
+        res = res < 0 ? res : -1 * res;
         goto dev_iio_create_err;
     }
 
