@@ -10,22 +10,6 @@
 #include "rog_ally.h"
 #include "legion_go.h"
 
-/*
-logic_t global_logic;
-
-static output_dev_t out_gamepadd_dev = {
-  .logic = &global_logic,
-};
-
-void sig_handler(int signo)
-{
-  if (signo == SIGINT) {
-    logic_request_termination(&global_logic);
-    printf("Received SIGINT\n");
-  }
-}
-*/
-
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 
 controller_settings_t settings;
@@ -134,11 +118,9 @@ int main(int argc, char ** argv) {
                 // Check the signal received
                 if (si.ssi_signo == SIGTERM) {
                     printf("Received SIGTERM -- propagating signal\n");
-                    dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
                     goto main_exit;
                 } else if (si.ssi_signo == SIGINT) {
-                printf("Received SIGINT -- propagating signal\n");
-                    dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
+                    printf("Received SIGINT -- propagating signal\n");
                     goto main_exit;
                 }
             } else if (poll_fds[1].revents & POLLIN) {
@@ -170,14 +152,16 @@ int main(int argc, char ** argv) {
             }
         }
     } while (false);
-        
+
+main_exit:
+    dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
+
     if (sd != -1) {
         close(sd);
     }
 
     unlink(SERVER_PATH);
 
-main_exit:
 main_err:
     if (dev_out_thread_creation == 0) {
         pthread_join(dev_out_thread, NULL);
