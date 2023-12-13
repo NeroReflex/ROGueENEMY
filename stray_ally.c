@@ -80,6 +80,13 @@ int main(int argc, char ** argv) {
             break;
         }
 
+        rc = listen(sd, MAX_CONNECTED_CLIENTS - 1);
+        if (rc< 0)
+        {
+            perror("listen() failed");
+            break;
+        }
+
         while (true) {
             const int client_fd = accept(sd, NULL, NULL);
             if (client_fd < 0) {
