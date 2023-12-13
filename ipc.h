@@ -40,4 +40,4 @@ typedef struct ipc {
 
 } ipc_t;
 
-#define SERVER_PATH "/tmp/rogue-enemy.sock"
+#define SERVER_PATH "/home/rogue-enemy.sock"

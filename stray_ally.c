@@ -110,15 +110,16 @@ int main(int argc, char ** argv) {
 
                 // here the client_fd is good
                 if (pthread_mutex_lock(&dev_out_thread_data.communication.endpoint.ssocket.mutex) == 0) {
-                    int i;
-                    for (i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                    bool found = false;
+                    for (size_t i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
                         if (dev_out_thread_data.communication.endpoint.ssocket.clients[i] < 0) {
                             dev_out_thread_data.communication.endpoint.ssocket.clients[i] = client_fd;
+                            found = true;
                             break;
                         }
                     }
 
-                    if (i == MAX_CONNECTED_CLIENTS) {
+                    if (!found) {
                         fprintf(stderr, "Could not find a free spot fot the incoming client -- client will be rejected\n");
                         close(client_fd);
                     }
