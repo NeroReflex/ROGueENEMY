@@ -4,7 +4,6 @@
 #include "message.h"
 #include "virt_ds4.h"
 #include "virt_ds5.h"
-#include <pthread.h>
 
 static void handle_incoming_message_gamepad_action(
     const in_message_gamepad_action_t *const msg_payload,
