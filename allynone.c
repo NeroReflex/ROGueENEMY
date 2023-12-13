@@ -166,23 +166,26 @@ int main(int argc, char ** argv) {
         printf("Received SIGTERM -- propagating signal\n");
         dev_in_thread_data.flags |= DEV_IN_FLAG_EXIT;
         dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
-        break;
+        goto main_exit;
       } else if (si.ssi_signo == SIGINT) {
         printf("Received SIGINT -- propagating signal\n");
         dev_in_thread_data.flags |= DEV_IN_FLAG_EXIT;
         dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
-        break;
+        goto main_exit;
       }
     }
   }
 
+main_exit:
 main_err:
   if (dev_in_thread_creation == 0) {
     pthread_join(dev_in_thread, NULL);
+    printf("dev_in_thread terminated\n");
   }
 
   if (dev_out_thread_creation == 0) {
     pthread_join(dev_out_thread, NULL);
+    printf("dev_out_thread terminated\n");
   }
 
   return ret == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
