@@ -94,7 +94,7 @@ int main(int argc, char ** argv) {
 
   // populate the input device thread data
   dev_in_data_t dev_in_thread_data = {
-    .timeout_ms = 400,
+    .timeout_ms = 800,
     .input_dev_decl = in_devs,
     .flags = 0x00000000U,
     .communication = {
@@ -149,7 +149,7 @@ int main(int argc, char ** argv) {
   for (;;) {
     sigpoll.revents = 0;
 
-    poll(&sigpoll, 1, 400);
+    poll(&sigpoll, 1, (dev_in_thread_data.timeout_ms / 2) - 1);
  
     if (sigpoll.revents & POLL_IN) {
       // Read signals from the signalfd

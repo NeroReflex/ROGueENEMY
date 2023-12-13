@@ -10,22 +10,6 @@
 #include "rog_ally.h"
 #include "legion_go.h"
 
-/*
-logic_t global_logic;
-
-static output_dev_t out_gamepadd_dev = {
-  .logic = &global_logic,
-};
-
-void sig_handler(int signo)
-{
-  if (signo == SIGINT) {
-    logic_request_termination(&global_logic);
-    printf("Received SIGINT\n");
-  }
-}
-*/
-
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 
 controller_settings_t settings;
@@ -58,7 +42,7 @@ int main(int argc, char ** argv) {
 
   // populate the input device thread data
   dev_in_data_t dev_in_thread_data = {
-    .timeout_ms = 1200,
+    .timeout_ms = 800,
     .input_dev_decl = in_devs,
     .communication = {
       .type = ipc_client_socket,
@@ -84,15 +68,6 @@ int main(int argc, char ** argv) {
     //logic_request_termination(&global_logic);
     goto main_err;
   }
-
-/*
-  // TODO: once the application is able to exit de-comment this
-  __sighandler_t sigint_hndl = signal(SIGINT, sig_handler); 
-  if (sigint_hndl == SIG_ERR) {
-    fprintf(stderr, "Error registering SIGINT handler\n");
-    return EXIT_FAILURE;
-  }
-*/
 
 main_err:
   if (dev_in_thread_creation == 0) {

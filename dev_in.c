@@ -501,23 +501,23 @@ void* dev_in_thread_func(void *ptr) {
             }
 
             // send messages (if any)
-            if (controller_msg_count > 0) {
-                int in_message_fd = -1;
-                if (dev_in_data->communication.type == ipc_client_socket) {
-                    in_message_fd = dev_in_data->communication.endpoint.socket.fd;
-                } else if (dev_in_data->communication.type == ipc_unix_pipe) {
-                    in_message_fd = dev_in_data->communication.endpoint.pipe.in_message_pipe_fd;
-                }
+            if (controller_msg_count <= 0) {
+                continue;
+            }
 
-                const int write_res = write(in_message_fd, (void*)&controller_msg[0], sizeof(in_message_t) * controller_msg_count);
+            if (dev_in_data->communication.type == ipc_client_socket) {
+                const int write_res = write(dev_in_data->communication.endpoint.socket.fd, (void*)&controller_msg[0], sizeof(in_message_t) * controller_msg_count);
                 if (write_res < 0) {
-                    fprintf(stderr, "Error in writing input event messages: %d\n", write_res);
+                    fprintf(stderr, "Error in writing input event messages: %d -- connection will be drop and retried\n", write_res);
 
                     // in case of an error reschedule to socket for reconnection
-                    if (dev_in_data->communication.type == ipc_client_socket) {
-                        close(in_message_fd);
-                        dev_in_data->communication.endpoint.socket.fd = -1;
-                    }
+                    close(dev_in_data->communication.endpoint.socket.fd);
+                    dev_in_data->communication.endpoint.socket.fd = -1;
+                }
+            } else if (dev_in_data->communication.type == ipc_unix_pipe) {
+                const int write_res = write(dev_in_data->communication.endpoint.pipe.in_message_pipe_fd, (void*)&controller_msg[0], sizeof(in_message_t) * controller_msg_count);
+                if (write_res < 0) {
+                    fprintf(stderr, "Error in writing input event messages: %d\n", write_res);
                 }
             }
         }
