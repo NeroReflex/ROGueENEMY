@@ -89,4 +89,6 @@ int xbox360_ev_map(const evdev_collected_t *const coll, in_message_t *const mess
 			messages[written_msg++] = current_message;
 		}
 	}
+
+	return written_msg;
 }
