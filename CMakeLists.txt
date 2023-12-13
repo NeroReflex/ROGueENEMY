@@ -11,6 +11,7 @@ project(
 
 set(ROGUE_EXECUTABLE_NAME "rogue-enemy")
 set(STRAY_EXECUTABLE_NAME "stray-ally")
+set(ALLINONE_EXECUTABLE_NAME "allynone")
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -36,6 +37,32 @@ add_executable(${STRAY_EXECUTABLE_NAME}
                   virt_ds5.c
                   devices_status.c
 )
+
+add_executable(${ALLINONE_EXECUTABLE_NAME}
+                  dev_out.c
+                  allynone.c
+                  settings.c
+                  virt_ds4.c
+                  virt_ds5.c
+                  devices_status.c
+                  dev_evdev.c
+                  dev_iio.c
+                  dev_hidraw.c
+                  dev_in.c
+                  settings.c
+                  rog_ally.c
+                  legion_go.c
+                  xbox360.c
+                  rogue_enemy.c
+)
+
+set_property(TARGET ${ALLINONE_EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
+
+target_link_libraries(${ALLINONE_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm)
+
+set_target_properties(${ALLINONE_EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
+
+install(TARGETS ${ALLINONE_EXECUTABLE_NAME} DESTINATION bin)
 
 set_property(TARGET ${ROGUE_EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
 
