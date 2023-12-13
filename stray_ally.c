@@ -59,6 +59,12 @@ int main(int argc, char ** argv) {
         goto main_err;
     }
 
+    const uint64_t timeout_ms = 1500;
+
+    struct pollfd poll_fds[2];
+    poll_fds[0].fd = -1 /*signalfd(-1, )*/;
+    poll_fds[0].events = POLL_IN;
+
     int    sd=-1;
     struct sockaddr_un serveraddr;
     do {
@@ -87,29 +93,38 @@ int main(int argc, char ** argv) {
             break;
         }
 
+        poll_fds[1].fd = sd;
+        poll_fds[1].events = POLL_IN;
+
         while (true) {
-            const int client_fd = accept(sd, NULL, NULL);
-            if (client_fd < 0) {
-                fprintf(stderr, "Error in getting a client connected: %d\n", client_fd);
-                continue;
-            }
+            const int poll_ret = poll(poll_fds, sizeof(poll_fds) / sizeof(poll_fds[0]), timeout_ms);
 
-            // here the client_fd is good
-            if (pthread_mutex_lock(&dev_out_thread_data.communication.endpoint.ssocket.mutex) == 0) {
-                int i;
-                for (i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
-                    if (dev_out_thread_data.communication.endpoint.ssocket.clients[i] < 0) {
-                        dev_out_thread_data.communication.endpoint.ssocket.clients[i] = client_fd;
-                        break;
+            if (poll_fds[0].revents & POLLIN) {
+                // TODO: read for signals
+            } else if (poll_fds[1].revents & POLLIN) {
+                const int client_fd = accept(sd, NULL, NULL);
+                if (client_fd < 0) {
+                    fprintf(stderr, "Error in getting a client connected: %d\n", client_fd);
+                    continue;
+                }
+
+                // here the client_fd is good
+                if (pthread_mutex_lock(&dev_out_thread_data.communication.endpoint.ssocket.mutex) == 0) {
+                    int i;
+                    for (i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                        if (dev_out_thread_data.communication.endpoint.ssocket.clients[i] < 0) {
+                            dev_out_thread_data.communication.endpoint.ssocket.clients[i] = client_fd;
+                            break;
+                        }
                     }
-                }
 
-                if (i == MAX_CONNECTED_CLIENTS) {
-                    fprintf(stderr, "Could not find a free spot fot the incoming client -- client will be rejected\n");
-                    close(client_fd);
-                }
+                    if (i == MAX_CONNECTED_CLIENTS) {
+                        fprintf(stderr, "Could not find a free spot fot the incoming client -- client will be rejected\n");
+                        close(client_fd);
+                    }
 
-                pthread_mutex_unlock(&dev_out_thread_data.communication.endpoint.ssocket.mutex);
+                    pthread_mutex_unlock(&dev_out_thread_data.communication.endpoint.ssocket.mutex);
+                }
             }
         }
     } while (false);

@@ -59,61 +59,16 @@ typedef struct dev_in {
 static int map_message_from_iio(dev_in_iio_t *const in_iio, in_message_t *const messages, size_t messages_len) {
     int res = -EIO;
 
-    /*
-     *  data layout is:
-     *    - [0][0...2] => [gyro][x...z]
-     *    - [1][0...2] => [acce][x...z]
-     *
-     */
-    uint16_t data[2][3];
+    uint8_t data[32];
 
-    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[0][0], sizeof(uint16_t));
-    if (res != sizeof(uint16_t)) {
-        fprintf(stderr, "Error reading from %s: %d\n", dev_iio_get_name(in_iio->iiodev), res);
+    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[0], sizeof(data));
+    if (res == -1) {
+        res = errno;
+        res = res > 0 ? -1 * res : res;
         goto send_message_from_iio_err;
-    } else {
-        printf("OK\n");
     }
 
-    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[0][1], sizeof(uint16_t));
-    if (res != sizeof(uint16_t)) {
-        fprintf(stderr, "Error reading from %s: %d\n", dev_iio_get_name(in_iio->iiodev), res);
-        goto send_message_from_iio_err;
-    } else {
-        printf("OK\n");
-    }
-
-    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[0][2], sizeof(uint16_t));
-    if (res != sizeof(uint16_t)) {
-        fprintf(stderr, "Error reading from %s: %d\n", dev_iio_get_name(in_iio->iiodev), res);
-        goto send_message_from_iio_err;
-    } else {
-        printf("OK\n");
-    }
-
-    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[1][0], sizeof(uint16_t));
-    if (res != sizeof(uint16_t)) {
-        fprintf(stderr, "Error reading from %s: %d\n", dev_iio_get_name(in_iio->iiodev), res);
-        goto send_message_from_iio_err;
-    } else {
-        printf("OK\n");
-    }
-
-    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[1][1], sizeof(uint16_t));
-    if (res != sizeof(uint16_t)) {
-        fprintf(stderr, "Error reading from %s: %d\n", dev_iio_get_name(in_iio->iiodev), res);
-        goto send_message_from_iio_err;
-    } else {
-        printf("OK\n");
-    }
-
-    res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[1][2], sizeof(uint16_t));
-    if (res != sizeof(uint16_t)) {
-        fprintf(stderr, "Error reading from %s: %d\n", dev_iio_get_name(in_iio->iiodev), res);
-        goto send_message_from_iio_err;
-    } else {
-        printf("OK\n");
-    }
+    res = 0;
 
 send_message_from_iio_err:
     return res;

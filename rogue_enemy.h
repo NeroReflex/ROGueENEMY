@@ -14,6 +14,7 @@
 #include <math.h>
 #include <termios.h>
 #include <dirent.h>
+#include <poll.h>
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -24,6 +25,7 @@
 #include <sys/select.h>
 #include <sys/syscall.h>
 #include <sys/socket.h>
+#include <sys/signalfd.h>
 #include <sys/un.h>
 
 #include <linux/hidraw.h>
