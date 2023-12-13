@@ -86,7 +86,7 @@ int main(int argc, char ** argv) {
   }
 
   // Create a signalfd for the specified signals
-  int sfd = signalfd(-1, &mask, 0);
+  const int sfd = signalfd(-1, &mask, 0);
   if (sfd == -1) {
       perror("signalfd");
       exit(EXIT_FAILURE);
