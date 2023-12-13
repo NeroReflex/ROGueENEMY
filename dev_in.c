@@ -334,10 +334,22 @@ static void handle_rumble(dev_in_t *const in_devs, size_t in_devs_count, const o
     }
 }
 
-static int open_socket(void) {
+static int open_socket(struct sockaddr_un *serveraddr) {
     int res = -ENODEV;
 
+    int sd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+    if (sd < 0)
+    {
+        res = sd;
+        goto open_socket_err;
+    }
 
+    res = connect(sd, (struct sockaddr *)serveraddr, SUN_LEN(serveraddr));
+    if (res < 0) {
+        goto open_socket_err;
+    }
+
+    res = sd;
 
 open_socket_err:
     return res;
@@ -378,11 +390,11 @@ void* dev_in_thread_func(void *ptr) {
         if (dev_in_data->communication.type == ipc_unix_pipe) {
             FD_SET(dev_in_data->communication.endpoint.pipe.out_message_pipe_fd, &read_fds);
         } else if (dev_in_data->communication.type == ipc_client_socket) {
-            dev_in_data->communication.endpoint.socket = open_socket();
+            dev_in_data->communication.endpoint.socket.fd = open_socket(&dev_in_data->communication.endpoint.socket.serveraddr);
 
             // do not do a thing! that will consume messages and they won't be available anymore!
-            if (dev_in_data->communication.endpoint.socket < 0) {
-                fprintf(stderr, "Unable to connect to server: %d -- will retry connection\n", dev_in_data->communication.endpoint.socket);
+            if (dev_in_data->communication.endpoint.socket.fd < 0) {
+                fprintf(stderr, "Unable to connect to server: %d -- will retry connection\n", dev_in_data->communication.endpoint.socket.fd);
                 usleep(500000);
                 continue;
             }
@@ -466,7 +478,7 @@ void* dev_in_thread_func(void *ptr) {
                 // in case of an error reschedule to socket for reconnection
                 if (dev_in_data->communication.type == ipc_client_socket) {
                     close(out_message_fd);
-                    dev_in_data->communication.endpoint.socket = -1;
+                    dev_in_data->communication.endpoint.socket.fd = -1;
                 }
             }
         }
@@ -529,7 +541,7 @@ void* dev_in_thread_func(void *ptr) {
             if (controller_msg_count > 0) {
                 int in_message_fd = -1;
                 if (dev_in_data->communication.type == ipc_client_socket) {
-                    in_message_fd = dev_in_data->communication.endpoint.socket;
+                    in_message_fd = dev_in_data->communication.endpoint.socket.fd;
                 } else if (dev_in_data->communication.type == ipc_unix_pipe) {
                     in_message_fd = dev_in_data->communication.endpoint.pipe.in_message_pipe_fd;
                 }
@@ -541,7 +553,7 @@ void* dev_in_thread_func(void *ptr) {
                     // in case of an error reschedule to socket for reconnection
                     if (dev_in_data->communication.type == ipc_client_socket) {
                         close(in_message_fd);
-                        dev_in_data->communication.endpoint.socket = -1;
+                        dev_in_data->communication.endpoint.socket.fd = -1;
                     }
                 }
             }

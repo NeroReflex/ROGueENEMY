@@ -5,9 +5,14 @@
 #define MAX_CONNECTED_CLIENTS 8
 
 typedef struct ipc_strategy_socket {
+    struct sockaddr_un serveraddr;
+    int fd;
+} ipc_strategy_socket_t;
+
+typedef struct ipc_strategy_ssocket {
     pthread_mutex_t mutex;
     int clients[MAX_CONNECTED_CLIENTS];
-} ipc_strategy_socket_t;
+} ipc_strategy_ssocket_t;
 
 typedef struct ipc_strategy_pipe {
 
@@ -29,10 +34,10 @@ typedef struct ipc {
     ipc_strategy_t type;
     union {
         ipc_strategy_pipe_t pipe;
-        ipc_strategy_socket_t ssocket;
-        int socket;
+        ipc_strategy_ssocket_t ssocket;
+        ipc_strategy_socket_t socket;
     } endpoint;
 
 } ipc_t;
 
-#define SERVER_PATH "/tmp/server.sock"
+#define SERVER_PATH "/tmp/rogue-enemy.sock"

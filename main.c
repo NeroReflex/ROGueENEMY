@@ -4,6 +4,7 @@
 #include "input_dev.h"
 #include "dev_in.h"
 #include "dev_out.h"
+#include "ipc.h"
 #include "settings.h"
 
 #include "rog_ally.h"
@@ -62,10 +63,18 @@ int main(int argc, char ** argv) {
     .communication = {
       .type = ipc_client_socket,
       .endpoint = {
-        .socket = -1,
+        .socket = {
+          .fd = -1,
+          .serveraddr = {
+            .sun_path = SERVER_PATH,
+            .sun_family = AF_UNIX,
+          }
+        },
       }
     }
   };
+
+  //memset(&dev_in_thread_data.communication.endpoint.socket.serveraddr, 0, sizeof(dev_in_thread_data.communication.endpoint.socket.serveraddr));
   
   pthread_t dev_in_thread;
   const int dev_in_thread_creation = pthread_create(&dev_in_thread, NULL, dev_in_thread_func, (void*)(&dev_in_thread_data));
