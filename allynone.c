@@ -28,9 +28,6 @@ void sig_handler(int signo)
 
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 
-dev_in_data_t dev_in_thread_data;
-dev_out_data_t dev_out_thread_data;
-
 controller_settings_t settings;
 
 int main(int argc, char ** argv) {
@@ -87,17 +84,35 @@ int main(int argc, char ** argv) {
   }
 
   // populate the input device thread data
-  dev_in_thread_data.timeout_ms = 400;
-  dev_in_thread_data.communication.type = ipc_unix_pipe;
-  dev_in_thread_data.communication.endpoint.pipe.in_message_pipe_fd = in_message_pipes[1];
-  dev_in_thread_data.communication.endpoint.pipe.out_message_pipe_fd = out_message_pipes[0];
-  dev_in_thread_data.input_dev_decl = in_devs;
-  
+  dev_in_data_t dev_in_thread_data = {
+    .timeout_ms = 400,
+    .input_dev_decl = in_devs,
+    .flags = 0x00000000U,
+    .communication = {
+      .type = ipc_unix_pipe,
+      .endpoint = {
+        .pipe = {
+          .in_message_pipe_fd = in_message_pipes[1],
+          .out_message_pipe_fd = out_message_pipes[0],
+        }
+      }
+    }
+  };
+
   // populate the output device thread data
-  dev_in_thread_data.communication.type = ipc_unix_pipe;
-  dev_out_thread_data.communication.endpoint.pipe.in_message_pipe_fd = in_message_pipes[0];
-  dev_out_thread_data.communication.endpoint.pipe.out_message_pipe_fd = out_message_pipes[1];
-  dev_out_thread_data.gamepad = GAMEPAD_DUALSENSE;
+  dev_out_data_t dev_out_thread_data = {
+    .gamepad = GAMEPAD_DUALSENSE,
+    .flags = 0x00000000U,
+    .communication = {
+      .type = ipc_unix_pipe,
+      .endpoint = {
+        .pipe = {
+          .in_message_pipe_fd = in_message_pipes[0],
+          .out_message_pipe_fd = out_message_pipes[1],
+        }
+      }
+    }
+  };
 
   pthread_t dev_in_thread;
   dev_in_thread_creation = pthread_create(&dev_in_thread, NULL, dev_in_thread_func, (void*)(&dev_in_thread_data));
