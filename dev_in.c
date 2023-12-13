@@ -478,7 +478,7 @@ void* dev_in_thread_func(void *ptr) {
                     continue;
                 }
 
-                dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(&coll, &controller_msg[0], controller_msg_avail, dev_in_data->input_dev_decl->dev[i]->user_data);
+                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(&coll, &controller_msg[0], controller_msg_avail, dev_in_data->input_dev_decl->dev[i]->user_data);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
                 controller_msg_count = map_message_from_iio(&devices[i].dev.iio, &controller_msg[0], controller_msg_avail);
                 if (controller_msg_count != 0) {
