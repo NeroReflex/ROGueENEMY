@@ -314,13 +314,17 @@ void *dev_out_thread_func(void *ptr) {
                         fprintf(stderr, "Error in writing out_message to out_message_pipe: %d\n", write_res);
                     }
                 } else if (dev_out->communication.type == ipc_server_sockets) {
-                    for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
-                        const int write_res = write(dev_out->communication.endpoint.ssocket.clients[i], (void*)&out_msgs, bytes_to_send);
-                        if (write_res != bytes_to_send) {
-                            fprintf(stderr, "Error in writing out_message to socket number %d: %d\n", i, write_res);
-                            close(dev_out->communication.endpoint.ssocket.clients[i]);
-                            dev_out->communication.endpoint.ssocket.clients[i] = -1;
+                    if (pthread_mutex_lock(&dev_out->communication.endpoint.ssocket.mutex) == 0) {
+                        for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                            const int write_res = write(dev_out->communication.endpoint.ssocket.clients[i], (void*)&out_msgs, bytes_to_send);
+                            if (write_res != bytes_to_send) {
+                                fprintf(stderr, "Error in writing out_message to socket number %d: %d\n", i, write_res);
+                                close(dev_out->communication.endpoint.ssocket.clients[i]);
+                                dev_out->communication.endpoint.ssocket.clients[i] = -1;
+                            }
                         }
+
+                        pthread_mutex_unlock(&dev_out->communication.endpoint.ssocket.mutex);
                     }
                 }
             }
@@ -347,8 +351,8 @@ void *dev_out_thread_func(void *ptr) {
                                 handle_incoming_message(&incoming_message, &dev_out->dev_stats);
                             } else {
                                 fprintf(stderr, "Error reading from in_message_pipe_fd: got %zu bytes, expected %zu butes\n", in_message_pipe_read_res, sizeof(in_message_t));
+                                close(dev_out->communication.endpoint.ssocket.clients[i]);
                                 dev_out->communication.endpoint.ssocket.clients[i] = -1;
-                                close(fd);
                             }
                         }
                     }

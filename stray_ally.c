@@ -98,7 +98,7 @@ int main(int argc, char ** argv) {
             if (pthread_mutex_lock(&dev_out_thread_data.communication.endpoint.ssocket.mutex) == 0) {
                 int i;
                 for (i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
-                    if (dev_out_thread_data.communication.endpoint.ssocket.clients[i] == -1) {
+                    if (dev_out_thread_data.communication.endpoint.ssocket.clients[i] < 0) {
                         dev_out_thread_data.communication.endpoint.ssocket.clients[i] = client_fd;
                         break;
                     }
