@@ -60,15 +60,24 @@ int main(int argc, char ** argv) {
   int dev_out_thread_creation = -1;
 
   int out_message_pipes[2];
-  pipe(out_message_pipes);
+  const int out_msg_pipe_res = pipe(out_message_pipes);
+  if (out_msg_pipe_res != 0) {
+    fprintf(stderr, "Unable to create out_message pipe: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
 
   int in_message_pipes[2];
-  pipe(in_message_pipes);
+  const int in_msg_pipe_res = pipe(in_message_pipes);
+  if (in_msg_pipe_res != 0) {
+    fprintf(stderr, "Unable to create out_message pipe: %d\n", errno);
+    exit(EXIT_FAILURE);
+  }
 
   // Create a signal set containing only SIGTERM
   sigset_t mask;
   sigemptyset(&mask);
   sigaddset(&mask, SIGTERM);
+  sigaddset(&mask, SIGINT);
 
   // Block SIGTERM for the current thread
   if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
@@ -154,10 +163,15 @@ int main(int argc, char ** argv) {
 
       // Check the signal received
       if (si.ssi_signo == SIGTERM) {
-          printf("Received SIGTERM -- propagating signal\n");
-          dev_in_thread_data.flags |= DEV_IN_FLAG_EXIT;
-          dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
-          break;
+        printf("Received SIGTERM -- propagating signal\n");
+        dev_in_thread_data.flags |= DEV_IN_FLAG_EXIT;
+        dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
+        break;
+      } else if (si.ssi_signo == SIGINT) {
+        printf("Received SIGINT -- propagating signal\n");
+        dev_in_thread_data.flags |= DEV_IN_FLAG_EXIT;
+        dev_out_thread_data.flags |= DEV_OUT_FLAG_EXIT;
+        break;
       }
     }
   }
