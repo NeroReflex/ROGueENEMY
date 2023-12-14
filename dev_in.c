@@ -458,7 +458,7 @@ void* dev_in_thread_func(void *ptr) {
                     // TODO: handle_leds()
                 }
             } else {
-                fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu butes\n", out_message_pipe_read_res, sizeof(out_message_t));
+                fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu bytes\n", out_message_pipe_read_res, sizeof(out_message_t));
 
                 // in case of an error reschedule to socket for reconnection
                 if (dev_in_data->communication.type == ipc_client_socket) {
@@ -506,15 +506,15 @@ void* dev_in_thread_func(void *ptr) {
                 controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(&coll, &controller_msg[0], controller_msg_avail, dev_in_data->input_dev_decl->dev[i]->user_data);
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
                 controller_msg_count = map_message_from_iio(&devices[i].dev.iio, &controller_msg[0], controller_msg_avail);
-                if (controller_msg_count != 0) {
-                    fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
+                if (controller_msg_count < 0) {
+                    fprintf(stderr, "Error in reading iio buffer for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
                     iio_close_device(&devices[i].dev.iio);
                     devices[i].type = DEV_IN_TYPE_NONE;
                     continue;
                 }
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
                 controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), &controller_msg[0], controller_msg_avail, dev_in_data->input_dev_decl->dev[i]->user_data);
-                if (controller_msg_count != 0) {
+                if (controller_msg_count < 0) {
                     fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
                     hidraw_close_device(&devices[i].dev.hidraw);
                     devices[i].type = DEV_IN_TYPE_NONE;
