@@ -48,6 +48,8 @@ int main(int argc, char ** argv) {
         }
     };
 
+    load_out_config(&dev_out_thread_data.settings, configuration_file);
+
     pthread_t dev_out_thread;
     const int dev_out_thread_creation = pthread_create(&dev_out_thread, NULL, dev_out_thread_func, (void*)(&dev_out_thread_data));
     if (dev_out_thread_creation != 0) {
