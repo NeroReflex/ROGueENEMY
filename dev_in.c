@@ -77,8 +77,9 @@ static int map_message_from_iio(dev_in_iio_t *const in_iio, in_message_t *const 
 
     uint16_t *const scan_elements = (uint16_t*)&data[0];
 
+    messages[0].type = GAMEPAD_SET_ELEMENT;
     messages[0].data.gamepad_set.element = GAMEPAD_ACCELEROMETER;
-    messages[0].data.gamepad_set.status.gyro.sample_time = read_time;
+    messages[0].data.gamepad_set.status.accel.sample_time = read_time;
     messages[0].data.gamepad_set.status.accel.x = scan_elements[0];
     messages[0].data.gamepad_set.status.accel.y = scan_elements[1];
     messages[0].data.gamepad_set.status.accel.z = scan_elements[2];
