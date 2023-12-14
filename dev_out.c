@@ -134,6 +134,20 @@ static void handle_incoming_message_gamepad_set(
 
             break;
         }
+        case GAMEPAD_GYROSCOPE: {
+            inout_gamepad->last_gyro_motion_time = msg_payload->status.gyro.sample_time;
+            inout_gamepad->raw_gyro[0] = msg_payload->status.gyro.x;
+            inout_gamepad->raw_gyro[1] = msg_payload->status.gyro.y;
+            inout_gamepad->raw_gyro[2] = msg_payload->status.gyro.z;
+            break;
+        }
+        case GAMEPAD_ACCELEROMETER: {
+            inout_gamepad->last_accel_motion_time = msg_payload->status.accel.sample_time;
+            inout_gamepad->raw_accel[0] = msg_payload->status.accel.x;
+            inout_gamepad->raw_accel[1] = msg_payload->status.accel.y;
+            inout_gamepad->raw_accel[2] = msg_payload->status.accel.z;
+            break;
+        }
         default: {
             fprintf(stderr, "Unknown gamepad element: %d\n", msg_payload->element);
             break;

@@ -32,7 +32,26 @@ typedef enum in_message_gamepad_btn {
 
     GAMEPAD_DPAD_X,
     GAMEPAD_DPAD_Y,
+
+    GAMEPAD_GYROSCOPE,
+    GAMEPAD_ACCELEROMETER,
 }  in_gamepad_element_t;
+
+typedef struct in_message_gamepad_gyro {
+    struct timeval sample_time;
+
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+} in_message_gamepad_gyro_t;
+
+typedef struct in_message_gamepad_accel {
+    struct timeval sample_time;
+
+    uint16_t x;
+    uint16_t y;
+    uint16_t z;
+} in_message_gamepad_accel_t;
 
 typedef struct in_message_gamepad_set_element {
     in_gamepad_element_t element;
@@ -40,6 +59,8 @@ typedef struct in_message_gamepad_set_element {
         uint8_t btn;
         int32_t joystick_pos;
         int8_t dpad; // -1 | 0 | +1
+        in_message_gamepad_accel_t accel;
+        in_message_gamepad_gyro_t gyro;
     } status;
 }  in_message_gamepad_set_element_t;
 
