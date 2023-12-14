@@ -432,6 +432,24 @@ static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 	}
 };
 
+typedef enum rc71l_platform_mode {
+  rc71l_platform_mode_hidraw,
+  rc71l_platform_mode_linux_and_asusctl,
+} rc71l_platform_mode_t;
+
+typedef struct rc71l_platform {
+  rc71l_platform_mode_t platform_mode;
+  
+  union {
+    dev_hidraw_t *hidraw;
+  } platform;
+
+  unsigned long mode;
+  unsigned int modes_count;
+} rc71l_platform_t;
+
+static rc71l_platform_t hw_platform;
+
 int asus_kbd_ev_map(
 	const dev_in_settings_t *const conf,
 	const evdev_collected_t *const e,
@@ -441,7 +459,27 @@ int asus_kbd_ev_map(
 ) {
 	int written_msg = 0;
 
-  if ( // this is what happens at release of the left-screen button of the ROG Ally
+	if (
+		(e->ev_count >= 2) &&
+		(e->ev[0].type == EV_MSC) &&
+		(e->ev[0].code == MSC_SCAN) &&
+        (e->ev[0].value == -13565784) &&
+		(e->ev[1].type == EV_KEY) &&
+		(e->ev[1].code == KEY_F18) &&
+		(e->ev[1].value == 1)
+	) {
+		if (hw_platform.mode == rc71l_platform_mode_hidraw) {
+			printf("Using hidraw to switch controller mode\n");
+
+			for (int i = 0; i < 23; ++i) {
+				const int write_res = write(hw_platform.platform.hidraw->fd, &rc71l_mode_switch_commands[0][i][0], 64);
+				if (write_res != 64) {
+					fprintf(stderr, "Error writing packet %d/23: %d bytes sent, 64 expected\n", i, write_res);
+					break;
+				}
+			}
+		}
+	} else if ( // this is what happens at release of the left-screen button of the ROG Ally
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
 		(e->ev[0].code == MSC_SCAN) &&
@@ -450,14 +488,14 @@ int asus_kbd_ev_map(
 		(e->ev[1].code == KEY_F16) &&
 		(e->ev[1].value == 1)
 	) {
-    const in_message_t current_message = {
-      .type = GAMEPAD_ACTION,
-      .data = {
-        .action = GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
-      }
-    };
+		const in_message_t current_message = {
+		.type = GAMEPAD_ACTION,
+		.data = {
+			.action = GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
+		}
+		};
 
-	messages[written_msg++] = current_message;
+		messages[written_msg++] = current_message;
 	} else if ( // this is what happens at release of the right-screen button of the ROG Ally
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
@@ -485,20 +523,20 @@ int asus_kbd_ev_map(
 		(e->ev[1].type == EV_KEY) &&
 		(e->ev[1].code == KEY_F17)
 	) {
-    const in_message_t current_message = {
-      .type = GAMEPAD_SET_ELEMENT,
-      .data = {
-        .gamepad_set = {
-          .element = GAMEPAD_BTN_L5,
-          .status = {
-            .btn = e->ev[1].value,
-          }
-        }
-      }
-    };
+		const in_message_t current_message = {
+		.type = GAMEPAD_SET_ELEMENT,
+		.data = {
+			.gamepad_set = {
+			.element = GAMEPAD_BTN_L5,
+			.status = {
+				.btn = e->ev[1].value,
+			}
+			}
+		}
+		};
 
-    messages[written_msg++] = current_message;
-  } else if (
+		messages[written_msg++] = current_message;
+  	} else if (
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
 		(e->ev[0].code == MSC_SCAN) &&
@@ -609,22 +647,6 @@ static input_dev_t in_xbox_dev = {
   }
 };
 
-typedef enum rc71l_platform_mode {
-  rc71l_platform_mode_hidraw,
-  rc71l_platform_mode_linux_and_asusctl,
-} rc71l_platform_mode_t;
-
-typedef struct rc71l_platform {
-  rc71l_platform_mode_t platform_mode;
-  
-  union {
-    dev_hidraw_t *hidraw;
-  } platform;
-
-  unsigned long mode;
-  unsigned int modes_count;
-} rc71l_platform_t;
-
 enum rc71l_leds_mode {
   ROG_ALLY_MODE_STATIC           = 0,
   ROG_ALLY_MODE_BREATHING        = 1,
@@ -648,7 +670,7 @@ enum rc71l_leds_direction {
 static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platform_data) {
   int res = -EINVAL;
 
-  rc71l_platform_t *const platform = malloc(sizeof(rc71l_platform_t));
+  rc71l_platform_t *const platform = &hw_platform;
   if (platform == NULL) {
     fprintf(stderr, "Unable to setup platform\n");
     res = -ENOMEM;
@@ -709,7 +731,6 @@ static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** pl
     platform->platform.hidraw = NULL;
   }
 
-  free(platform);
   *platform_data = NULL;
 }
 
