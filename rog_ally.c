@@ -469,14 +469,23 @@ int asus_kbd_ev_map(
 		(e->ev[1].value == 1)
 	) {
 		if (hw_platform.mode == rc71l_platform_mode_hidraw) {
-			printf("Using hidraw to switch controller mode\n");
+			const unsigned long new_mode = (hw_platform.mode + 1) % hw_platform.modes_count;
+			printf("Using hidraw to switch controller mode from %lu to %lu\n", hw_platform.mode, new_mode);
 
-			for (int i = 0; i < 23; ++i) {
-				const int write_res = write(hw_platform.platform.hidraw->fd, &rc71l_mode_switch_commands[0][i][0], 64);
+			int i;
+			for (i = 0; i < 23; ++i) {
+				const int write_res = write(hw_platform.platform.hidraw->fd, &rc71l_mode_switch_commands[new_mode][i][0], 64);
 				if (write_res != 64) {
 					fprintf(stderr, "Error writing packet %d/23: %d bytes sent, 64 expected\n", i, write_res);
 					break;
 				}
+			}
+
+			if (i == 23) {
+				printf("Mode correctly switched\n");
+				hw_platform.mode = new_mode;
+			} else {
+				fprintf(stderr, "Mode was not switched correctly: you should retry -- expect bugs\n");
 			}
 		}
 	} else if ( // this is what happens at release of the left-screen button of the ROG Ally
