@@ -498,10 +498,10 @@ int asus_kbd_ev_map(
 		(e->ev[1].value == 1)
 	) {
 		const in_message_t current_message = {
-		.type = GAMEPAD_ACTION,
-		.data = {
-			.action = GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
-		}
+			.type = GAMEPAD_ACTION,
+			.data = {
+				.action = GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
+			}
 		};
 
 		messages[written_msg++] = current_message;
@@ -533,15 +533,15 @@ int asus_kbd_ev_map(
 		(e->ev[1].code == KEY_F17)
 	) {
 		const in_message_t current_message = {
-		.type = GAMEPAD_SET_ELEMENT,
-		.data = {
-			.gamepad_set = {
-			.element = GAMEPAD_BTN_L5,
-			.status = {
-				.btn = e->ev[1].value,
+			.type = GAMEPAD_SET_ELEMENT,
+			.data = {
+				.gamepad_set = {
+				.element = GAMEPAD_BTN_L5,
+				.status = {
+					.btn = e->ev[1].value,
+				}
+				}
 			}
-			}
-		}
 		};
 
 		messages[written_msg++] = current_message;
@@ -557,10 +557,10 @@ int asus_kbd_ev_map(
 			.type = GAMEPAD_SET_ELEMENT,
 			.data = {
 				.gamepad_set = {
-				.element = GAMEPAD_BTN_R5,
-				.status = {
-					.btn = e->ev[1].value,
-				}
+					.element = GAMEPAD_BTN_R5,
+					.status = {
+						.btn = e->ev[1].value,
+					}
 				}
 			}
 		};
