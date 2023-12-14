@@ -384,6 +384,8 @@ void* dev_in_thread_func(void *ptr) {
                     continue;
                 }
             }
+
+            FD_SET(dev_in_data->communication.endpoint.socket.fd, &read_fds);
         }
 
         for (size_t i = 0; i < max_devices; ++i) {
