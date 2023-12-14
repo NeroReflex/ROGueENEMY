@@ -54,7 +54,7 @@ void load_out_config(dev_out_settings_t *const out_conf, const char* const filep
     }
 
     int default_gamepad;
-    if (config_lookup_bool(&cfg, "default_gamepad", &default_gamepad) != CONFIG_FALSE) {
+    if (config_lookup_int(&cfg, "default_gamepad", &default_gamepad) != CONFIG_FALSE) {
         out_conf->default_gamepad = default_gamepad % 3;
     } else {
         fprintf(stderr, "default_gamepad (int) configuration not found. Default value will be used.\n");
