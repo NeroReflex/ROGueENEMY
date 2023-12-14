@@ -71,7 +71,7 @@ int main(int argc, char ** argv) {
     int    sd=-1;
     struct sockaddr_un serveraddr;
     do {
-        sd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+        sd = socket(AF_UNIX, SOCK_STREAM, 0);
         if (sd < 0)
         {
             fprintf(stderr, "socket() failed");

@@ -315,7 +315,7 @@ static void handle_rumble(dev_in_t *const in_devs, size_t in_devs_count, const o
 static int open_socket(struct sockaddr_un *serveraddr) {
     int res = -ENODEV;
 
-    int sd = socket(AF_UNIX, SOCK_SEQPACKET, 0);
+    int sd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sd < 0)
     {
         res = sd;
