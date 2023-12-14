@@ -532,7 +532,7 @@ void* dev_in_thread_func(void *ptr) {
 
             if (dev_in_data->communication.type == ipc_client_socket) {
                 for (int msg_idx = 0; msg_idx < controller_msg_count; ++msg_idx) {
-                    const int write_res = write(dev_in_data->communication.endpoint.socket.fd, (void*)&controller_msg[0], sizeof(in_message_t));
+                    const int write_res = write(dev_in_data->communication.endpoint.socket.fd, (void*)&controller_msg[msg_idx], sizeof(in_message_t));
                     if (write_res < 0) {
                         fprintf(stderr, "Error in writing input event messages: %d -- connection will be drop and retried\n", write_res);
 
@@ -543,7 +543,7 @@ void* dev_in_thread_func(void *ptr) {
                 }
             } else if (dev_in_data->communication.type == ipc_unix_pipe) {
                 for (int msg_idx = 0; msg_idx < controller_msg_count; ++msg_idx) {
-                    const int write_res = write(dev_in_data->communication.endpoint.pipe.in_message_pipe_fd, (void*)&controller_msg[0], sizeof(in_message_t));
+                    const int write_res = write(dev_in_data->communication.endpoint.pipe.in_message_pipe_fd, (void*)&controller_msg[msg_idx], sizeof(in_message_t));
                     if (write_res < 0) {
                         fprintf(stderr, "Error in writing input event messages: %d\n", write_res);
                     }

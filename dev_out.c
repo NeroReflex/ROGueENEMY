@@ -326,7 +326,7 @@ void *dev_out_thread_func(void *ptr) {
                 // send out game-generated events to sockets
                 if (dev_out_data->communication.type == ipc_unix_pipe) {
                     for (int msg_idx = 0; msg_idx < out_msgs_count; ++msg_idx) {
-                        const int write_res = write(dev_out_data->communication.endpoint.pipe.out_message_pipe_fd, (void*)&out_msgs, sizeof(out_message_t));
+                        const int write_res = write(dev_out_data->communication.endpoint.pipe.out_message_pipe_fd, (void*)&out_msgs[msg_idx], sizeof(out_message_t));
                         if (write_res != sizeof(out_message_t)) {
                             fprintf(stderr, "Error in writing out_message to out_message_pipe: %d\n", write_res);
                         }
@@ -336,7 +336,7 @@ void *dev_out_thread_func(void *ptr) {
                         for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
                             if (dev_out_data->communication.endpoint.ssocket.clients[i] > 0) {
                                 for (int msg_idx = 0; msg_idx < out_msgs_count; ++msg_idx) {
-                                    const int write_res = write(dev_out_data->communication.endpoint.ssocket.clients[i], (void*)&out_msgs, sizeof(out_message_t));
+                                    const int write_res = write(dev_out_data->communication.endpoint.ssocket.clients[i], (void*)&out_msgs[msg_idx], sizeof(out_message_t));
                                     if (write_res != sizeof(out_message_t)) {
                                         fprintf(stderr, "Error in writing out_message to socket number %d: %d\n", i, write_res);
                                         close(dev_out_data->communication.endpoint.ssocket.clients[i]);
