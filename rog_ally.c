@@ -725,7 +725,9 @@ static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platf
           break;
       }
   }
-
+  
+  platform->mode = 0;
+  platform->modes_count = 2;
   printf("ROG Ally platform will be managed over hidraw. I'm sorry fluke.\n");
 
 rc71l_platform_init_err:
