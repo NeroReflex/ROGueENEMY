@@ -467,14 +467,16 @@ int asus_kbd_ev_map(
 		(e->ev[1].code == KEY_PROG1) &&
 		(e->ev[1].value == 1)
 	) {
-    const in_message_t current_message = {
-      .type = GAMEPAD_ACTION,
-      .data = {
-        .action = GAMEPAD_ACTION_OPEN_STEAM_QAM,
-      }
-    };
+		if (conf->enable_qam) {
+			const in_message_t current_message = {
+				.type = GAMEPAD_ACTION,
+				.data = {
+					.action = GAMEPAD_ACTION_OPEN_STEAM_QAM,
+				}
+			};
 
-    messages[written_msg++] = current_message;
+			messages[written_msg++] = current_message;
+		}
 	} else if (
 		(e->ev_count == 2) &&
 		(e->ev[0].type == EV_MSC) &&
