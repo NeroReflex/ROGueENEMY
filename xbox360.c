@@ -1,8 +1,13 @@
 #include "xbox360.h"
 #include "message.h"
 
-int xbox360_ev_map(const evdev_collected_t *const coll, in_message_t *const messages, size_t messages_len, void* user_data) {
-	const xbox360_settings_t *const settings = (xbox360_settings_t*)user_data;
+int xbox360_ev_map(
+	const dev_in_settings_t *const conf,
+	const evdev_collected_t *const coll,
+	in_message_t *const messages,
+	size_t messages_len,
+	void* user_data
+) {
 	int written_msg = 0;
 
     for (uint32_t i = 0; i < coll->ev_count; ++i) {
@@ -12,16 +17,16 @@ int xbox360_ev_map(const evdev_collected_t *const coll, in_message_t *const mess
 			};
 
 			if (coll->ev[i].code == BTN_EAST) {
-				current_message.data.gamepad_set.element = (settings->nintendo_layout) ? GAMEPAD_BTN_CROSS : GAMEPAD_BTN_CIRCLE;
+				current_message.data.gamepad_set.element = GAMEPAD_BTN_CIRCLE;
 				current_message.data.gamepad_set.status.btn = coll->ev[i].value;
 			} else if (coll->ev[i].code == BTN_NORTH) {
-				current_message.data.gamepad_set.element = (settings->nintendo_layout) ? GAMEPAD_BTN_TRIANGLE : GAMEPAD_BTN_SQUARE;
+				current_message.data.gamepad_set.element = GAMEPAD_BTN_SQUARE;
 				current_message.data.gamepad_set.status.btn = coll->ev[i].value;
 			} else if (coll->ev[i].code == BTN_SOUTH) {
-				current_message.data.gamepad_set.element = (settings->nintendo_layout) ? GAMEPAD_BTN_CIRCLE : GAMEPAD_BTN_CROSS;
+				current_message.data.gamepad_set.element = GAMEPAD_BTN_CROSS;
 				current_message.data.gamepad_set.status.btn = coll->ev[i].value;
 			} else if (coll->ev[i].code == BTN_WEST) {
-				current_message.data.gamepad_set.element = (settings->nintendo_layout) ? GAMEPAD_BTN_SQUARE : GAMEPAD_BTN_TRIANGLE;
+				current_message.data.gamepad_set.element = GAMEPAD_BTN_TRIANGLE;
 				current_message.data.gamepad_set.status.btn = coll->ev[i].value;
 			} else if (coll->ev[i].code == BTN_SELECT) {
 				current_message.data.gamepad_set.element = GAMEPAD_BTN_OPTION;

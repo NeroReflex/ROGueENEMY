@@ -15,8 +15,6 @@ static input_dev_t in_xbox_dev = {
     }
 };
 
-static xbox360_settings_t x360_cfg;
-
 static input_dev_t in_iio_dev = {
     .dev_type = input_dev_type_iio,
     .filters = {
@@ -40,7 +38,7 @@ static struct llg_hidraw_data {
     uint8_t last_packet[64];
 } llg_hidraw_user_data;
 
-static int llg_hidraw_map(int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data) {
+static int llg_hidraw_map(const dev_in_settings_t *const conf, int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data) {
     struct llg_hidraw_data *const llg_data = (struct llg_hidraw_data*)user_data;
 
     int msg_count = 0;
@@ -92,7 +90,7 @@ typedef struct legion_go_platform {
     int _pad;
 } legion_go_platform_t;
 
-static int legion_platform_init(void** platform_data) {
+static int legion_platform_init(const dev_in_settings_t *const conf, void** platform_data) {
     int res = -EINVAL;
 
     legion_go_platform_t *const llg_platform = malloc(sizeof(legion_go_platform_t));
@@ -109,12 +107,12 @@ legion_platform_init_err:
     return res;
 }
 
-static void legion_platform_deinit(void** platform_data) {
+static void legion_platform_deinit(const dev_in_settings_t *const conf, void** platform_data) {
     free(*platform_data);
     *platform_data = NULL;
 }
 
-int legion_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
+int legion_platform_leds(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
     return 0;
 }
 
@@ -131,10 +129,7 @@ input_dev_composite_t legion_composite = {
 };
 
 
-input_dev_composite_t* legion_go_device_def(const controller_settings_t *const settings) {
-    x360_cfg.nintendo_layout = settings->nintendo_layout;
-
-    in_xbox_dev.user_data = (void*)&x360_cfg;
+input_dev_composite_t* legion_go_device_def(void) {
     return &legion_composite;
 }
 

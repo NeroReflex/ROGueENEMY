@@ -3,6 +3,7 @@
 #include "ipc.h"
 #include "message.h"
 #include "input_dev.h"
+#include "settings.h"
 
 #define MAX_IN_MESSAGES 8
 
@@ -18,6 +19,8 @@ typedef struct dev_in_data {
     input_dev_composite_t *input_dev_decl;
 
     ipc_t communication;
+
+    dev_in_settings_t settings;
 
     volatile uint32_t flags;
 

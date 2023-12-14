@@ -2,22 +2,16 @@
 
 #include "rogue_enemy.h"
 
-typedef struct controller_settings {
+typedef struct dev_in_settings {
+    bool enable_qam;
     uint16_t ff_gain;
-    int enable_qam;
-    int nintendo_layout;
+} dev_in_settings_t;
 
-    /**
-     * 0 is virtual evdev
-     * 1 is DualSense
-     * 2 is DualShock
-     * 3 is Xbox one
-     */
-    int gamepad_output_device;
+void load_in_config(dev_in_settings_t *const out_conf, const char* const filepath);
 
-    int rumble_dedicated_thread;
-} controller_settings_t;
+typedef struct dev_out_settings {
+    bool nintendo_layout;
+    uint8_t default_gamepad;
+} dev_out_settings_t;
 
-void init_config(controller_settings_t *const conf);
-
-int fill_config(controller_settings_t *const conf, const char* file);
+void load_out_config(dev_out_settings_t *const out_conf, const char* const filepath);

@@ -432,7 +432,13 @@ static const uint8_t rc71l_mode_switch_commands[][23][64] = {
 	}
 };
 
-int asus_kbd_ev_map(const evdev_collected_t *const e, in_message_t *const messages, size_t messages_len, void* user_data) {
+int asus_kbd_ev_map(
+	const dev_in_settings_t *const conf,
+	const evdev_collected_t *const e,
+	in_message_t *const messages,
+	size_t messages_len,
+	void* user_data
+) {
 	int written_msg = 0;
 
   if ( // this is what happens at release of the left-screen button of the ROG Ally
@@ -601,8 +607,6 @@ static input_dev_t in_xbox_dev = {
   }
 };
 
-static xbox360_settings_t x360_cfg;
-
 typedef enum rc71l_platform_mode {
   rc71l_platform_mode_hidraw,
   rc71l_platform_mode_linux_and_asusctl,
@@ -639,7 +643,7 @@ enum rc71l_leds_direction {
     ROG_ALLY_DIRECTION_LEFT         = 0x01
 } rc71l_leds_direction_t;
 
-static int rc71l_platform_init(void** platform_data) {
+static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platform_data) {
   int res = -EINVAL;
 
   rc71l_platform_t *const platform = malloc(sizeof(rc71l_platform_t));
@@ -695,7 +699,7 @@ rc71l_platform_init_err:
   return res;
 }
 
-static void rc71l_platform_deinit(void** platform_data) {
+static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** platform_data) {
   rc71l_platform_t *const platform = (rc71l_platform_t *)(*platform_data);
 
   if ((platform->platform_mode == rc71l_platform_mode_hidraw) && (platform->platform.hidraw != NULL)) {
@@ -707,7 +711,7 @@ static void rc71l_platform_deinit(void** platform_data) {
   *platform_data = NULL;
 }
 
-static int rc71l_platform_leds(uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
+static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
   rc71l_platform_t *const platform = (rc71l_platform_t *)platform_data;
   if (platform == NULL) {
     return -EINVAL;
@@ -780,9 +784,6 @@ input_dev_composite_t rc71l_composite = {
   .leds_fn = rc71l_platform_leds,
 };
 
-input_dev_composite_t* rog_ally_device_def(const controller_settings_t *const settings) {
-  x360_cfg.nintendo_layout = settings->nintendo_layout;
-
-  in_xbox_dev.user_data = (void*)&x360_cfg;
+input_dev_composite_t* rog_ally_device_def(void) {
   return &rc71l_composite;
 }

@@ -7,18 +7,10 @@
 #include "dev_out.h"
 #include "settings.h"
 
-#include "rog_ally.h"
-#include "legion_go.h"
-
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
-
-controller_settings_t settings;
 
 int main(int argc, char ** argv) {
     int ret = 0;
-
-    init_config(&settings);
-    fill_config(&settings, configuration_file);
 
     // Create a signal set containing only SIGTERM
     sigset_t mask;
@@ -50,7 +42,10 @@ int main(int argc, char ** argv) {
                 }
             }
         },
-        .gamepad = GAMEPAD_DUALSENSE,
+        .settings = {
+            .default_gamepad = 0,
+            .nintendo_layout = false,
+        }
     };
 
     pthread_t dev_out_thread;

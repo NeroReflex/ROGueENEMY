@@ -10,31 +10,10 @@
 #include "rog_ally.h"
 #include "legion_go.h"
 
-/*
-logic_t global_logic;
-
-static output_dev_t out_gamepadd_dev = {
-  .logic = &global_logic,
-};
-
-void sig_handler(int signo)
-{
-  if (signo == SIGINT) {
-    logic_request_termination(&global_logic);
-    printf("Received SIGINT\n");
-  }
-}
-*/
-
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
-
-controller_settings_t settings;
 
 int main(int argc, char ** argv) {
   int ret = 0;
-
-  init_config(&settings);
-  fill_config(&settings, configuration_file);
 
   input_dev_composite_t* in_devs = NULL;
   
@@ -49,10 +28,10 @@ int main(int argc, char ** argv) {
   read(dmi_name_fd, bname, sizeof(bname));
   if (strstr(bname, "RC71L") != NULL) {
     printf("Running in an Asus ROG Ally device\n");
-    in_devs = rog_ally_device_def(&settings);
+    in_devs = rog_ally_device_def();
   } else if (strstr(bname, "LNVNB161216")) {
     printf("Running in an Lenovo Legion Go device\n");
-    in_devs = legion_go_device_def(&settings);
+    in_devs = legion_go_device_def();
   }
   close(dmi_name_fd);
 
@@ -105,12 +84,18 @@ int main(int argc, char ** argv) {
           .out_message_pipe_fd = out_message_pipes[0],
         }
       }
+    },
+    .settings = {
+      .enable_qam = true,
+      .ff_gain = 0xFFFF,
     }
   };
 
+  // fill in configuration from file: automatic fallback to default
+  load_in_config(&dev_in_thread_data.settings, configuration_file);
+
   // populate the output device thread data
   dev_out_data_t dev_out_thread_data = {
-    .gamepad = GAMEPAD_DUALSENSE,
     .flags = 0x00000000U,
     .communication = {
       .type = ipc_unix_pipe,
@@ -120,8 +105,14 @@ int main(int argc, char ** argv) {
           .out_message_pipe_fd = out_message_pipes[1],
         }
       }
+    },
+    .settings = {
+        .default_gamepad = 0,
+        .nintendo_layout = false,
     }
   };
+
+  load_out_config(&dev_out_thread_data.settings, configuration_file);
 
   pthread_t dev_in_thread;
   dev_in_thread_creation = pthread_create(&dev_in_thread, NULL, dev_in_thread_func, (void*)(&dev_in_thread_data));

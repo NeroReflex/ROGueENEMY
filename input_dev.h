@@ -1,6 +1,7 @@
 #pragma once
 
 #include "message.h"
+#include "settings.h"
 
 #undef INCLUDE_INPUT_DEBUG
 #undef IGNORE_INPUT_SCAN
@@ -17,8 +18,8 @@ typedef struct evdev_collected {
  * A function with this signature grapbs input_event data and sends to the pipe messages
  * constructed from that data.
  */
-typedef int (*ev_map)(const evdev_collected_t *const e, in_message_t *const messages, size_t messages_len, void* user_data);
-typedef int (*hidraw_map)(int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data);
+typedef int (*ev_map)(const dev_in_settings_t *const conf, const evdev_collected_t *const e, in_message_t *const messages, size_t messages_len, void* user_data);
+typedef int (*hidraw_map)(const dev_in_settings_t *const conf, int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data);
 
 typedef enum input_dev_type {
     input_dev_type_uinput,
@@ -73,11 +74,11 @@ typedef struct input_dev {
 
 } input_dev_t;
 
-typedef int (*platform_init)(void** platform_data);
+typedef int (*platform_init)(const dev_in_settings_t *const conf, void** platform_data);
 
-typedef void (*platform_deinit)(void** platform_data);
+typedef void (*platform_deinit)(const dev_in_settings_t *const conf, void** platform_data);
 
-typedef int (*platform_leds)(uint8_t r, uint8_t g, uint8_t b, void* platform_data);
+typedef int (*platform_leds)(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data);
 
 typedef struct input_dev_composite {
 

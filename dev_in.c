@@ -6,6 +6,8 @@
 #include "dev_evdev.h"
 #include "dev_iio.h"
 
+#include <libconfig.h>
+
 typedef enum dev_in_type {
     DEV_IN_TYPE_NONE,
     DEV_IN_TYPE_HIDRAW,
@@ -144,6 +146,7 @@ fill_message_from_evdev_err_completed:
 }
 
 static int hidraw_open_device(
+    const dev_in_settings_t *const in_settings,
     const hidraw_filters_t *const in_filters,
     dev_in_hidraw_t *const out_dev
 ) {
@@ -164,6 +167,7 @@ iio_open_device_err:
 }
 
 static int iio_open_device(
+    const dev_in_settings_t *const in_settings,
     const iio_filters_t *const in_filters,
     dev_in_iio_t *const out_dev
 ) {
@@ -187,6 +191,7 @@ iio_open_device_err:
 }
 
 static int evdev_open_device(
+    const dev_in_settings_t *const in_settings,
     const uinput_filters_t *const in_filters,
     dev_in_ev_t *const out_dev
 ) {
@@ -219,14 +224,14 @@ static int evdev_open_device(
         out_dev->ff_effect.type = FF_RUMBLE;
         out_dev->ff_effect.id = -1;
         out_dev->ff_effect.replay.delay = 0;
-        out_dev->ff_effect.replay.length = 5000;
+        out_dev->ff_effect.replay.length = 1000;
         out_dev->ff_effect.u.rumble.strong_magnitude = 0x0000;
         out_dev->ff_effect.u.rumble.weak_magnitude = 0x0000;
 
         const struct input_event gain = {
             .type = EV_FF,
             .code = FF_GAIN,
-            .value = 0xFFFF, // TODO: give the user the ability to change this
+            .value = in_settings->ff_gain,
         };
 
         const int gain_set_res = write(libevdev_get_fd(out_dev->evdev), (const void*)&gain, sizeof(gain));
@@ -337,7 +342,7 @@ void* dev_in_thread_func(void *ptr) {
     dev_in_data_t *const dev_in_data = (dev_in_data_t*)ptr;
 
     void* platform_data;
-    const int platform_init_res = dev_in_data->input_dev_decl->init_fn(&platform_data);
+    const int platform_init_res = dev_in_data->input_dev_decl->init_fn(&dev_in_data->settings, &platform_data);
     if (platform_init_res != 0) {
         fprintf(stderr, "Error setting up platform data: %d\n", platform_init_res);
     }
@@ -401,7 +406,11 @@ void* dev_in_thread_func(void *ptr) {
                 if (d_type == input_dev_type_uinput) {
                     fprintf(stderr, "Device (evdev) %zu not found -- Attempt reconnection for device named %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.ev.name);
 
-                    const int open_res = evdev_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.ev, &devices[i].dev.evdev);
+                    const int open_res = evdev_open_device(
+                        &dev_in_data->settings,
+                        &dev_in_data->input_dev_decl->dev[i]->filters.ev,
+                        &devices[i].dev.evdev
+                    );
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_EV;
 
@@ -411,14 +420,22 @@ void* dev_in_thread_func(void *ptr) {
                 } else if (d_type == input_dev_type_iio) {
                     fprintf(stderr, "Device (iio) %zu not found -- Attempt reconnection for device named %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.iio.name);
                 
-                    const int open_res = iio_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.iio, &devices[i].dev.iio);
+                    const int open_res = iio_open_device(
+                        &dev_in_data->settings,
+                        &dev_in_data->input_dev_decl->dev[i]->filters.iio,
+                        &devices[i].dev.iio
+                    );
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_IIO;
                     }
                 } else if (d_type == input_dev_type_hidraw) {
                     fprintf(stderr, "Device (hidraw) %zu not found -- Attempt reconnection for device %x:%x\n", i, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.pid, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.vid);
                 
-                    const int open_res = hidraw_open_device(&dev_in_data->input_dev_decl->dev[i]->filters.hidraw, &devices[i].dev.hidraw);
+                    const int open_res = hidraw_open_device(
+                        &dev_in_data->settings,
+                        &dev_in_data->input_dev_decl->dev[i]->filters.hidraw,
+                        &devices[i].dev.hidraw
+                    );
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_HIDRAW;
                     }
@@ -453,7 +470,11 @@ void* dev_in_thread_func(void *ptr) {
                     handle_rumble(devices, max_devices, &out_msg.data.rumble);
                 } else if (out_msg.type == OUT_MSG_TYPE_LEDS) {
                     // first inform the platform
-                    const int platform_leds_res = dev_in_data->input_dev_decl->leds_fn(out_msg.data.leds.r, out_msg.data.leds.g, out_msg.data.leds.b, platform_data);
+                    const int platform_leds_res = dev_in_data->input_dev_decl->leds_fn(
+                        &dev_in_data->settings,
+                        out_msg.data.leds.r, out_msg.data.leds.g,
+                        out_msg.data.leds.b, platform_data
+                    );
                     if (platform_leds_res != 0) {
                         fprintf(stderr, "Error in changing platform LEDs: %d\n", platform_leds_res);
                     }
@@ -506,9 +527,19 @@ void* dev_in_thread_func(void *ptr) {
                     continue;
                 }
 
-                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(&coll, &controller_msg[0], controller_msg_avail, dev_in_data->input_dev_decl->dev[i]->user_data);
+                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(
+                    &dev_in_data->settings,
+                    &coll,
+                    &controller_msg[0],
+                    controller_msg_avail,
+                    dev_in_data->input_dev_decl->dev[i]->user_data
+                );
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
-                controller_msg_count = map_message_from_iio(&devices[i].dev.iio, &controller_msg[0], controller_msg_avail);
+                controller_msg_count = map_message_from_iio(
+                    &devices[i].dev.iio,
+                    &controller_msg[0],
+                    controller_msg_avail
+                );
                 if (controller_msg_count < 0) {
                     fprintf(stderr, "Error in reading iio buffer for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
                     iio_close_device(&devices[i].dev.iio);
@@ -516,7 +547,13 @@ void* dev_in_thread_func(void *ptr) {
                     continue;
                 }
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
-                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), &controller_msg[0], controller_msg_avail, dev_in_data->input_dev_decl->dev[i]->user_data);
+                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(
+                    &dev_in_data->settings,
+                    dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev),
+                    &controller_msg[0],
+                    controller_msg_avail,
+                    dev_in_data->input_dev_decl->dev[i]->user_data
+                );
                 if (controller_msg_count < 0) {
                     fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
                     hidraw_close_device(&devices[i].dev.hidraw);
@@ -585,11 +622,10 @@ void* dev_in_thread_func(void *ptr) {
         }
     }
 
-    // TODO: free every fd
     free(devices);
 
     if (platform_init_res != 0) {
-        dev_in_data->input_dev_decl->deinit_fn(&platform_data);
+        dev_in_data->input_dev_decl->deinit_fn(&dev_in_data->settings, &platform_data);
     }
 
     return NULL;

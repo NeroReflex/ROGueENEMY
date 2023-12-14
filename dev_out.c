@@ -6,7 +6,10 @@
 #include "virt_ds4.h"
 #include "virt_ds5.h"
 
+#include <libconfig.h>
+
 static void handle_incoming_message_gamepad_action(
+    const dev_out_settings_t *const in_settings,
     const in_message_gamepad_action_t *const msg_payload,
     gamepad_status_t *const inout_gamepad
 ) {
@@ -18,24 +21,45 @@ static void handle_incoming_message_gamepad_action(
 }
 
 static void handle_incoming_message_gamepad_set(
+    const dev_out_settings_t *const in_settings,
     const in_message_gamepad_set_element_t *const msg_payload,
     gamepad_status_t *const inout_gamepad
 ) {
     switch (msg_payload->element) {
         case GAMEPAD_BTN_CROSS: {
-            inout_gamepad->cross = msg_payload->status.btn;
+            if (!in_settings->nintendo_layout) {
+                inout_gamepad->cross = msg_payload->status.btn;
+            } else {
+                inout_gamepad->circle = msg_payload->status.btn;
+            }
+            
             break;
         }
         case GAMEPAD_BTN_CIRCLE: {
-            inout_gamepad->circle = msg_payload->status.btn;
+            if (in_settings->nintendo_layout) {
+                inout_gamepad->cross = msg_payload->status.btn;
+            } else {
+                inout_gamepad->circle = msg_payload->status.btn;
+            }
+
             break;
         }
         case GAMEPAD_BTN_SQUARE: {
-            inout_gamepad->square = msg_payload->status.btn;
+            if (in_settings->nintendo_layout) {
+                inout_gamepad->triangle = msg_payload->status.btn;
+            } else {
+                inout_gamepad->square = msg_payload->status.btn;
+            }
+            
             break;
         }
         case GAMEPAD_BTN_TRIANGLE: {
-            inout_gamepad->triangle = msg_payload->status.btn;
+            if (!in_settings->nintendo_layout) {
+                inout_gamepad->triangle = msg_payload->status.btn;
+            } else {
+                inout_gamepad->square = msg_payload->status.btn;
+            }
+
             break;
         }
         case GAMEPAD_BTN_OPTION: {
@@ -156,13 +180,22 @@ static void handle_incoming_message_gamepad_set(
 }
 
 static void handle_incoming_message(
+    const dev_out_settings_t *const in_settings,
     const in_message_t *const msg,
     devices_status_t *const dev_stats
 ) {
     if (msg->type == GAMEPAD_SET_ELEMENT) {
-        handle_incoming_message_gamepad_set(&msg->data.gamepad_set, &dev_stats->gamepad);
+        handle_incoming_message_gamepad_set(
+            in_settings,
+            &msg->data.gamepad_set,
+            &dev_stats->gamepad
+        );
     } else if (msg->type == GAMEPAD_ACTION) {
-        handle_incoming_message_gamepad_action(&msg->data.action, &dev_stats->gamepad);
+        handle_incoming_message_gamepad_action(
+            in_settings,
+            &msg->data.action,
+            &dev_stats->gamepad
+        );
     }
 }
 
@@ -181,7 +214,20 @@ void *dev_out_thread_func(void *ptr) {
     // Initialize device
     devices_status_init(&dev_out_data->dev_stats);
 
-    dev_out_gamepad_device_t current_gamepad = dev_out_data->gamepad;
+    dev_out_gamepad_device_t current_gamepad = GAMEPAD_DUALSENSE;
+    
+    switch (dev_out_data->settings.default_gamepad) {
+        case 1:
+            current_gamepad = GAMEPAD_DUALSENSE;
+            break;
+        case 2:
+            current_gamepad = GAMEPAD_DUALSHOCK;
+            break;
+
+        default:
+            current_gamepad = GAMEPAD_DUALSENSE;
+            break;
+    }
 
     union {
         virt_dualshock_t ds4;
@@ -357,7 +403,11 @@ void *dev_out_thread_func(void *ptr) {
                     in_message_t incoming_message;
                     const size_t in_message_pipe_read_res = read(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd, (void*)&incoming_message, sizeof(in_message_t));
                     if (in_message_pipe_read_res == sizeof(in_message_t)) {
-                        handle_incoming_message(&incoming_message, &dev_out_data->dev_stats);
+                        handle_incoming_message(
+                            &dev_out_data->settings,
+                            &incoming_message,
+                            &dev_out_data->dev_stats
+                        );
                     } else {
                         fprintf(stderr, "Error reading from in_message_pipe_fd: got %zu bytes, expected %zu bytes\n", in_message_pipe_read_res, sizeof(in_message_t));
                     }
@@ -370,7 +420,11 @@ void *dev_out_thread_func(void *ptr) {
                             in_message_t incoming_message;
                             const size_t in_message_pipe_read_res = read(fd, (void*)&incoming_message, sizeof(in_message_t));
                             if (in_message_pipe_read_res == sizeof(in_message_t)) {
-                                handle_incoming_message(&incoming_message, &dev_out_data->dev_stats);
+                                handle_incoming_message(
+                                    &dev_out_data->settings,
+                                    &incoming_message,
+                                    &dev_out_data->dev_stats
+                                );
                             } else {
                                 fprintf(stderr, "Error reading from socket number %d: got %zu bytes, expected %zu bytes\n", i, in_message_pipe_read_res, sizeof(in_message_t));
                                 close(dev_out_data->communication.endpoint.ssocket.clients[i]);

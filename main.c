@@ -12,13 +12,8 @@
 
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 
-controller_settings_t settings;
-
 int main(int argc, char ** argv) {
   int ret = 0;
-
-  init_config(&settings);
-  fill_config(&settings, configuration_file);
 
   input_dev_composite_t* in_devs = NULL;
   
@@ -33,10 +28,10 @@ int main(int argc, char ** argv) {
   read(dmi_name_fd, bname, sizeof(bname));
   if (strstr(bname, "RC71L") != NULL) {
     printf("Running in an Asus ROG Ally device\n");
-    in_devs = rog_ally_device_def(&settings);
+    in_devs = rog_ally_device_def();
   } else if (strstr(bname, "LNVNB161216")) {
     printf("Running in an Lenovo Legion Go device\n");
-    in_devs = legion_go_device_def(&settings);
+    in_devs = legion_go_device_def();
   }
   close(dmi_name_fd);
 
@@ -55,8 +50,15 @@ int main(int argc, char ** argv) {
           }
         },
       }
+    },
+    .settings = {
+      .enable_qam = true,
+      .ff_gain = 0xFFFF,
     }
   };
+
+  // fill in configuration from file: automatic fallback to default
+  load_in_config(&dev_in_thread_data.settings, configuration_file);
 
   //memset(&dev_in_thread_data.communication.endpoint.socket.serveraddr, 0, sizeof(dev_in_thread_data.communication.endpoint.socket.serveraddr));
   
