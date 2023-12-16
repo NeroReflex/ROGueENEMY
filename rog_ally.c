@@ -125,7 +125,14 @@ int asus_kbd_ev_map(
 				messages[written_msg++] = current_message;
 			} else if ((e->ev[i].code == KEY_F16) && (e->ev[i].value != 0)) {
 				// this is left screen button, on release both 0 and 1 events are emitted so just discard the 0
+				const in_message_t current_message = {
+					.type = GAMEPAD_ACTION,
+					.data = {
+						.action = GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
+					}
+				};
 
+				messages[written_msg++] = current_message;
 			} else if ((e->ev[i].code == KEY_PROG1) && (e->ev[i].value != 0)) {
 				// this is right screen button, on short release both 0 and 1 events are emitted so just discard the 0
 				if (conf->enable_qam) {
