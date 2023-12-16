@@ -25,6 +25,8 @@ typedef struct dev_in_hidraw {
     dev_hidraw_t *hidrawdev;
 
     hidraw_callbacks_t callbacks;
+
+    void* user_data;
 } dev_in_hidraw_t;
 
 typedef struct dev_in_ev {
@@ -320,15 +322,26 @@ static void handle_rumble_device(const dev_in_settings_t *const conf, dev_in_ev_
 static void handle_rumble(const dev_in_settings_t *const conf, dev_in_t *const in_devs, size_t in_devs_count, const out_message_rumble_t *const in_rumble_msg) {
     for (size_t i = 0; i < in_devs_count; ++i) {
         if (in_devs[i].type == DEV_IN_TYPE_EV) {
-            handle_rumble_device(conf, &in_devs[i].dev.evdev, in_rumble_msg);
+            handle_rumble_device(
+                conf,
+                &in_devs[i].dev.evdev,
+                in_rumble_msg
+            );
         }
     }
 }
 
-static void handle_leds(const dev_in_settings_t *const conf, dev_in_t *const in_devs, size_t in_devs_count, const out_message_leds_t *const in_rumble_msg) {
+static void handle_leds(const dev_in_settings_t *const conf, dev_in_t *const in_devs, size_t in_devs_count, const out_message_leds_t *const in_leds_msg) {
     for (size_t i = 0; i < in_devs_count; ++i) {
         if (in_devs[i].type == DEV_IN_TYPE_HIDRAW) {
-            
+            in_devs[i].dev.hidraw.callbacks.leds_callback(
+                conf,
+                in_devs[i].dev.hidraw.hidrawdev->fd,
+                in_leds_msg->r,
+                in_leds_msg->g,
+                in_leds_msg->b,
+                in_devs[i].dev.hidraw.user_data
+            );
         }
     }
 }
@@ -435,25 +448,28 @@ void* dev_in_thread_func(void *ptr) {
                     }
                 } else if (d_type == input_dev_type_iio) {
                     fprintf(stderr, "Device (iio) %zu not found -- Attempt reconnection for device named %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.iio.name);
-                
+
                     const int open_res = iio_open_device(
                         &dev_in_data->settings,
                         &dev_in_data->input_dev_decl->dev[i]->filters.iio,
                         &devices[i].dev.iio
                     );
+
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_IIO;
                     }
                 } else if (d_type == input_dev_type_hidraw) {
                     fprintf(stderr, "Device (hidraw) %zu not found -- Attempt reconnection for device %x:%x\n", i, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.pid, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.vid);
-                
+
                     const int open_res = hidraw_open_device(
                         &dev_in_data->settings,
                         &dev_in_data->input_dev_decl->dev[i]->filters.hidraw,
                         &devices[i].dev.hidraw
                     );
+
                     if (open_res == 0) {
                         devices[i].dev.hidraw.callbacks = dev_in_data->input_dev_decl->dev[i]->map.hidraw_callbacks;
+                        devices[i].dev.hidraw.user_data = dev_in_data->input_dev_decl->dev[i]->user_data;
                         devices[i].type = DEV_IN_TYPE_HIDRAW;
                     }
                 }
