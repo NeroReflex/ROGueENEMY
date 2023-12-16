@@ -90,9 +90,9 @@ static int get_next_mode(int current_mode) {
 	if (current_mode == 2)
 		return 3;
 	if (current_mode == 3)
-		return 2;
+		return 1;
 	else
-		fprintf(stderr, "Invalid current mode: %d -- gamepad will be set\n", current_mode);
+		fprintf(stderr, "Invalid current mode: %d -- 1 (gamepad) will be set\n", current_mode);
 
 	return 1;
 }
@@ -188,7 +188,7 @@ static int asus_kbd_ev_map(
 					memset(tmp_path, 0, tmp_path_max_len);
 					snprintf(tmp_path, tmp_path_max_len - 1, "%s/gamepad_mode", kernel_sysfs);
 
-					int gamepad_mode_fd = open(tmp_path, O_RDONLY | O_NONBLOCK);
+					int gamepad_mode_fd = open(tmp_path, O_RDONLY);
 					if (gamepad_mode_fd > 0) {
 						char current_mode_str[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 						int current_mode_read_res = read(gamepad_mode_fd, (void*)current_mode_str, sizeof(current_mode_str));
