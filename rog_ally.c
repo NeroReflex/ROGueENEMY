@@ -4,6 +4,7 @@
 #include "message.h"
 #include "xbox360.h"
 #include <linux/input-event-codes.h>
+#include <stdio.h>
 
 typedef enum rc71l_platform_mode {
   rc71l_platform_mode_hidraw,
@@ -83,7 +84,11 @@ static char* find_kernel_sysfs_device_path(struct udev *udev) {
     return NULL;
 }
 
-int asus_kbd_ev_map(
+static int get_next_mode(int current_mode) {
+	return 1 + ((current_mode + 1) % 3);
+}
+
+static int asus_kbd_ev_map(
 	const dev_in_settings_t *const conf,
 	const evdev_collected_t *const e,
 	in_message_t *const messages,
@@ -166,6 +171,53 @@ int asus_kbd_ev_map(
 				}
 
 				printf("Asus MCU kernel interface found at %s -- switching mode\n", kernel_sysfs);
+
+				const size_t tmp_path_max_len = strlen(kernel_sysfs) + 256;
+				char *tmp_path = malloc(tmp_path_max_len);
+
+				if (tmp_path != NULL) {
+					memset(tmp_path, 0, tmp_path_max_len);
+					snprintf(tmp_path, tmp_path_max_len - 1, "%s/gamepad_mode", kernel_sysfs);
+
+					int gamepad_mode_fd = open(tmp_path, O_RDONLY | O_NONBLOCK);
+					if (gamepad_mode_fd > 0) {
+						char current_mode_str[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+						int current_mode_read_res = read(gamepad_mode_fd, (void*)current_mode_str, sizeof(current_mode_str));
+						if (current_mode_read_res > 0) {
+							int current_mode;
+							sscanf("%d", current_mode_str, &current_mode);
+
+							const int new_mode = get_next_mode(current_mode);
+							printf("Current mode is set to %d -- switching to %d", current_mode, new_mode);
+
+							// end the current mode read
+							close(gamepad_mode_fd);
+
+							char new_mode_str[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+							snprintf(new_mode_str, sizeof(new_mode_str) - 1, "%d", new_mode);
+							gamepad_mode_fd = open(tmp_path, O_RDONLY);
+							if (gamepad_mode_fd > 0) {
+								if (write(gamepad_mode_fd, new_mode_str, strlen(new_mode_str)) > 0) {
+									printf("Controller mode switched successfully to %d\n", new_mode);
+								} else {
+									fprintf(stderr, "Unable to switch controller mode: %d -- expect bugs\n", errno);
+								}
+								close(gamepad_mode_fd);
+							} else {
+								fprintf(stderr, "Unable to open gamepad mode file to switch mode: %d\n", errno);
+							}
+						} else {
+							close(gamepad_mode_fd);
+							fprintf(stderr, "Unable to read gamepad_mode file to get current mode: %d", errno);
+						}
+					} else {
+						fprintf(stderr, "Unable to open gamepad_mode file in read-only mode to get current mode: %d", errno);
+					}
+
+					free(tmp_path);
+				} else {
+					fprintf(stderr, "Unable to allocate enough memory\n");
+				}
 
 				free(kernel_sysfs);
 			} else if (e->ev[i].code == BTN_LEFT) {
