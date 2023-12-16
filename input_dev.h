@@ -19,7 +19,6 @@ typedef struct evdev_collected {
  * constructed from that data.
  */
 typedef int (*ev_map)(const dev_in_settings_t *const conf, const evdev_collected_t *const e, in_message_t *const messages, size_t messages_len, void* user_data);
-typedef int (*hidraw_map)(const dev_in_settings_t *const conf, int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data);
 
 typedef enum input_dev_type {
     input_dev_type_uinput,
@@ -41,13 +40,14 @@ typedef struct iio_filters {
     const char name[256];
 } iio_filters_t;
 
-typedef int (*hidraw_set_leds)(uint8_t r, uint8_t g, uint8_t b, void* user_data);
-
-typedef int (*hidraw_rumble)(uint8_t left_motor, uint8_t right_motor, void* user_data);
+typedef int (*hidraw_map)(const dev_in_settings_t *const conf, int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data);
+typedef int (*hidraw_set_leds)(const dev_in_settings_t *const conf, int hidraw_fd, uint8_t r, uint8_t g, uint8_t b, void* user_data);
+typedef int (*hidraw_rumble)(const dev_in_settings_t *const conf, int hidraw_fd, uint8_t left_motor, uint8_t right_motor, void* user_data);
 
 typedef struct hidraw_callbacks {
     hidraw_set_leds leds_callback;
     hidraw_rumble rumble_callback;
+    hidraw_map map_callback;
 } hidraw_callbacks_t;
 
 typedef struct iio_settings {
@@ -69,7 +69,7 @@ typedef struct input_dev {
     union input_dev_map {
         iio_settings_t iio_settings;
         ev_map ev_input_map_fn;
-        hidraw_map hidraw_input_map_fn;
+        hidraw_callbacks_t hidraw_callbacks;
     } map;
 
 } input_dev_t;

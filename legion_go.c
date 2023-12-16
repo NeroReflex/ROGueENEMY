@@ -82,7 +82,9 @@ static input_dev_t in_hidraw_dev = {
     },
     .user_data = (void*)&llg_hidraw_user_data,
     .map = {
-        .hidraw_input_map_fn = llg_hidraw_map,
+        .hidraw_callbacks = {
+            .map_callback = llg_hidraw_map,
+        }
     },
 };
 

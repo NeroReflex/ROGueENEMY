@@ -23,6 +23,8 @@ typedef struct dev_in_iio {
 
 typedef struct dev_in_hidraw {
     dev_hidraw_t *hidrawdev;
+
+    hidraw_callbacks_t callbacks;
 } dev_in_hidraw_t;
 
 typedef struct dev_in_ev {
@@ -266,7 +268,7 @@ static void hidraw_close_device(dev_in_hidraw_t *const out_hidraw) {
     dev_hidraw_close(out_hidraw->hidrawdev);
 }
 
-static void handle_rumble_device(dev_in_ev_t *const in_dev, const out_message_rumble_t *const in_rumble_msg) {
+static void handle_rumble_device(const dev_in_settings_t *const conf, dev_in_ev_t *const in_dev, const out_message_rumble_t *const in_rumble_msg) {
     if (!in_dev->has_rumble_support) {
         return;
     }
@@ -315,10 +317,18 @@ static void handle_rumble_device(dev_in_ev_t *const in_dev, const out_message_ru
     }
 }
 
-static void handle_rumble(dev_in_t *const in_devs, size_t in_devs_count, const out_message_rumble_t *const in_rumble_msg) {
+static void handle_rumble(const dev_in_settings_t *const conf, dev_in_t *const in_devs, size_t in_devs_count, const out_message_rumble_t *const in_rumble_msg) {
     for (size_t i = 0; i < in_devs_count; ++i) {
         if (in_devs[i].type == DEV_IN_TYPE_EV) {
-            handle_rumble_device(&in_devs[i].dev.evdev, in_rumble_msg);
+            handle_rumble_device(conf, &in_devs[i].dev.evdev, in_rumble_msg);
+        }
+    }
+}
+
+static void handle_leds(const dev_in_settings_t *const conf, dev_in_t *const in_devs, size_t in_devs_count, const out_message_leds_t *const in_rumble_msg) {
+    for (size_t i = 0; i < in_devs_count; ++i) {
+        if (in_devs[i].type == DEV_IN_TYPE_HIDRAW) {
+            
         }
     }
 }
@@ -443,6 +453,7 @@ void* dev_in_thread_func(void *ptr) {
                         &devices[i].dev.hidraw
                     );
                     if (open_res == 0) {
+                        devices[i].dev.hidraw.callbacks = dev_in_data->input_dev_decl->dev[i]->map.hidraw_callbacks;
                         devices[i].type = DEV_IN_TYPE_HIDRAW;
                     }
                 }
@@ -473,7 +484,7 @@ void* dev_in_thread_func(void *ptr) {
             const ssize_t out_message_pipe_read_res = read(out_message_fd, (void*)&out_msg, sizeof(out_message_t));
             if (out_message_pipe_read_res == sizeof(out_message_t)) {
                 if (out_msg.type == OUT_MSG_TYPE_RUMBLE) {
-                    handle_rumble(devices, max_devices, &out_msg.data.rumble);
+                    handle_rumble(&dev_in_data->settings, devices, max_devices, &out_msg.data.rumble);
                 } else if (out_msg.type == OUT_MSG_TYPE_LEDS) {
                     // first inform the platform
                     const int platform_leds_res = dev_in_data->input_dev_decl->leds_fn(
@@ -485,7 +496,7 @@ void* dev_in_thread_func(void *ptr) {
                         fprintf(stderr, "Error in changing platform LEDs: %d\n", platform_leds_res);
                     }
 
-                    // TODO: handle_leds()
+                    handle_leds(&dev_in_data->settings, devices, max_devices, &out_msg.data.leds);
                 }
             } else {
                 fprintf(stderr, "Error reading from out_message_pipe_fd: got %zu bytes, expected %zu bytes\n", out_message_pipe_read_res, sizeof(out_message_t));
@@ -553,7 +564,7 @@ void* dev_in_thread_func(void *ptr) {
                     continue;
                 }
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
-                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.hidraw_input_map_fn(
+                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.hidraw_callbacks.map_callback(
                     &dev_in_data->settings,
                     dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev),
                     &controller_msg[0],

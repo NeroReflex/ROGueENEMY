@@ -6,6 +6,26 @@
 #include <linux/input-event-codes.h>
 #include <stdio.h>
 
+enum rc71l_leds_mode {
+  ROG_ALLY_MODE_STATIC           = 0,
+  ROG_ALLY_MODE_BREATHING        = 1,
+  ROG_ALLY_MODE_COLOR_CYCLE      = 2,
+  ROG_ALLY_MODE_RAINBOW          = 3,
+  ROG_ALLY_MODE_STROBING         = 10,
+  ROG_ALLY_MODE_DIRECT           = 0xFF,
+} rc71l_leds_mode_t;
+
+enum rc71l_leds_speed {
+    ROG_ALLY_SPEED_MIN              = 0xE1,
+    ROG_ALLY_SPEED_MED              = 0xEB,
+    ROG_ALLY_SPEED_MAX              = 0xF5
+} rc71l_leds_speed_t;
+
+enum rc71l_leds_direction {
+    ROG_ALLY_DIRECTION_RIGHT        = 0x00,
+    ROG_ALLY_DIRECTION_LEFT         = 0x01
+} rc71l_leds_direction_t;
+
 typedef enum rc71l_platform_mode {
   rc71l_platform_mode_hidraw,
   rc71l_platform_mode_linux_and_asusctl,
@@ -297,12 +317,6 @@ static int asus_kbd_ev_map(
 	return written_msg;
 }
 
-static hidraw_filters_t n_key_hidraw_filters = {
-  .pid = 0x1abe,
-  .vid = 0x0b05,
-  .rdesc_size = 167, // 48 83 167
-};
-
 static input_dev_t in_iio_dev = {
   .dev_type = input_dev_type_iio,
   .filters = {
@@ -385,25 +399,63 @@ static input_dev_t in_xbox_dev = {
   }
 };
 
-enum rc71l_leds_mode {
-  ROG_ALLY_MODE_STATIC           = 0,
-  ROG_ALLY_MODE_BREATHING        = 1,
-  ROG_ALLY_MODE_COLOR_CYCLE      = 2,
-  ROG_ALLY_MODE_RAINBOW          = 3,
-  ROG_ALLY_MODE_STROBING         = 10,
-  ROG_ALLY_MODE_DIRECT           = 0xFF,
-} rc71l_leds_mode_t;
+static int rc71l_hidraw_map(const dev_in_settings_t *const conf, int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data) {
+	return 0;
+}
 
-enum rc71l_leds_speed {
-    ROG_ALLY_SPEED_MIN              = 0xE1,
-    ROG_ALLY_SPEED_MED              = 0xEB,
-    ROG_ALLY_SPEED_MAX              = 0xF5
-} rc71l_leds_speed_t;
+static int rc71l_hidraw_rumble(const dev_in_settings_t *const conf, int hidraw_fd, uint8_t left_motor, uint8_t right_motor, void* user_data) {
+	return 0;
+}
 
-enum rc71l_leds_direction {
-    ROG_ALLY_DIRECTION_RIGHT        = 0x00,
-    ROG_ALLY_DIRECTION_LEFT         = 0x01
-} rc71l_leds_direction_t;
+static int rc71l_hidraw_set_leds(const dev_in_settings_t *const conf, int hidraw_fd, uint8_t r, uint8_t g, uint8_t b, void* user_data) {
+	const uint8_t brightness_buf[] = {
+		0x5A, 0xBA, 0xC5, 0xC4, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
+
+	const uint8_t colors_buf[] = {
+		0x5A, 0xB3, 0x00, ROG_ALLY_MODE_STATIC, r, g, b, 0x00, ROG_ALLY_DIRECTION_RIGHT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
+
+	if (write(hidraw_fd, brightness_buf, sizeof(brightness_buf)) != 64) {
+		fprintf(stderr, "Unable to send LEDs brightness (1) command change: %d\n", errno);
+		goto rc71l_hidraw_set_leds_err;
+	}
+
+	if (write(hidraw_fd, colors_buf, sizeof(colors_buf)) != 64) {
+		fprintf(stderr, "Unable to send LEDs color command change (1)\n");
+		goto rc71l_hidraw_set_leds_err;
+	}
+
+	return 0;
+
+rc71l_hidraw_set_leds_err:
+  return -EIO;
+}
+
+static input_dev_t nkey_dev = {
+	.dev_type = input_dev_type_hidraw,
+	.filters = {
+		.hidraw = {
+			.pid = 0x1abe,
+			.vid = 0x0b05,
+			.rdesc_size = 167, // 48 83 167
+		}
+	},
+	.user_data = NULL,
+	.map = {
+		.hidraw_callbacks = {
+			.leds_callback = rc71l_hidraw_set_leds,
+			.rumble_callback = rc71l_hidraw_rumble,
+			.map_callback = rc71l_hidraw_map,
+		}
+	}
+};
 
 static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platform_data) {
 	int res = -EINVAL;
@@ -419,22 +471,6 @@ static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platf
 
 	// setup asus keyboard(s) user_data
 	asus_userdata.udev = udev_new();
-
-	res = dev_hidraw_open(&n_key_hidraw_filters, &platform->platform.hidraw);
-	if (res != 0) {
-		fprintf(stderr, "Unable to open the ROG ally hidraw main device...\n");
-		free(*platform_data);
-		*platform_data = NULL;
-		goto rc71l_platform_init_err;
-	}
-
-	platform->platform_mode = rc71l_platform_mode_hidraw;
-
-	const int fd = dev_hidraw_get_fd(platform->platform.hidraw);
-	
-	platform->mode = 0;
-	platform->modes_count = 2;
-	printf("ROG Ally platform will be managed over hidraw. I'm sorry fluke.\n");
 
 rc71l_platform_init_err:
 	return res;
@@ -454,58 +490,7 @@ static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** pl
 }
 
 static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
-	rc71l_platform_t *const platform = (rc71l_platform_t *)platform_data;
-	if (platform == NULL) {
-		return -EINVAL;
-	}
-
-	const uint8_t brightness_buf[] = {
-		0x5A, 0xBA, 0xC5, 0xC4, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	};
-
-	uint8_t colors_buf[] = {
-		0x5A, 0xB3, 0x00, ROG_ALLY_MODE_STATIC, r, g, b, 0x00, ROG_ALLY_DIRECTION_RIGHT, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	};
-
-	if ((platform->platform_mode == rc71l_platform_mode_hidraw) && (platform->platform.hidraw != NULL)) {
-		int fd = dev_hidraw_get_fd(platform->platform.hidraw);
-
-		if (write(fd, brightness_buf, sizeof(brightness_buf)) != 64) {
-			fprintf(stderr, "Unable to send LEDs brightness (1) command change -- attempt to reacquire hidraw\n");
-
-			dev_hidraw_close(platform->platform.hidraw);
-
-			const int reopen_res = dev_hidraw_open(&n_key_hidraw_filters, &platform->platform.hidraw);
-			if (reopen_res != 0) {
-				fprintf(stderr, "Unable to (re)open the ROG ally hidraw main device...\n");
-				goto rc71l_platform_leds_err;
-			} else {
-				printf("ROG ally hidraw main device reacquired\n");
-				fd = dev_hidraw_get_fd(platform->platform.hidraw);
-
-				if (write(fd, brightness_buf, sizeof(brightness_buf)) != 64) {
-					fprintf(stderr, "Unable to send LEDs brightness (1) command change after hidraw reset -- giving up\n");
-					goto rc71l_platform_leds_err;
-				}
-			}
-		}
-
-		if (write(fd, colors_buf, sizeof(colors_buf)) != 64) {
-			fprintf(stderr, "Unable to send LEDs color command change (1)\n");
-			goto rc71l_platform_leds_err;
-		}
-
-		return 0;
-	}
-
-rc71l_platform_leds_err:
-  return -EINVAL;
+	return 0;
 }
 
 input_dev_composite_t rc71l_composite = {
@@ -515,8 +500,9 @@ input_dev_composite_t rc71l_composite = {
     &in_asus_kb_1_dev,
     &in_asus_kb_2_dev,
     &in_asus_kb_3_dev,
+	&nkey_dev,
   },
-  .dev_count = 5,
+  .dev_count = 6,
   .init_fn = rc71l_platform_init,
   .deinit_fn = rc71l_platform_deinit,
   .leds_fn = rc71l_platform_leds,
