@@ -64,6 +64,19 @@ typedef struct in_message_gamepad_set_element {
     } status;
 }  in_message_gamepad_set_element_t;
 
+typedef enum mouse_element {
+    MOUSE_ELEMENT_X,
+    MOUSE_ELEMENT_Y,
+    MOUSE_BTN_LEFT,
+    MOUSE_BTN_MIDDLE,
+    MOUSE_BTN_RIGHT,
+} mouse_element_t;
+
+typedef struct in_message_mouse_event {
+    mouse_element_t type;
+    int32_t value;
+} in_message_mouse_event_t;
+
 typedef enum in_message_gamepad_action {
     GAMEPAD_ACTION_PRESS_AND_RELEASE_CENTER,
     GAMEPAD_ACTION_OPEN_STEAM_QAM,
@@ -72,6 +85,7 @@ typedef enum in_message_gamepad_action {
 typedef enum in_in_message_type {
     GAMEPAD_SET_ELEMENT,
     GAMEPAD_ACTION,
+    MOUSE_EVENT,
 }  in_message_type_t;
 
 typedef struct in_message {
@@ -83,6 +97,8 @@ typedef struct in_message {
         in_message_gamepad_action_t action;
 
         in_message_gamepad_set_element_t gamepad_set;
+
+        in_message_mouse_event_t mouse_event;
     } data;
 
 }  in_message_t;

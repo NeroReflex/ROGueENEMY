@@ -1,7 +1,9 @@
 #include "rog_ally.h"
 #include "input_dev.h"
 #include "dev_hidraw.h"
+#include "message.h"
 #include "xbox360.h"
+#include <linux/input-event-codes.h>
 
 typedef enum rc71l_platform_mode {
   rc71l_platform_mode_hidraw,
@@ -99,10 +101,10 @@ int asus_kbd_ev_map(
 					.type = GAMEPAD_SET_ELEMENT,
 					.data = {
 						.gamepad_set = {
-						.element = GAMEPAD_BTN_L5,
-						.status = {
-							.btn = e->ev[1].value,
-						}
+							.element = GAMEPAD_BTN_L5,
+							.status = {
+								.btn = e->ev[1].value,
+							}
 						}
 					}
 				};
@@ -166,6 +168,68 @@ int asus_kbd_ev_map(
 				printf("Asus MCU kernel interface found at %s -- switching mode\n", kernel_sysfs);
 
 				free(kernel_sysfs);
+			} else if (e->ev[i].code == BTN_LEFT) {
+				const in_message_t current_message = {
+					.type = MOUSE_EVENT,
+					.data = {
+						.mouse_event = {
+							.type = MOUSE_BTN_LEFT,
+							.value = e->ev[i].value,
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			}  else if (e->ev[i].code == BTN_MIDDLE) {
+				const in_message_t current_message = {
+					.type = MOUSE_EVENT,
+					.data = {
+						.mouse_event = {
+							.type = MOUSE_BTN_MIDDLE,
+							.value = e->ev[i].value,
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == BTN_RIGHT) {
+				const in_message_t current_message = {
+					.type = MOUSE_EVENT,
+					.data = {
+						.mouse_event = {
+							.type = MOUSE_BTN_RIGHT,
+							.value = e->ev[i].value,
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			}
+		} else if (e->ev[i].type == EV_REL) {
+			if (e->ev[i].code == REL_X) {
+				const in_message_t current_message = {
+					.type = MOUSE_EVENT,
+					.data = {
+						.mouse_event = {
+							.type = MOUSE_ELEMENT_X,
+							.value = e->ev[i].value,
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == REL_Y) {
+				const in_message_t current_message = {
+					.type = MOUSE_EVENT,
+					.data = {
+						.mouse_event = {
+							.type = MOUSE_ELEMENT_Y,
+							.value = e->ev[i].value,
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
 			}
 		}
 	}

@@ -5,6 +5,7 @@
 #include "message.h"
 #include "virt_ds4.h"
 #include "virt_ds5.h"
+#include "virt_mouse.h"
 
 #include <libconfig.h>
 
@@ -18,6 +19,24 @@ static void handle_incoming_message_gamepad_action(
     } else if (*msg_payload == GAMEPAD_ACTION_OPEN_STEAM_QAM) {
         inout_gamepad->flags |= GAMEPAD_STATUS_FLAGS_OPEN_STEAM_QAM;
     } 
+}
+
+static void handle_incoming_message_mouse_event(
+    const dev_out_settings_t *const in_settings,
+    const in_message_mouse_event_t *const msg_payload,
+    mouse_status_t *const inout_mouse
+) {
+    if (msg_payload->type == MOUSE_ELEMENT_X) {
+        inout_mouse->x += msg_payload->value;
+    } else if (msg_payload->type == MOUSE_ELEMENT_Y) {
+        inout_mouse->y += msg_payload->value;
+    } else if (msg_payload->type == MOUSE_BTN_LEFT) {
+        inout_mouse->btn_left = msg_payload->value;
+    } else if (msg_payload->type == MOUSE_BTN_MIDDLE) {
+        inout_mouse->btn_middle = msg_payload->value;
+    } else if (msg_payload->type == MOUSE_BTN_RIGHT) {
+        inout_mouse->btn_right = msg_payload->value;
+    }
 }
 
 static void handle_incoming_message_gamepad_set(
@@ -196,6 +215,12 @@ static void handle_incoming_message(
             &msg->data.action,
             &dev_stats->gamepad
         );
+    } else if (msg->type == MOUSE_EVENT) {
+        handle_incoming_message_mouse_event(
+            in_settings,
+            &msg->data.mouse_event,
+            &dev_stats->mouse
+        );
     }
 }
 
@@ -229,14 +254,26 @@ void *dev_out_thread_func(void *ptr) {
             break;
     }
 
+    int current_gamepad_fd = -1;
+    int current_keyboard_fd = -1;
+    int current_mouse_fd = -1;
+
     union {
         virt_dualshock_t ds4;
         virt_dualsense_t ds5;
     } controller_data;
 
-    int current_gamepad_fd = -1;
-    //int current_keyboard_fd = -1;
-    //int current_mouse_fd = -1;
+    virt_mouse_t mouse_data;
+    const int mouse_init_res = virt_mouse_init(&mouse_data);
+    if (mouse_init_res < 0) {
+        fprintf(stderr, "Unable to initialize virtual mouse -- will continue regardless\n");
+    } else {
+        current_mouse_fd = virt_mouse_get_fd(&mouse_data);
+    }
+
+    const int64_t kbd_report_timing_us = 1125;
+    const int64_t mouse_report_timing_us = 950;
+    const int64_t gamepad_report_timing_us = 1250;
 
     if (current_gamepad == GAMEPAD_DUALSENSE) {
         const int ds5_init_res = virt_dualsense_init(&controller_data.ds5);
@@ -260,8 +297,8 @@ void *dev_out_thread_func(void *ptr) {
     gettimeofday(&now, NULL);
 
     struct timeval gamepad_last_hid_report_sent = now;
-    //struct timeval mouse_last_hid_report_sent = now;
-    //struct timeval keyboard_last_hid_report_sent = now;
+    struct timeval mouse_last_hid_report_sent = now;
+    struct timeval keyboard_last_hid_report_sent = now;
 
     uint8_t tmp_buf[256];
 
@@ -272,9 +309,12 @@ void *dev_out_thread_func(void *ptr) {
             break;
         }
 
+        const int64_t gamepad_time_diff_usecs = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
+        const int64_t mouse_time_diff_usecs = get_timediff_usec(&mouse_last_hid_report_sent, &now);
+        const int64_t kbd_time_diff_usecs = get_timediff_usec(&keyboard_last_hid_report_sent, &now);
+
         gettimeofday(&now, NULL);
-        int64_t gamepad_time_diff_usecs = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
-        if (gamepad_time_diff_usecs >= 1250) {
+        if (gamepad_time_diff_usecs >= gamepad_report_timing_us) {
             gamepad_last_hid_report_sent = now;
             
             if (current_gamepad == GAMEPAD_DUALSENSE) {
@@ -284,169 +324,199 @@ void *dev_out_thread_func(void *ptr) {
                 virt_dualshock_compose(&controller_data.ds4, &dev_out_data->dev_stats.gamepad, tmp_buf);
                 virt_dualshock_send(&controller_data.ds4, tmp_buf);
             }
-        } else {
-            FD_ZERO(&read_fds);
 
+            // this does reset the for, ensuring every other device has nothing to say
+            continue;
+        } else if (mouse_time_diff_usecs >= mouse_report_timing_us) {
+            mouse_last_hid_report_sent = now;
+
+            virt_mouse_send(&mouse_data, &dev_out_data->dev_stats.mouse, &now);
+
+            // this does reset the for, ensuring every other device has nothing to say
+            continue;
+        } else if (kbd_time_diff_usecs >= kbd_report_timing_us) {
+            keyboard_last_hid_report_sent = now;
+
+            // this does reset the for, ensuring every other device has nothing to say
+            continue;
+        }
+
+
+        // once here no output device needs to send out its report
+        FD_ZERO(&read_fds);
+
+        if (dev_out_data->communication.type == ipc_unix_pipe) {
+            FD_SET(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd, &read_fds);
+        } else if (dev_out_data->communication.type == ipc_server_sockets) {
+            if (pthread_mutex_lock(&dev_out_data->communication.endpoint.ssocket.mutex) == 0) {
+                for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                    const int fd = dev_out_data->communication.endpoint.ssocket.clients[i];
+                    if (fd > 0) {
+                        FD_SET(fd, &read_fds);
+                    }
+                }
+            
+                pthread_mutex_unlock(&dev_out_data->communication.endpoint.ssocket.mutex);
+            }
+        }
+
+        if (current_mouse_fd > 0) {
+            FD_SET(current_mouse_fd, &read_fds);
+        }
+        
+        // TODO: FD_SET(current_keyboard_fd, &read_fds);
+
+        if (current_gamepad_fd > 0) {
+            FD_SET(current_gamepad_fd, &read_fds);
+        }
+
+        const int64_t timeout_gamepad_time_diff_usecs = gamepad_report_timing_us - gamepad_time_diff_usecs;
+        const int64_t timeout_mouse_time_diff_usecs = mouse_time_diff_usecs - mouse_report_timing_us;
+        const int64_t timeout_kbd_time_diff_usecs = kbd_report_timing_us - kbd_time_diff_usecs;
+
+        int64_t next_timing_out_device_diff_usecs = timeout_kbd_time_diff_usecs < timeout_mouse_time_diff_usecs ? timeout_kbd_time_diff_usecs : timeout_mouse_time_diff_usecs;
+        next_timing_out_device_diff_usecs = next_timing_out_device_diff_usecs < timeout_gamepad_time_diff_usecs ? next_timing_out_device_diff_usecs : timeout_gamepad_time_diff_usecs;
+
+        // calculate the shortest timeout between one of the multiple device will needs to send out its hid report
+        struct timeval timeout = {
+            .tv_sec = (__time_t)next_timing_out_device_diff_usecs / (__time_t)1000000,
+            .tv_usec = (__suseconds_t)next_timing_out_device_diff_usecs % (__suseconds_t)1000000,
+        };
+
+        int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
+        gamepad_status_qam_quirk_ext_time(&dev_out_data->dev_stats.gamepad, &now);
+
+        if (ready_fds == -1) {
+            const int err = errno;
+            fprintf(stderr, "Error reading events for output devices: %d\n", err);
+            continue;
+        } else if (ready_fds == 0) {
+            // timeout: do nothing but continue. next iteration will take care
+            continue;
+        }
+
+        if ((current_gamepad_fd > 0) && (FD_ISSET(current_gamepad_fd, &read_fds))) {
+            const uint64_t prev_leds_events_count = dev_out_data->dev_stats.gamepad.leds_events_count;
+            const uint64_t prev_motors_events_count = dev_out_data->dev_stats.gamepad.rumble_events_count;
+
+            out_message_t out_msgs[4];
+            size_t out_msgs_count = 0;
+            if (current_gamepad == GAMEPAD_DUALSENSE) {
+                virt_dualsense_event(&controller_data.ds5, &dev_out_data->dev_stats.gamepad);
+            } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
+                virt_dualshock_event(&controller_data.ds4, &dev_out_data->dev_stats.gamepad);
+            }
+
+            const uint64_t current_leds_events_count = dev_out_data->dev_stats.gamepad.leds_events_count;
+            const uint64_t current_motors_events_count = dev_out_data->dev_stats.gamepad.rumble_events_count;
+
+            if (current_leds_events_count != prev_leds_events_count) {
+                const out_message_t msg = {
+                    .type = OUT_MSG_TYPE_LEDS,
+                    .data = {
+                        .leds = {
+                            .r = dev_out_data->dev_stats.gamepad.leds_colors[0],
+                            .g = dev_out_data->dev_stats.gamepad.leds_colors[1],
+                            .b = dev_out_data->dev_stats.gamepad.leds_colors[2],
+                        }
+                    }
+                };
+
+                out_msgs[out_msgs_count++] = msg;
+            }
+
+            if (current_motors_events_count != prev_motors_events_count) {
+                const out_message_t msg = {
+                    .type = OUT_MSG_TYPE_RUMBLE,
+                    .data = {
+                        .rumble = {
+                            .motors_left = dev_out_data->dev_stats.gamepad.motors_intensity[0],
+                            .motors_right = dev_out_data->dev_stats.gamepad.motors_intensity[1],
+                        }
+                    }
+                };
+
+                out_msgs[out_msgs_count++] = msg;
+            }
+
+            // send out game-generated events to sockets
             if (dev_out_data->communication.type == ipc_unix_pipe) {
-                FD_SET(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd, &read_fds);
+                for (int msg_idx = 0; msg_idx < out_msgs_count; ++msg_idx) {
+                    const int write_res = write(dev_out_data->communication.endpoint.pipe.out_message_pipe_fd, (void*)&out_msgs[msg_idx], sizeof(out_message_t));
+                    if (write_res != sizeof(out_message_t)) {
+                        fprintf(stderr, "Error in writing out_message to out_message_pipe: %d\n", write_res);
+                    }
+                }
             } else if (dev_out_data->communication.type == ipc_server_sockets) {
                 if (pthread_mutex_lock(&dev_out_data->communication.endpoint.ssocket.mutex) == 0) {
                     for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
-                        const int fd = dev_out_data->communication.endpoint.ssocket.clients[i];
-                        if (fd > 0) {
-                            FD_SET(fd, &read_fds);
-                        }
-                    }
-                
-                    pthread_mutex_unlock(&dev_out_data->communication.endpoint.ssocket.mutex);
-                }
-            }
-
-            // TODO: FD_SET(current_mouse_fd, &read_fds);
-            // TODO: FD_SET(current_keyboard_fd, &read_fds);
-            FD_SET(current_gamepad_fd, &read_fds);
-
-            // calculate the shortest timeout between one of the multiple device will needs to send out its hid report
-            struct timeval timeout = {
-                .tv_sec = (__time_t)gamepad_time_diff_usecs / (__time_t)1000000,
-                .tv_usec = (__suseconds_t)gamepad_time_diff_usecs % (__suseconds_t)1000000,
-            };
-
-            int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
-            gamepad_status_qam_quirk_ext_time(&dev_out_data->dev_stats.gamepad, &now);
-
-            if (ready_fds == -1) {
-                const int err = errno;
-                fprintf(stderr, "Error reading events for output devices: %d\n", err);
-                continue;
-            } else if (ready_fds == 0) {
-                // timeout: do nothing but continue. next iteration will take care
-                continue;
-            }
-
-            
-            if (FD_ISSET(current_gamepad_fd, &read_fds)) {
-                const uint64_t prev_leds_events_count = dev_out_data->dev_stats.gamepad.leds_events_count;
-                const uint64_t prev_motors_events_count = dev_out_data->dev_stats.gamepad.rumble_events_count;
-
-                out_message_t out_msgs[4];
-                size_t out_msgs_count = 0;
-                if (current_gamepad == GAMEPAD_DUALSENSE) {
-                    virt_dualsense_event(&controller_data.ds5, &dev_out_data->dev_stats.gamepad);
-                } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
-                    virt_dualshock_event(&controller_data.ds4, &dev_out_data->dev_stats.gamepad);
-                }
-
-                const uint64_t current_leds_events_count = dev_out_data->dev_stats.gamepad.leds_events_count;
-                const uint64_t current_motors_events_count = dev_out_data->dev_stats.gamepad.rumble_events_count;
-
-                if (current_leds_events_count != prev_leds_events_count) {
-                    const out_message_t msg = {
-                        .type = OUT_MSG_TYPE_LEDS,
-                        .data = {
-                            .leds = {
-                                .r = dev_out_data->dev_stats.gamepad.leds_colors[0],
-                                .g = dev_out_data->dev_stats.gamepad.leds_colors[1],
-                                .b = dev_out_data->dev_stats.gamepad.leds_colors[2],
-                            }
-                        }
-                    };
-
-                    out_msgs[out_msgs_count++] = msg;
-                }
-
-                if (current_motors_events_count != prev_motors_events_count) {
-                    const out_message_t msg = {
-                        .type = OUT_MSG_TYPE_RUMBLE,
-                        .data = {
-                            .rumble = {
-                                .motors_left = dev_out_data->dev_stats.gamepad.motors_intensity[0],
-                                .motors_right = dev_out_data->dev_stats.gamepad.motors_intensity[1],
-                            }
-                        }
-                    };
-
-                    out_msgs[out_msgs_count++] = msg;
-                }
-
-                // send out game-generated events to sockets
-                if (dev_out_data->communication.type == ipc_unix_pipe) {
-                    for (int msg_idx = 0; msg_idx < out_msgs_count; ++msg_idx) {
-                        const int write_res = write(dev_out_data->communication.endpoint.pipe.out_message_pipe_fd, (void*)&out_msgs[msg_idx], sizeof(out_message_t));
-                        if (write_res != sizeof(out_message_t)) {
-                            fprintf(stderr, "Error in writing out_message to out_message_pipe: %d\n", write_res);
-                        }
-                    }
-                } else if (dev_out_data->communication.type == ipc_server_sockets) {
-                    if (pthread_mutex_lock(&dev_out_data->communication.endpoint.ssocket.mutex) == 0) {
-                        for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
-                            if (dev_out_data->communication.endpoint.ssocket.clients[i] > 0) {
-                                for (int msg_idx = 0; msg_idx < out_msgs_count; ++msg_idx) {
-                                    const int write_res = write(dev_out_data->communication.endpoint.ssocket.clients[i], (void*)&out_msgs[msg_idx], sizeof(out_message_t));
-                                    if (write_res != sizeof(out_message_t)) {
-                                        fprintf(stderr, "Error in writing out_message to socket number %d: %d\n", i, write_res);
-                                        close(dev_out_data->communication.endpoint.ssocket.clients[i]);
-                                        dev_out_data->communication.endpoint.ssocket.clients[i] = -1;
-                                    }
+                        if (dev_out_data->communication.endpoint.ssocket.clients[i] > 0) {
+                            for (int msg_idx = 0; msg_idx < out_msgs_count; ++msg_idx) {
+                                const int write_res = write(dev_out_data->communication.endpoint.ssocket.clients[i], (void*)&out_msgs[msg_idx], sizeof(out_message_t));
+                                if (write_res != sizeof(out_message_t)) {
+                                    fprintf(stderr, "Error in writing out_message to socket number %d: %d\n", i, write_res);
+                                    close(dev_out_data->communication.endpoint.ssocket.clients[i]);
+                                    dev_out_data->communication.endpoint.ssocket.clients[i] = -1;
                                 }
                             }
                         }
+                    }
 
-                        pthread_mutex_unlock(&dev_out_data->communication.endpoint.ssocket.mutex);
-                    }
-                }
-            }
-
-            // read and handle incoming data: this data is packed into in_message_t
-            if (dev_out_data->communication.type == ipc_unix_pipe) {
-                if (FD_ISSET(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd, &read_fds)) {
-                    in_message_t incoming_message;
-                    const size_t in_message_pipe_read_res = read(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd, (void*)&incoming_message, sizeof(in_message_t));
-                    if (in_message_pipe_read_res == sizeof(in_message_t)) {
-                        handle_incoming_message(
-                            &dev_out_data->settings,
-                            &incoming_message,
-                            &dev_out_data->dev_stats
-                        );
-                    } else {
-                        fprintf(stderr, "Error reading from in_message_pipe_fd: got %zu bytes, expected %zu bytes\n", in_message_pipe_read_res, sizeof(in_message_t));
-                    }
-                }
-            } else if (dev_out_data->communication.type == ipc_server_sockets) {
-                if (pthread_mutex_lock(&dev_out_data->communication.endpoint.ssocket.mutex) == 0) {
-                    for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
-                        const int fd = dev_out_data->communication.endpoint.ssocket.clients[i];
-                        if ((fd > 0) && (FD_ISSET(fd, &read_fds))) {
-                            in_message_t incoming_message;
-                            const size_t in_message_pipe_read_res = read(fd, (void*)&incoming_message, sizeof(in_message_t));
-                            if (in_message_pipe_read_res == sizeof(in_message_t)) {
-                                handle_incoming_message(
-                                    &dev_out_data->settings,
-                                    &incoming_message,
-                                    &dev_out_data->dev_stats
-                                );
-                            } else {
-                                fprintf(stderr, "Error reading from socket number %d: got %zu bytes, expected %zu bytes\n", i, in_message_pipe_read_res, sizeof(in_message_t));
-                                close(dev_out_data->communication.endpoint.ssocket.clients[i]);
-                                dev_out_data->communication.endpoint.ssocket.clients[i] = -1;
-                            }
-                        }
-                    }
-                
                     pthread_mutex_unlock(&dev_out_data->communication.endpoint.ssocket.mutex);
                 }
             }
+        }
 
+        // read and handle incoming data: this data is packed into in_message_t
+        if (dev_out_data->communication.type == ipc_unix_pipe) {
+            if (FD_ISSET(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd, &read_fds)) {
+                in_message_t incoming_message;
+                const size_t in_message_pipe_read_res = read(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd, (void*)&incoming_message, sizeof(in_message_t));
+                if (in_message_pipe_read_res == sizeof(in_message_t)) {
+                    handle_incoming_message(
+                        &dev_out_data->settings,
+                        &incoming_message,
+                        &dev_out_data->dev_stats
+                    );
+                } else {
+                    fprintf(stderr, "Error reading from in_message_pipe_fd: got %zu bytes, expected %zu bytes\n", in_message_pipe_read_res, sizeof(in_message_t));
+                }
+            }
+        } else if (dev_out_data->communication.type == ipc_server_sockets) {
+            if (pthread_mutex_lock(&dev_out_data->communication.endpoint.ssocket.mutex) == 0) {
+                for (int i = 0; i < MAX_CONNECTED_CLIENTS; ++i) {
+                    const int fd = dev_out_data->communication.endpoint.ssocket.clients[i];
+                    if ((fd > 0) && (FD_ISSET(fd, &read_fds))) {
+                        in_message_t incoming_message;
+                        const size_t in_message_pipe_read_res = read(fd, (void*)&incoming_message, sizeof(in_message_t));
+                        if (in_message_pipe_read_res == sizeof(in_message_t)) {
+                            handle_incoming_message(
+                                &dev_out_data->settings,
+                                &incoming_message,
+                                &dev_out_data->dev_stats
+                            );
+                        } else {
+                            fprintf(stderr, "Error reading from socket number %d: got %zu bytes, expected %zu bytes\n", i, in_message_pipe_read_res, sizeof(in_message_t));
+                            close(dev_out_data->communication.endpoint.ssocket.clients[i]);
+                            dev_out_data->communication.endpoint.ssocket.clients[i] = -1;
+                        }
+                    }
+                }
             
+                pthread_mutex_unlock(&dev_out_data->communication.endpoint.ssocket.mutex);
+            }
         }
     }
 
-    // close the output device
+    // close the gamepad output device
     if (current_gamepad == GAMEPAD_DUALSENSE) {
         virt_dualsense_close(&controller_data.ds5);
     } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
         virt_dualshock_close(&controller_data.ds4);
     }
+
+    // close the mouse device
+    virt_mouse_close(&mouse_data);
 
     // end communication
     if (dev_out_data->communication.type == ipc_server_sockets) {

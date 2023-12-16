@@ -69,6 +69,19 @@ typedef struct keyboard_status {
     bool connected;
 } keyboard_status_t;
 
+
+typedef struct mouse_status {
+    bool connected;
+
+    int32_t x;
+    int32_t y;
+    
+    uint8_t btn_left;
+    uint8_t btn_middle;
+    uint8_t btn_right;
+
+} mouse_status_t;
+
 typedef struct devices_status {
     // this mutex MUST be grabbed when reading and/or writing below properties
     pthread_mutex_t mutex;
@@ -77,7 +90,11 @@ typedef struct devices_status {
 
     keyboard_status_t kbd;
 
+    mouse_status_t mouse;
+
 } devices_status_t;
+
+void mouse_status_init(mouse_status_t *const stats);
 
 void kbd_status_init(keyboard_status_t *const stats);
 

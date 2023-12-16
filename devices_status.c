@@ -4,6 +4,16 @@ void kbd_status_init(keyboard_status_t *const stats) {
     stats->connected = true;
 }
 
+void mouse_status_init(mouse_status_t *const stats) {
+    stats->connected = true;
+
+    stats->x = 0;
+    stats->y = 0;
+    stats->btn_left = 0;
+    stats->btn_middle = 0;
+    stats->btn_right = 0;
+}
+
 void gamepad_status_init(gamepad_status_t *const stats) {
     stats->connected = true;
     stats->joystick_positions[0][0] = 0;
@@ -45,7 +55,7 @@ void gamepad_status_init(gamepad_status_t *const stats) {
 void devices_status_init(devices_status_t *const stats) {
     gamepad_status_init(&stats->gamepad);
     kbd_status_init(&stats->kbd);
-    // TODO: mouse init
+    mouse_status_init(&stats->mouse);
 }
 
 void gamepad_status_qam_quirk(gamepad_status_t *const gamepad_stats) {
