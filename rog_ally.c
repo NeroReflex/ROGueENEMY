@@ -196,7 +196,7 @@ static int asus_kbd_ev_map(
 							close(gamepad_mode_fd);
 
 							int current_mode;
-							sscanf("%d", current_mode_str, &current_mode);
+							sscanf(current_mode_str, "%d", &current_mode);
 
 							const int new_mode = get_next_mode(current_mode);
 							printf("Current mode is set to %d (read from %s) -- switching to %d", current_mode, current_mode_str, new_mode);
