@@ -69,34 +69,32 @@ int virt_mouse_get_fd(virt_mouse_t *const mouse) {
 int virt_mouse_send(virt_mouse_t *const mouse, mouse_status_t *const status, struct timeval *const now) {
     int res = 0;
     
+    struct timeval syn_time;
+    gettimeofday(&syn_time, NULL);
+
     struct input_event tmp_ev;
-    if (now == NULL) {
-        gettimeofday(&tmp_ev.time, NULL);
-    } else {
+    gettimeofday(&tmp_ev.time, NULL);
+    if (now != NULL) {
         tmp_ev.time = *now;
     }
 
     tmp_ev.type = EV_REL;
 
-    if (status->x > 0) {
+    if (status->x != 0) {
         tmp_ev.code = REL_X;
         tmp_ev.value = status->x;
         if (write(mouse->fd, &tmp_ev, sizeof(tmp_ev)) != sizeof(struct input_event)) {
             res = errno < 0 ? errno : -1 * errno;
             goto virt_mouse_send_err;
-        } else {
-            status->x = 0;
         }
     }
 
-    if (status->y > 0) {
+    if (status->y != 0) {
         tmp_ev.code = REL_Y;
         tmp_ev.value = status->y;
         if (write(mouse->fd, &tmp_ev, sizeof(tmp_ev)) != sizeof(struct input_event)) {
             res = errno < 0 ? errno : -1 * errno;
             goto virt_mouse_send_err;
-        } else {
-            status->y = 0;
         }
     }
 
@@ -131,6 +129,31 @@ int virt_mouse_send(virt_mouse_t *const mouse, mouse_status_t *const status, str
             goto virt_mouse_send_err;
         }
     }
+
+    #if 0
+	const struct input_event timestamp_ev = {
+		.code = MSC_TIMESTAMP,
+		.type = EV_MSC,
+		.value = (now.tv_sec - secAtInit)*1000000 + (now.tv_usec - usecAtInit),
+		.time = now,
+	};
+	const ssize_t timestamp_written = write(fd, (void*)&timestamp_ev, sizeof(timestamp_ev));
+	if (timestamp_written != sizeof(timestamp_ev)) {
+		fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", timestamp_written, sizeof(timestamp_ev));
+	}
+    #endif
+
+    syn_time.tv_usec += 1;
+	const struct input_event syn_ev = {
+		.code = SYN_REPORT,
+		.type = EV_SYN,
+		.value = 0,
+		.time = syn_time,
+	};
+	const ssize_t sync_written = write(mouse->fd, (void*)&syn_ev, sizeof(syn_ev));
+	if (sync_written != sizeof(syn_ev)) {
+		fprintf(stderr, "Error in sync: written %ld bytes out of %ld\n", sync_written, sizeof(syn_ev));
+	}
 
 virt_mouse_send_err:
     return res;

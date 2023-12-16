@@ -85,7 +85,16 @@ static char* find_kernel_sysfs_device_path(struct udev *udev) {
 }
 
 static int get_next_mode(int current_mode) {
-	return 1 + ((current_mode + 1) % 3);
+	if (current_mode == 1)
+		return 2;
+	if (current_mode == 2)
+		return 3;
+	if (current_mode == 3)
+		return 2;
+	else
+		fprintf(stderr, "Invalid current mode: %d -- gamepad will be set\n", current_mode);
+
+	return 1;
 }
 
 static int asus_kbd_ev_map(
@@ -184,23 +193,22 @@ static int asus_kbd_ev_map(
 						char current_mode_str[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 						int current_mode_read_res = read(gamepad_mode_fd, (void*)current_mode_str, sizeof(current_mode_str));
 						if (current_mode_read_res > 0) {
+							close(gamepad_mode_fd);
+
 							int current_mode;
 							sscanf("%d", current_mode_str, &current_mode);
 
 							const int new_mode = get_next_mode(current_mode);
-							printf("Current mode is set to %d -- switching to %d", current_mode, new_mode);
-
-							// end the current mode read
-							close(gamepad_mode_fd);
+							printf("Current mode is set to %d (read from %s) -- switching to %d", current_mode, current_mode_str, new_mode);
 
 							char new_mode_str[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 							snprintf(new_mode_str, sizeof(new_mode_str) - 1, "%d", new_mode);
-							gamepad_mode_fd = open(tmp_path, O_RDONLY);
+							gamepad_mode_fd = open(tmp_path, O_WRONLY);
 							if (gamepad_mode_fd > 0) {
 								if (write(gamepad_mode_fd, new_mode_str, strlen(new_mode_str)) > 0) {
-									printf("Controller mode switched successfully to %d\n", new_mode);
+									printf("Controller mode switched successfully to %s\n", new_mode_str);
 								} else {
-									fprintf(stderr, "Unable to switch controller mode: %d -- expect bugs\n", errno);
+									fprintf(stderr, "Unable to switch controller mode to %s: %d -- expect bugs\n", new_mode_str, errno);
 								}
 								close(gamepad_mode_fd);
 							} else {

@@ -332,6 +332,10 @@ void *dev_out_thread_func(void *ptr) {
             mouse_last_hid_report_sent = now;
 
             virt_mouse_send(&mouse_data, &dev_out_data->dev_stats.mouse, &now);
+            
+            // reset mouse movements now
+            dev_out_data->dev_stats.mouse.x = 0;
+            dev_out_data->dev_stats.mouse.y = 0;
 
             // this does reset the for, ensuring every other device has nothing to say
             continue;
