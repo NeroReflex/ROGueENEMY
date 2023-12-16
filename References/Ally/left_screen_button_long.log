@@ -1,0 +1,18 @@
+Event: time 1702734659.559525, type 4 (EV_MSC), code 4 (MSC_SCAN), value 700e0
+Event: time 1702734659.559525, type 1 (EV_KEY), code 29 (KEY_LEFTCTRL), value 1
+Event: time 1702734659.559525, -------------- SYN_REPORT ------------
+Event: time 1702734659.560490, type 4 (EV_MSC), code 4 (MSC_SCAN), value 700e2
+Event: time 1702734659.560490, type 1 (EV_KEY), code 56 (KEY_LEFTALT), value 1
+Event: time 1702734659.560490, -------------- SYN_REPORT ------------
+Event: time 1702734659.561435, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7004c
+Event: time 1702734659.561435, type 1 (EV_KEY), code 111 (KEY_DELETE), value 1
+Event: time 1702734659.561435, -------------- SYN_REPORT ------------
+Event: time 1702734659.562485, type 4 (EV_MSC), code 4 (MSC_SCAN), value 700e0
+Event: time 1702734659.562485, type 1 (EV_KEY), code 29 (KEY_LEFTCTRL), value 0
+Event: time 1702734659.562485, -------------- SYN_REPORT ------------
+Event: time 1702734659.563486, type 4 (EV_MSC), code 4 (MSC_SCAN), value 700e2
+Event: time 1702734659.563486, type 1 (EV_KEY), code 56 (KEY_LEFTALT), value 0
+Event: time 1702734659.563486, -------------- SYN_REPORT ------------
+Event: time 1702734659.565433, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7004c
+Event: time 1702734659.565433, type 1 (EV_KEY), code 111 (KEY_DELETE), value 0
+Event: time 1702734659.565433, -------------- SYN_REPORT ------------

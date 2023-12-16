@@ -1,0 +1,6 @@
+Event: time 1702734588.908929, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff310038
+Event: time 1702734588.908929, type 1 (EV_KEY), code 148 (KEY_PROG1), value 1
+Event: time 1702734588.908929, -------------- SYN_REPORT ------------
+Event: time 1702734588.909906, type 4 (EV_MSC), code 4 (MSC_SCAN), value ff310038
+Event: time 1702734588.909906, type 1 (EV_KEY), code 148 (KEY_PROG1), value 0
+Event: time 1702734588.909906, -------------- SYN_REPORT ------------

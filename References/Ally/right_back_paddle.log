@@ -1,0 +1,14 @@
+Event: time 1702734541.227670, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006a
+Event: time 1702734541.227670, type 1 (EV_KEY), code 185 (KEY_F15), value 1
+Event: time 1702734541.227670, -------------- SYN_REPORT ------------
+Event: time 1702734541.490206, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1702734541.490206, -------------- SYN_REPORT ------------
+Event: time 1702734541.530208, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1702734541.530208, -------------- SYN_REPORT ------------
+Event: time 1702734541.570205, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1702734541.570205, -------------- SYN_REPORT ------------
+Event: time 1702734541.606872, type 1 (EV_KEY), code 185 (KEY_F15), value 2
+Event: time 1702734541.606872, -------------- SYN_REPORT ------------
+Event: time 1702734541.640678, type 4 (EV_MSC), code 4 (MSC_SCAN), value 7006a
+Event: time 1702734541.640678, type 1 (EV_KEY), code 185 (KEY_F15), value 0
+Event: time 1702734541.640678, -------------- SYN_REPORT ------------
