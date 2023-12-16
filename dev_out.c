@@ -269,6 +269,7 @@ void *dev_out_thread_func(void *ptr) {
         fprintf(stderr, "Unable to initialize virtual mouse -- will continue regardless\n");
     } else {
         current_mouse_fd = virt_mouse_get_fd(&mouse_data);
+        printf("Mouse initialized: fd=%d\n", current_mouse_fd);
     }
 
     const int64_t kbd_report_timing_us = 1125;
@@ -371,7 +372,7 @@ void *dev_out_thread_func(void *ptr) {
         }
 
         const int64_t timeout_gamepad_time_diff_usecs = gamepad_report_timing_us - gamepad_time_diff_usecs;
-        const int64_t timeout_mouse_time_diff_usecs = mouse_time_diff_usecs - mouse_report_timing_us;
+        const int64_t timeout_mouse_time_diff_usecs = mouse_report_timing_us - mouse_time_diff_usecs;
         const int64_t timeout_kbd_time_diff_usecs = kbd_report_timing_us - kbd_time_diff_usecs;
 
         int64_t next_timing_out_device_diff_usecs = timeout_kbd_time_diff_usecs < timeout_mouse_time_diff_usecs ? timeout_kbd_time_diff_usecs : timeout_mouse_time_diff_usecs;
