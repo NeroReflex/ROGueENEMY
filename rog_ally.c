@@ -844,6 +844,15 @@ static input_dev_t in_iio_dev = {
   //.input_filter_fn = input_filter_imu_identity,
 };
 
+static void rc71l_timer_asus_kbd(
+	const dev_in_settings_t *const conf,
+    const char* const timer_name,
+    uint64_t expired,
+    void* user_data
+) {
+
+}
+
 static input_dev_t in_asus_kb_1_dev = {
   .dev_type = input_dev_type_uinput,
   .filters = {
@@ -855,6 +864,7 @@ static input_dev_t in_asus_kb_1_dev = {
   .map = {
 	.ev_callbacks = {
 		.input_map_fn = asus_kbd_ev_map,
+		.timeout_callback = rc71l_timer_asus_kbd,
 	},
   }
 };
@@ -870,6 +880,7 @@ static input_dev_t in_asus_kb_2_dev = {
   .map = {
 	.ev_callbacks = {
 		.input_map_fn = asus_kbd_ev_map,
+		.timeout_callback = rc71l_timer_asus_kbd,
 	},
   }
 };
@@ -885,9 +896,19 @@ static input_dev_t in_asus_kb_3_dev = {
   .map = {
 	.ev_callbacks = {
 		.input_map_fn = asus_kbd_ev_map,
+		.timeout_callback = rc71l_timer_asus_kbd,
 	},
   }
 };
+
+static void rc71l_timer_xbox360(
+	const dev_in_settings_t *const conf,
+    const char* const timer_name,
+    uint64_t expired,
+    void* user_data
+) {
+	
+}
 
 static input_dev_t in_xbox_dev = {
   .dev_type = input_dev_type_uinput,
@@ -899,6 +920,7 @@ static input_dev_t in_xbox_dev = {
   .map = {
 	.ev_callbacks = {
 		.input_map_fn = xbox360_ev_map,
+		.timeout_callback = rc71l_timer_xbox360,
 	},
   }
 };
@@ -1006,7 +1028,7 @@ input_dev_t timer_dev = {
 	.filters = {
 		.timer = {
 			.name = "RC71L_timer",
-			.ticktime_ms = 650,
+			.ticktime_ms = 150,
 		}
 	},
 	.user_data = NULL,

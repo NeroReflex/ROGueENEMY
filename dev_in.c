@@ -56,6 +56,8 @@ typedef struct dev_in_timer {
     
     dev_timer_t* timer;
 
+    const char* name;
+
     timer_callbacks_t callbacks;
 
     void* user_data;
@@ -384,6 +386,25 @@ static void handle_leds(const dev_in_settings_t *const conf, dev_in_t *const in_
     }
 }
 
+static void handle_timeout(
+    const dev_in_settings_t *const conf,
+    dev_in_t *const in_devs,
+    size_t in_devs_count,
+    const char* name,
+    uint64_t expirations
+) {
+    for (size_t i = 0; i < in_devs_count; ++i) {
+        if (in_devs[i].type == DEV_IN_TYPE_EV) {
+            in_devs[i].dev.hidraw.callbacks.timeout_callback(
+                conf,
+                name,
+                expirations,
+                in_devs[i].dev.evdev.user_data
+            );
+        }
+    }
+}
+
 static int open_socket(struct sockaddr_un *serveraddr) {
     int res = -ENODEV;
 
@@ -531,6 +552,7 @@ void* dev_in_thread_func(void *ptr) {
                     if (open_res == 0) {
                         devices[i].dev.timer.callbacks = dev_in_data->input_dev_decl->dev[i]->map.timer_callbacks;
                         devices[i].dev.timer.user_data = dev_in_data->input_dev_decl->dev[i]->user_data;
+                        devices[i].dev.timer.name = dev_in_data->input_dev_decl->dev[i]->filters.timer.name;
                         devices[i].type = DEV_IN_TYPE_TIMER;
 
                         // device is now connected, query it in select
@@ -686,6 +708,14 @@ void* dev_in_thread_func(void *ptr) {
                     devices[i].type = DEV_IN_TYPE_NONE;
                     continue;
                 }
+
+                handle_timeout(
+                    &dev_in_data->settings,
+                    devices,
+                    max_devices,
+                    devices[i].dev.timer.name,
+                    expirations
+                );
             }
 
             // send messages (if any)

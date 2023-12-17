@@ -18,7 +18,19 @@ typedef struct evdev_collected {
  * A function with this signature grapbs input_event data and sends to the pipe messages
  * constructed from that data.
  */
-typedef int (*ev_map)(const dev_in_settings_t *const conf, const evdev_collected_t *const e, in_message_t *const messages, size_t messages_len, void* user_data);
+typedef int (*ev_map)(
+    const dev_in_settings_t *const conf,
+    const evdev_collected_t *const e,
+    in_message_t *const messages,
+    size_t messages_len,
+    void* user_data
+);
+typedef void (*ev_timer)(
+    const dev_in_settings_t *const conf,
+    const char* const timer_name,
+    uint64_t expired,
+    void* user_data
+);
 
 typedef enum input_dev_type {
     input_dev_type_uinput,
@@ -49,6 +61,7 @@ typedef struct hidraw_callbacks {
     hidraw_set_leds leds_callback;
     hidraw_rumble rumble_callback;
     hidraw_map map_callback;
+    ev_timer timeout_callback;
 } hidraw_callbacks_t;
 
 typedef struct iio_settings {
@@ -64,6 +77,7 @@ typedef struct timer_callbacks {
 
 typedef struct ev_callbacks {
     ev_map input_map_fn;
+    ev_timer timeout_callback;
 } ev_callbacks_t;
 
 typedef struct timer_filters {
