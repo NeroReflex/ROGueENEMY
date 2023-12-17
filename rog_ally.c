@@ -129,6 +129,10 @@ static int asus_kbd_ev_map(
 
 	for (size_t i = 0; i < e->ev_count; ++i) {
 		if (e->ev[i].type == EV_KEY) {
+			if (e->ev[i].value > 1) {
+				continue;
+			}
+
 			if (e->ev[i].code == KEY_F14) {
 				// this is left back paddle, works as expected
 				const in_message_t current_message = {
