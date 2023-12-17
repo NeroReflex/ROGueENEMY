@@ -998,6 +998,14 @@ static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platf
 	// setup asus keyboard(s) user_data
 	asus_userdata.udev = udev_new();
 
+	if (asus_userdata.udev == NULL) {
+		fprintf(stderr, "Unable to initialize udev\n");
+		res = -ENOMEM;
+		goto rc71l_platform_init_err;
+	}
+
+	res = 0;
+
 rc71l_platform_init_err:
 	return res;
 }
