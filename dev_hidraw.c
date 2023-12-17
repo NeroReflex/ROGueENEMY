@@ -82,7 +82,7 @@ int dev_hidraw_open(
             //printf("Testing for device %s\n", path);
 
             // try to open the device, if it cannot be opened to go the next
-            int fd = open(path, O_RDWR);
+            int fd = open(path, O_RDWR | O_NONBLOCK);
             if (fd < 0) {
                 //fprintf(stderr, "Cannot open %s, device skipped.\n", path);
                 continue;

@@ -926,6 +926,15 @@ static input_dev_t in_xbox_dev = {
 };
 
 static int rc71l_hidraw_map(const dev_in_settings_t *const conf, int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data) {
+	uint8_t data[256];
+	const int read_res = read(hidraw_fd, data, sizeof(data));
+
+	if (read_res < 0) {
+		return -EIO;
+	} else {
+		printf("Got %d bytes from Asus MCU\n", read_res);
+	}
+
 	return 0;
 }
 
