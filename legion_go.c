@@ -11,7 +11,9 @@ static input_dev_t in_xbox_dev = {
         }
     },
     .map = {
-        .ev_input_map_fn = xbox360_ev_map,
+        .ev_callbacks = {
+            .input_map_fn = xbox360_ev_map,
+        },
     }
 };
 

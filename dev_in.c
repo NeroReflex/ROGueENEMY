@@ -5,6 +5,7 @@
 #include "message.h"
 #include "dev_evdev.h"
 #include "dev_iio.h"
+#include "dev_timer.h"
 
 #include <libconfig.h>
 
@@ -13,6 +14,7 @@ typedef enum dev_in_type {
     DEV_IN_TYPE_HIDRAW,
     DEV_IN_TYPE_IIO,
     DEV_IN_TYPE_EV,
+    DEV_IN_TYPE_TIMER,
 } dev_in_type_t;
 
 typedef struct dev_in_iio {
@@ -44,14 +46,27 @@ typedef struct dev_in_ev {
 
     struct ff_effect ff_effect;
 
+    ev_callbacks_t callbacks;
+
     void* user_data;
 
 } dev_in_ev_t;
+
+typedef struct dev_in_timer {
+    
+    dev_timer_t* timer;
+
+    timer_callbacks_t callbacks;
+
+    void* user_data;
+
+} dev_in_timer_t;
 
 typedef union dev_in_aggr {
     dev_in_ev_t evdev;
     dev_in_iio_t iio;
     dev_in_hidraw_t hidraw;
+    dev_in_timer_t timer;
 } dev_in_aggr_t;
 
 typedef struct dev_in {
@@ -154,6 +169,23 @@ static int fill_message_from_evdev(dev_in_ev_t *const in_evdev, evdev_collected_
 
 fill_message_from_evdev_err:
 fill_message_from_evdev_err_completed:
+    return res;
+}
+
+static int timer_open_device(
+    const dev_in_settings_t *const in_settings,
+    const timer_filters_t *const in_filters,
+    dev_in_timer_t *const out_dev
+) {
+    int res = dev_timer_open(in_filters, &out_dev->timer);
+    if (res != 0) {
+        fprintf(stderr, "Unable to open the timer device: %d\n", res);
+        goto timer_open_device_err;
+    }
+
+    printf("Opened timer device: %s\n", in_filters->name);
+
+timer_open_device_err:
     return res;
 }
 
@@ -270,6 +302,10 @@ static void iio_close_device(dev_in_iio_t *const out_dev) {
 
 static void hidraw_close_device(dev_in_hidraw_t *const out_hidraw) {
     dev_hidraw_close(out_hidraw->hidrawdev);
+}
+
+static void timer_close_device(dev_in_timer_t *const out_hidraw) {
+    dev_timer_close(out_hidraw->timer);
 }
 
 static void handle_rumble_device(const dev_in_settings_t *const conf, dev_in_ev_t *const in_dev, const out_message_rumble_t *const in_rumble_msg) {
@@ -446,6 +482,7 @@ void* dev_in_thread_func(void *ptr) {
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_EV;
                         devices[i].dev.evdev.user_data = dev_in_data->input_dev_decl->dev[i]->user_data;
+                        devices[i].dev.evdev.callbacks = dev_in_data->input_dev_decl->dev[i]->map.ev_callbacks;
 
                         // device is now connected, query it in select
                         FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
@@ -481,6 +518,23 @@ void* dev_in_thread_func(void *ptr) {
 
                         // device is now connected, query it in select
                         FD_SET(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), &read_fds);
+                    }
+                } else if (d_type == input_dev_type_timer) {
+                    fprintf(stderr, "Device (timer) %zu not found -- Attempt to create it with name %s\n", i, dev_in_data->input_dev_decl->dev[i]->filters.timer.name);
+
+                    const int open_res = timer_open_device(
+                        &dev_in_data->settings,
+                        &dev_in_data->input_dev_decl->dev[i]->filters.timer,
+                        &devices[i].dev.timer
+                    );
+
+                    if (open_res == 0) {
+                        devices[i].dev.timer.callbacks = dev_in_data->input_dev_decl->dev[i]->map.timer_callbacks;
+                        devices[i].dev.timer.user_data = dev_in_data->input_dev_decl->dev[i]->user_data;
+                        devices[i].type = DEV_IN_TYPE_TIMER;
+
+                        // device is now connected, query it in select
+                        FD_SET(dev_timer_get_fd(devices[i].dev.timer.timer), &read_fds);
                     }
                 }
             }
@@ -544,6 +598,8 @@ void* dev_in_thread_func(void *ptr) {
                 fd = dev_iio_get_buffer_fd(devices[i].dev.iio.iiodev);
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
                 fd = dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev);
+            } else if (devices[i].type == DEV_IN_TYPE_TIMER) {
+                fd = dev_timer_get_fd(devices[i].dev.timer.timer);
             } else {
                 continue;
             }
@@ -570,12 +626,12 @@ void* dev_in_thread_func(void *ptr) {
                     continue;
                 }
 
-                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.ev_input_map_fn(
+                controller_msg_count = devices[i].dev.evdev.callbacks.input_map_fn(
                     &dev_in_data->settings,
                     &coll,
                     &controller_msg[0],
                     controller_msg_avail,
-                    dev_in_data->input_dev_decl->dev[i]->user_data
+                    devices[i].dev.evdev.user_data
                 );
             } else if (devices[i].type == DEV_IN_TYPE_IIO) {
                 controller_msg_count = map_message_from_iio(
@@ -583,6 +639,7 @@ void* dev_in_thread_func(void *ptr) {
                     &controller_msg[0],
                     controller_msg_avail
                 );
+
                 if (controller_msg_count < 0) {
                     fprintf(stderr, "Error in reading iio buffer for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
                     iio_close_device(&devices[i].dev.iio);
@@ -590,16 +647,42 @@ void* dev_in_thread_func(void *ptr) {
                     continue;
                 }
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
-                controller_msg_count = dev_in_data->input_dev_decl->dev[i]->map.hidraw_callbacks.map_callback(
+                controller_msg_count = devices[i].dev.hidraw.callbacks.map_callback(
                     &dev_in_data->settings,
-                    dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev),
+                    fd,
                     &controller_msg[0],
                     controller_msg_avail,
-                    dev_in_data->input_dev_decl->dev[i]->user_data
+                    devices[i].dev.hidraw.user_data
                 );
+
                 if (controller_msg_count < 0) {
                     fprintf(stderr, "Error in performing operations for device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
                     hidraw_close_device(&devices[i].dev.hidraw);
+                    devices[i].type = DEV_IN_TYPE_NONE;
+                    continue;
+                }
+            } else if (devices[i].type == DEV_IN_TYPE_TIMER) {
+                uint64_t expirations;
+                ssize_t num_read = read(fd, &expirations, sizeof(uint64_t));
+                if (num_read != sizeof(uint64_t)) {
+                    fprintf(stderr, "Error in reading expirations from timer device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
+                    timer_close_device(&devices[i].dev.timer);
+                    devices[i].type = DEV_IN_TYPE_NONE;
+                    continue;
+                }
+
+                controller_msg_count = devices[i].dev.timer.callbacks.map_fn(
+                    &dev_in_data->settings,
+                    fd,
+                    expirations,
+                    &controller_msg[0],
+                    controller_msg_avail,
+                    devices[i].dev.timer.user_data
+                );
+
+                if (controller_msg_count < 0) {
+                    fprintf(stderr, "Error in timer device %zd: %d -- Will reconnect to the device\n", i, controller_msg_count);
+                    timer_close_device(&devices[i].dev.timer);
                     devices[i].type = DEV_IN_TYPE_NONE;
                     continue;
                 }
@@ -661,6 +744,9 @@ void* dev_in_thread_func(void *ptr) {
             devices[i].type = DEV_IN_TYPE_NONE;
         } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
             hidraw_close_device(&devices[i].dev.hidraw);
+            devices[i].type = DEV_IN_TYPE_NONE;
+        } else if (devices[i].type == DEV_IN_TYPE_TIMER) {
+            timer_close_device(&devices[i].dev.timer);
             devices[i].type = DEV_IN_TYPE_NONE;
         }
     }

@@ -28,6 +28,7 @@
 #include <sys/syscall.h>
 #include <sys/socket.h>
 #include <sys/signalfd.h>
+#include <sys/timerfd.h>
 #include <sys/un.h>
 
 #include <linux/hidraw.h>

@@ -24,6 +24,7 @@ typedef enum input_dev_type {
     input_dev_type_uinput,
     input_dev_type_iio,
     input_dev_type_hidraw,
+    input_dev_type_timer,
 } input_dev_type_t;
 
 typedef struct hidraw_filters {
@@ -55,6 +56,16 @@ typedef struct iio_settings {
     int8_t post_matrix[3][3];
 } iio_settings_t;
 
+typedef int (*timer_map)(const dev_in_settings_t *const conf, int timer_fd, uint64_t expirations, in_message_t *const messages, size_t messages_len, void* user_data);
+
+typedef struct timer_callbacks {
+    timer_map map_fn;
+} timer_callbacks_t;
+
+typedef struct ev_callbacks {
+    ev_map input_map_fn;
+} ev_callbacks_t;
+
 typedef struct timer_filters {
     char name[128];
     uint64_t ticktime_ms;
@@ -67,14 +78,16 @@ typedef struct input_dev {
         uinput_filters_t ev;
         iio_filters_t iio;
         hidraw_filters_t hidraw;
+        timer_filters_t timer;
     } filters;
 
     void* user_data;
 
     union input_dev_map {
         iio_settings_t iio_settings;
-        ev_map ev_input_map_fn;
+        ev_callbacks_t ev_callbacks;
         hidraw_callbacks_t hidraw_callbacks;
+        timer_callbacks_t timer_callbacks;
     } map;
 
 } input_dev_t;

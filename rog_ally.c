@@ -853,7 +853,9 @@ static input_dev_t in_asus_kb_1_dev = {
   },
   .user_data = (void*)&asus_userdata,
   .map = {
-	.ev_input_map_fn = asus_kbd_ev_map,
+	.ev_callbacks = {
+		.input_map_fn = asus_kbd_ev_map,
+	},
   }
 };
 
@@ -866,7 +868,9 @@ static input_dev_t in_asus_kb_2_dev = {
   },
   .user_data = (void*)&asus_userdata,
   .map = {
-	.ev_input_map_fn = asus_kbd_ev_map,
+	.ev_callbacks = {
+		.input_map_fn = asus_kbd_ev_map,
+	},
   }
 };
 
@@ -879,7 +883,9 @@ static input_dev_t in_asus_kb_3_dev = {
   },
   .user_data = &asus_userdata,
   .map = {
-	.ev_input_map_fn = asus_kbd_ev_map,
+	.ev_callbacks = {
+		.input_map_fn = asus_kbd_ev_map,
+	},
   }
 };
 
@@ -891,7 +897,9 @@ static input_dev_t in_xbox_dev = {
     }
   },
   .map = {
-	.ev_input_map_fn = xbox360_ev_map,
+	.ev_callbacks = {
+		.input_map_fn = xbox360_ev_map,
+	},
   }
 };
 
@@ -989,6 +997,26 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
 	return 0;
 }
 
+int rc71l_timer_map(const dev_in_settings_t *const conf, int timer_fd, uint64_t expirations, in_message_t *const messages, size_t messages_len, void* user_data) {
+	return 0;
+}
+
+input_dev_t timer_dev = {
+	.dev_type = input_dev_type_timer,
+	.filters = {
+		.timer = {
+			.name = "RC71L_timer",
+			.ticktime_ms = 650,
+		}
+	},
+	.user_data = NULL,
+	.map = {
+		.timer_callbacks = {
+			.map_fn = rc71l_timer_map,
+		}
+	}
+};
+
 input_dev_composite_t rc71l_composite = {
   .dev = {
     &in_xbox_dev,
@@ -997,8 +1025,9 @@ input_dev_composite_t rc71l_composite = {
     &in_asus_kb_2_dev,
     &in_asus_kb_3_dev,
 	&nkey_dev,
+	&timer_dev,
   },
-  .dev_count = 6,
+  .dev_count = 7,
   .init_fn = rc71l_platform_init,
   .deinit_fn = rc71l_platform_deinit,
   .leds_fn = rc71l_platform_leds,

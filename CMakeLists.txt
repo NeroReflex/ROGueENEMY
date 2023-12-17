@@ -17,6 +17,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 add_executable(${ROGUE_EXECUTABLE_NAME}
+                  dev_timer.c
                   dev_evdev.c
                   dev_iio.c
                   dev_hidraw.c
@@ -49,6 +50,7 @@ add_executable(${ALLINONE_EXECUTABLE_NAME}
                   virt_mouse.c
                   virt_kbd.c
                   devices_status.c
+                  dev_timer.c
                   dev_evdev.c
                   dev_iio.c
                   dev_hidraw.c
