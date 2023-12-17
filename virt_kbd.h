@@ -49,6 +49,11 @@ typedef struct virt_kbd {
     uint8_t prev_num_9;
     uint8_t prev_num_0;
 
+    uint8_t prev_up;
+    uint8_t prev_down;
+    uint8_t prev_left;
+    uint8_t prev_right;
+
     uint8_t prev_lctrl;
 
 } virt_kbd_t;

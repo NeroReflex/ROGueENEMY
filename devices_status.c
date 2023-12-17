@@ -42,6 +42,11 @@ void kbd_status_init(keyboard_status_t *const stats) {
     stats->num_9 = 0;
     stats->num_0 = 0;
 
+    stats->up = 0;
+    stats->down = 0;
+    stats->left = 0;
+    stats->right = 0;
+
     stats->lctrl = 0;
 }
 

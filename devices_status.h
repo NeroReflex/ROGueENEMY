@@ -72,6 +72,8 @@ typedef struct keyboard_status {
 
     uint8_t num_1, num_2, num_3, num_4, num_5, num_6, num_7, num_8, num_9, num_0;
 
+    uint8_t up, down, left, right;
+
     uint8_t lctrl;
 
 } keyboard_status_t;

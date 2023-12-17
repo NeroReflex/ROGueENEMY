@@ -219,7 +219,7 @@ static int asus_kbd_ev_map(
 							sscanf(current_mode_str, "%d", &current_mode);
 
 							const int new_mode = get_next_mode(current_mode);
-							printf("Current mode is set to %d (read from %s) -- switching to %d", current_mode, current_mode_str, new_mode);
+							printf("Current mode is set to %d (read from %s) -- switching to %d\n", current_mode, current_mode_str, new_mode);
 
 							char new_mode_str[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 							snprintf(new_mode_str, sizeof(new_mode_str) - 1, "%d", new_mode);
@@ -236,10 +236,10 @@ static int asus_kbd_ev_map(
 							}
 						} else {
 							close(gamepad_mode_fd);
-							fprintf(stderr, "Unable to read gamepad_mode file to get current mode: %d", errno);
+							fprintf(stderr, "Unable to read gamepad_mode file to get current mode: %d\n", errno);
 						}
 					} else {
-						fprintf(stderr, "Unable to open gamepad_mode file in read-only mode to get current mode: %d", errno);
+						fprintf(stderr, "Unable to open gamepad_mode file in read-only mode to get current mode: %d\n", errno);
 					}
 
 					free(tmp_path);
@@ -279,6 +279,486 @@ static int asus_kbd_ev_map(
 						.mouse_event = {
 							.type = MOUSE_BTN_RIGHT,
 							.value = e->ev[i].value,
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_Q) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_Q,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_W) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_W,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_E) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_E,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_R) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_R,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_T) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_T,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_Y) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_Y,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_U) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_U,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_I) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_I,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_O) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_O,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_P) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_P,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_A) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_A,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_S) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_S,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_D) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_D,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_F) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_F,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_G) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_G,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_H) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_H,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_J) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_J,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_K) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_K,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_L) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_L,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_Z) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_Z,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_X) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_X,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_C) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_C,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_V) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_V,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_B) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_B,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_N) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_N,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_M) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_M,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_0) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_0,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_1) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_1,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_2) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_2,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_3) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_3,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_4) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_4,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_5) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_5,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_6) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_6,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_7) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_7,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_8) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_8,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_9) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_NUM_9,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_UP) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_UP,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_DOWN) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_DOWN,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_LEFT) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_LEFT,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_RIGHT) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_RIGHT,
+							.value = e->ev[i].value
 						}
 					}
 				};

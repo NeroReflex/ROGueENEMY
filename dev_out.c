@@ -199,6 +199,140 @@ static void handle_incoming_message_gamepad_set(
     }
 }
 
+static void handle_incoming_message_keyboard_set(
+    const dev_out_settings_t *const in_settings,
+    const in_message_keyboard_set_element_t *const msg_payload,
+    keyboard_status_t *const inout_kbd
+) {
+    switch (msg_payload->type) {
+        case KEYBOARD_KEY_Q:
+            inout_kbd->q = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_W:
+            inout_kbd->w = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_E:
+            inout_kbd->e = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_R:
+            inout_kbd->r = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_T:
+            inout_kbd->t = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_Y:
+            inout_kbd->y = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_U:
+            inout_kbd->u = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_I:
+            inout_kbd->i = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_O:
+            inout_kbd->o = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_P:
+            inout_kbd->p = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_A:
+            inout_kbd->a = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_S:
+            inout_kbd->s = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_D:
+            inout_kbd->d = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_F:
+            inout_kbd->f = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_G:
+            inout_kbd->g = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_H:
+            inout_kbd->h = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_J:
+            inout_kbd->j = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_K:
+            inout_kbd->k = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_L:
+            inout_kbd->l = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_Z:
+            inout_kbd->z = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_X:
+            inout_kbd->x = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_C:
+            inout_kbd->c = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_V:
+            inout_kbd->v = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_B:
+            inout_kbd->b = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_N:
+            inout_kbd->n = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_M:
+            inout_kbd->m = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_UP:
+            inout_kbd->up = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_DOWN:
+            inout_kbd->down = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_LEFT:
+            inout_kbd->left = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_RIGHT:
+            inout_kbd->right = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_0:
+            inout_kbd->num_0 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_1:
+            inout_kbd->num_1 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_2:
+            inout_kbd->num_2 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_3:
+            inout_kbd->num_3 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_4:
+            inout_kbd->num_4 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_5:
+            inout_kbd->num_5 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_6:
+            inout_kbd->num_6 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_7:
+            inout_kbd->num_7 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_8:
+            inout_kbd->num_8 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_NUM_9:
+            inout_kbd->num_9 = msg_payload->value;
+            break;
+        case KEYBOARD_KEY_LCRTL:
+            inout_kbd->lctrl = msg_payload->value;
+            break;
+        default:
+            fprintf(stderr, "key not implemented\n");
+    }
+}
+
 static void handle_incoming_message(
     const dev_out_settings_t *const in_settings,
     const in_message_t *const msg,
@@ -221,6 +355,12 @@ static void handle_incoming_message(
             in_settings,
             &msg->data.mouse_event,
             &dev_stats->mouse
+        );
+    } else if (msg->type == KEYBOARD_SET_ELEMENT) {
+        handle_incoming_message_keyboard_set(
+            in_settings,
+            &msg->data.kbd_set,
+            &dev_stats->kbd
         );
     }
 }
