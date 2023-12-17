@@ -6,6 +6,7 @@
 #include "virt_ds4.h"
 #include "virt_ds5.h"
 #include "virt_mouse.h"
+#include "virt_kbd.h"
 
 #include <libconfig.h>
 
@@ -272,6 +273,15 @@ void *dev_out_thread_func(void *ptr) {
         printf("Mouse initialized: fd=%d\n", current_mouse_fd);
     }
 
+    virt_kbd_t keyboard_data;
+    const int kbd_init_res = virt_kbd_init(&keyboard_data);
+    if (kbd_init_res < 0) {
+        fprintf(stderr, "Unable to initialize virtual keyboard -- will continue regardless\n");
+    } else {
+        current_keyboard_fd = virt_kbd_get_fd(&keyboard_data);
+        printf("Keyboard initialized: fd=%d\n", current_keyboard_fd);
+    }
+
     const int64_t kbd_report_timing_us = 1125;
     const int64_t mouse_report_timing_us = 950;
     const int64_t gamepad_report_timing_us = 1250;
@@ -342,6 +352,8 @@ void *dev_out_thread_func(void *ptr) {
         } else if (kbd_time_diff_usecs >= kbd_report_timing_us) {
             keyboard_last_hid_report_sent = now;
 
+            virt_kbd_send(&keyboard_data, &dev_out_data->dev_stats.kbd, &now);
+
             // this does reset the for, ensuring every other device has nothing to say
             continue;
         }
@@ -369,7 +381,9 @@ void *dev_out_thread_func(void *ptr) {
             FD_SET(current_mouse_fd, &read_fds);
         }
         
-        // TODO: FD_SET(current_keyboard_fd, &read_fds);
+        if (current_mouse_fd > 0) {
+            FD_SET(current_keyboard_fd, &read_fds);
+        }
 
         if (current_gamepad_fd > 0) {
             FD_SET(current_gamepad_fd, &read_fds);
@@ -472,6 +486,14 @@ void *dev_out_thread_func(void *ptr) {
             }
         }
 
+        if ((current_keyboard_fd > 0) && (FD_ISSET(current_keyboard_fd, &read_fds))) {
+            // TODO: read keyboard events
+        }
+
+        if ((current_mouse_fd > 0) && (FD_ISSET(current_mouse_fd, &read_fds))) {
+            // TODO: read mouse events
+        }
+
         // read and handle incoming data: this data is packed into in_message_t
         if (dev_out_data->communication.type == ipc_unix_pipe) {
             if (FD_ISSET(dev_out_data->communication.endpoint.pipe.in_message_pipe_fd, &read_fds)) {
@@ -522,6 +544,9 @@ void *dev_out_thread_func(void *ptr) {
 
     // close the mouse device
     virt_mouse_close(&mouse_data);
+
+    // close the keyboard device
+    virt_kbd_close(&keyboard_data);
 
     // end communication
     if (dev_out_data->communication.type == ipc_server_sockets) {

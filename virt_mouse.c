@@ -1,7 +1,4 @@
 #include "virt_mouse.h"
-#include <linux/input-event-codes.h>
-#include <linux/input.h>
-#include <sys/time.h>
 
 int virt_mouse_init(virt_mouse_t *const mouse) {
     int ret = -EINVAL;

@@ -1,7 +1,48 @@
 #include "devices_status.h"
+#include <pthread.h>
 
 void kbd_status_init(keyboard_status_t *const stats) {
     stats->connected = true;
+
+    stats->q = 0;
+    stats->w = 0;
+    stats->e = 0;
+    stats->r = 0;
+    stats->t = 0;
+    stats->y = 0;
+    stats->u = 0;
+    stats->i = 0;
+    stats->o = 0;
+    stats->p = 0;
+    stats->a = 0;
+    stats->s = 0;
+    stats->d = 0;
+    stats->f = 0;
+    stats->g = 0;
+    stats->h = 0;
+    stats->j = 0;
+    stats->k = 0;
+    stats->l = 0;
+    stats->z = 0;
+    stats->x = 0;
+    stats->c = 0;
+    stats->v = 0;
+    stats->b = 0;
+    stats->n = 0;
+    stats->m = 0;
+
+    stats->num_1 = 0;
+    stats->num_2 = 0;
+    stats->num_3 = 0;
+    stats->num_4 = 0;
+    stats->num_5 = 0;
+    stats->num_6 = 0;
+    stats->num_7 = 0;
+    stats->num_8 = 0;
+    stats->num_9 = 0;
+    stats->num_0 = 0;
+
+    stats->lctrl = 0;
 }
 
 void mouse_status_init(mouse_status_t *const stats) {
@@ -53,6 +94,7 @@ void gamepad_status_init(gamepad_status_t *const stats) {
 }
 
 void devices_status_init(devices_status_t *const stats) {
+    pthread_mutex_init(&stats->mutex, NULL);
     gamepad_status_init(&stats->gamepad);
     kbd_status_init(&stats->kbd);
     mouse_status_init(&stats->mouse);

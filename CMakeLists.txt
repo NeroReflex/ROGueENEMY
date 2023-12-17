@@ -36,6 +36,7 @@ add_executable(${STRAY_EXECUTABLE_NAME}
                   virt_ds4.c
                   virt_ds5.c
                   virt_mouse.c
+                  virt_kbd.c
                   devices_status.c
 )
 
@@ -46,6 +47,7 @@ add_executable(${ALLINONE_EXECUTABLE_NAME}
                   virt_ds4.c
                   virt_ds5.c
                   virt_mouse.c
+                  virt_kbd.c
                   devices_status.c
                   dev_evdev.c
                   dev_iio.c

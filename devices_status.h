@@ -67,6 +67,13 @@ typedef struct gamepad_status {
 
 typedef struct keyboard_status {
     bool connected;
+
+    uint8_t q,w,e,r,t,y,u,i,o,p,a,s,d,f,g,h,j,k,l,z,x,c,v,b,n,m;
+
+    uint8_t num_1, num_2, num_3, num_4, num_5, num_6, num_7, num_8, num_9, num_0;
+
+    uint8_t lctrl;
+
 } keyboard_status_t;
 
 

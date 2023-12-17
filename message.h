@@ -82,23 +82,69 @@ typedef enum in_message_gamepad_action {
     GAMEPAD_ACTION_OPEN_STEAM_QAM,
 } in_message_gamepad_action_t;
 
+typedef enum kbd_element {
+    KEYBOARD_KEY_Q,
+    KEYBOARD_KEY_W,
+    KEYBOARD_KEY_E,
+    KEYBOARD_KEY_R,
+    KEYBOARD_KEY_T,
+    KEYBOARD_KEY_Y,
+    KEYBOARD_KEY_U,
+    KEYBOARD_KEY_I,
+    KEYBOARD_KEY_O,
+    KEYBOARD_KEY_P,
+    KEYBOARD_KEY_A,
+    KEYBOARD_KEY_S,
+    KEYBOARD_KEY_D,
+    KEYBOARD_KEY_F,
+    KEYBOARD_KEY_G,
+    KEYBOARD_KEY_H,
+    KEYBOARD_KEY_J,
+    KEYBOARD_KEY_K,
+    KEYBOARD_KEY_L,
+    KEYBOARD_KEY_Z,
+    KEYBOARD_KEY_X,
+    KEYBOARD_KEY_C,
+    KEYBOARD_KEY_V,
+    KEYBOARD_KEY_B,
+    KEYBOARD_KEY_N,
+    KEYBOARD_KEY_M,
+    KEYBOARD_KEY_NUM_1,
+    KEYBOARD_KEY_NUM_2,
+    KEYBOARD_KEY_NUM_3,
+    KEYBOARD_KEY_NUM_4,
+    KEYBOARD_KEY_NUM_5,
+    KEYBOARD_KEY_NUM_6,
+    KEYBOARD_KEY_NUM_7,
+    KEYBOARD_KEY_NUM_8,
+    KEYBOARD_KEY_NUM_9,
+    KEYBOARD_KEY_NUM_0,
+    KEYBOARD_KEY_LCRTL,
+} kbd_element_t;
+
+typedef struct in_message_keyboard_set_element {
+    kbd_element_t type;
+    uint8_t value;
+} in_message_keyboard_set_element_t;
+
 typedef enum in_in_message_type {
     GAMEPAD_SET_ELEMENT,
     GAMEPAD_ACTION,
     MOUSE_EVENT,
+    KEYBOARD_SET_ELEMENT,
 }  in_message_type_t;
 
 typedef struct in_message {
     in_message_type_t type;
 
     union {
-        //imu_in_message_t imu;
-
         in_message_gamepad_action_t action;
 
         in_message_gamepad_set_element_t gamepad_set;
 
         in_message_mouse_event_t mouse_event;
+
+        in_message_keyboard_set_element_t kbd_set;
     } data;
 
 }  in_message_t;

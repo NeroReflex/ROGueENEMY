@@ -4,7 +4,6 @@
 #include "devices_status.h"
 
 #define VIRT_MOUSE_DEV_NAME "ROGueENEMY - mouse"
-
 #define VIRT_MOUSE_DEV_VENDOR_ID 0x108c
 #define VIRT_MOUSE_DEV_PRODUCT_ID 0x0323
 #define VIRT_MOUSE_DEV_VERSION 0x0111
