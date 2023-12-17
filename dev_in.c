@@ -44,6 +44,8 @@ typedef struct dev_in_ev {
 
     struct ff_effect ff_effect;
 
+    void* user_data;
+
 } dev_in_ev_t;
 
 typedef union dev_in_aggr {
@@ -440,8 +442,10 @@ void* dev_in_thread_func(void *ptr) {
                         &dev_in_data->input_dev_decl->dev[i]->filters.ev,
                         &devices[i].dev.evdev
                     );
+
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_EV;
+                        devices[i].dev.evdev.user_data = dev_in_data->input_dev_decl->dev[i]->user_data;
 
                         // device is now connected, query it in select
                         FD_SET(libevdev_get_fd(devices[i].dev.evdev.evdev), &read_fds);
@@ -457,6 +461,9 @@ void* dev_in_thread_func(void *ptr) {
 
                     if (open_res == 0) {
                         devices[i].type = DEV_IN_TYPE_IIO;
+
+                        // device is now connected, query it in select
+                        FD_SET(dev_iio_get_buffer_fd(devices[i].dev.iio.iiodev), &read_fds);
                     }
                 } else if (d_type == input_dev_type_hidraw) {
                     fprintf(stderr, "Device (hidraw) %zu not found -- Attempt reconnection for device %x:%x\n", i, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.pid, dev_in_data->input_dev_decl->dev[i]->filters.hidraw.vid);
@@ -471,6 +478,9 @@ void* dev_in_thread_func(void *ptr) {
                         devices[i].dev.hidraw.callbacks = dev_in_data->input_dev_decl->dev[i]->map.hidraw_callbacks;
                         devices[i].dev.hidraw.user_data = dev_in_data->input_dev_decl->dev[i]->user_data;
                         devices[i].type = DEV_IN_TYPE_HIDRAW;
+
+                        // device is now connected, query it in select
+                        FD_SET(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), &read_fds);
                     }
                 }
             }

@@ -55,6 +55,11 @@ typedef struct iio_settings {
     int8_t post_matrix[3][3];
 } iio_settings_t;
 
+typedef struct timer_filters {
+    char name[128];
+    uint64_t ticktime_ms;
+} timer_filters_t;
+
 typedef struct input_dev {
     input_dev_type_t dev_type;
 
