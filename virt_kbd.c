@@ -44,6 +44,7 @@ int virt_kbd_init(virt_kbd_t *const kbd) {
     ioctl(fd, UI_SET_KEYBIT, KEY_B);
     ioctl(fd, UI_SET_KEYBIT, KEY_N);
     ioctl(fd, UI_SET_KEYBIT, KEY_M);
+    ioctl(fd, UI_SET_KEYBIT, KEY_0);
     ioctl(fd, UI_SET_KEYBIT, KEY_1);
     ioctl(fd, UI_SET_KEYBIT, KEY_2);
     ioctl(fd, UI_SET_KEYBIT, KEY_3);
@@ -53,8 +54,11 @@ int virt_kbd_init(virt_kbd_t *const kbd) {
     ioctl(fd, UI_SET_KEYBIT, KEY_7);
     ioctl(fd, UI_SET_KEYBIT, KEY_8);
     ioctl(fd, UI_SET_KEYBIT, KEY_9);
-    ioctl(fd, UI_SET_KEYBIT, KEY_0);
-    ioctl(fd, UI_SET_KEYBIT, KEYBOARD_KEY_LCRTL);
+    ioctl(fd, UI_SET_KEYBIT, KEY_UP);
+    ioctl(fd, UI_SET_KEYBIT, KEY_DOWN);
+    ioctl(fd, UI_SET_KEYBIT, KEY_LEFT);
+    ioctl(fd, UI_SET_KEYBIT, KEY_RIGHT);
+    //ioctl(fd, UI_SET_KEYBIT, KEY_);
 
     struct uinput_setup dev = {0};
 	strncpy(dev.name, VIRT_KBD_DEV_NAME, UINPUT_MAX_NAME_SIZE-1);
