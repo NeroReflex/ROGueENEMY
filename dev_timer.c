@@ -25,9 +25,9 @@ int dev_timer_open(
 
     (*out_dev)->fd = fd;
     (*out_dev)->timer_spec.it_value.tv_sec = in_filters->ticktime_ms / (__time_t)1000;
-    (*out_dev)->timer_spec.it_value.tv_nsec = (in_filters->ticktime_ms % (__syscall_slong_t)1000) * (__syscall_slong_t)1000;
+    (*out_dev)->timer_spec.it_value.tv_nsec = (in_filters->ticktime_ms % (__syscall_slong_t)1000) * (__syscall_slong_t)1000000;
     (*out_dev)->timer_spec.it_interval.tv_sec = in_filters->ticktime_ms / (__time_t)1000;
-    (*out_dev)->timer_spec.it_interval.tv_nsec = (in_filters->ticktime_ms % (__syscall_slong_t)1000) * (__syscall_slong_t)1000;
+    (*out_dev)->timer_spec.it_interval.tv_nsec = (in_filters->ticktime_ms % (__syscall_slong_t)1000) * (__syscall_slong_t)1000000;
 
     if (timerfd_settime((*out_dev)->fd, 0, &(*out_dev)->timer_spec, NULL) < 0) {
         res = errno < 0 ? errno : -1 * errno;
