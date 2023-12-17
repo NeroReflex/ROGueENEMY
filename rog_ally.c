@@ -288,6 +288,18 @@ static int asus_kbd_ev_map(
 				};
 
 				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == KEY_LEFTCTRL) {
+				const in_message_t current_message = {
+					.type = KEYBOARD_SET_ELEMENT,
+					.data = {
+						.kbd_set = {
+							.type = KEYBOARD_KEY_LCRTL,
+							.value = e->ev[i].value
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
 			} else if (e->ev[i].code == KEY_Q) {
 				const in_message_t current_message = {
 					.type = KEYBOARD_SET_ELEMENT,

@@ -445,7 +445,7 @@ int virt_kbd_send(virt_kbd_t *const kbd, keyboard_status_t *const status, struct
     }
 
     if (status->up != kbd->prev_up) {
-        tmp_ev.code = KEYBOARD_KEY_UP;
+        tmp_ev.code = KEY_LEFTCTRL;
         tmp_ev.value = kbd->prev_up = status->up;
         if (write(kbd->fd, &tmp_ev, sizeof(tmp_ev)) != sizeof(struct input_event)) {
             res = errno < 0 ? errno : -1 * errno;
@@ -454,7 +454,7 @@ int virt_kbd_send(virt_kbd_t *const kbd, keyboard_status_t *const status, struct
     }
 
     if (status->down != kbd->prev_down) {
-        tmp_ev.code = KEYBOARD_KEY_DOWN;
+        tmp_ev.code = KEY_DOWN;
         tmp_ev.value = kbd->prev_down = status->down;
         if (write(kbd->fd, &tmp_ev, sizeof(tmp_ev)) != sizeof(struct input_event)) {
             res = errno < 0 ? errno : -1 * errno;
@@ -463,7 +463,7 @@ int virt_kbd_send(virt_kbd_t *const kbd, keyboard_status_t *const status, struct
     }
 
     if (status->left != kbd->prev_left) {
-        tmp_ev.code = KEYBOARD_KEY_LEFT;
+        tmp_ev.code = KEY_LEFT;
         tmp_ev.value = kbd->prev_left = status->left;
         if (write(kbd->fd, &tmp_ev, sizeof(tmp_ev)) != sizeof(struct input_event)) {
             res = errno < 0 ? errno : -1 * errno;
@@ -472,7 +472,7 @@ int virt_kbd_send(virt_kbd_t *const kbd, keyboard_status_t *const status, struct
     }
 
     if (status->right != kbd->prev_right) {
-        tmp_ev.code = KEYBOARD_KEY_RIGHT;
+        tmp_ev.code = KEY_RIGHT;
         tmp_ev.value = kbd->prev_right = status->right;
         if (write(kbd->fd, &tmp_ev, sizeof(tmp_ev)) != sizeof(struct input_event)) {
             res = errno < 0 ? errno : -1 * errno;
