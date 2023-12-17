@@ -395,7 +395,7 @@ static void handle_timeout(
 ) {
     for (size_t i = 0; i < in_devs_count; ++i) {
         if (in_devs[i].type == DEV_IN_TYPE_EV) {
-            in_devs[i].dev.hidraw.callbacks.timeout_callback(
+            in_devs[i].dev.evdev.callbacks.timeout_callback(
                 conf,
                 name,
                 expirations,
