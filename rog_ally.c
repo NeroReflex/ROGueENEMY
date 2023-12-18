@@ -67,7 +67,7 @@ static rc71l_xbox360_user_data_t controller_user_data = {
 		.id = -1,
 		.replay = {
 			.delay = 0x00,
-			.length = 1000
+			.length = 500
 		},
 		.u = {
 			.rumble = {
@@ -982,7 +982,7 @@ static void rc71l_timer_xbox360(
 
 			xbox360_data->timeout_after_mode_switch++;
 			
-			if (xbox360_data->timeout_after_mode_switch >= 4) {
+			if (xbox360_data->timeout_after_mode_switch >= 10) {
 				xbox360_data->mode_switch_rumbling = false;
 
 				if (xbox360_data->mode_switch_rumble_effect.id != -1) {
@@ -1141,7 +1141,7 @@ input_dev_t timer_dev = {
 	.filters = {
 		.timer = {
 			.name = "RC71L_timer",
-			.ticktime_ms = 150,
+			.ticktime_ms = 60,
 		}
 	},
 	.user_data = NULL,
