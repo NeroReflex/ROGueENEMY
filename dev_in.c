@@ -489,6 +489,8 @@ void* dev_in_thread_func(void *ptr) {
                 FD_SET(dev_iio_get_buffer_fd(devices[i].dev.iio.iiodev), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_HIDRAW) {
                 FD_SET(dev_hidraw_get_fd(devices[i].dev.hidraw.hidrawdev), &read_fds);
+            } else if (devices[i].type == DEV_IN_TYPE_TIMER) {
+                FD_SET(dev_timer_get_fd(devices[i].dev.timer.timer), &read_fds);
             } else if (devices[i].type == DEV_IN_TYPE_NONE) {
                 const input_dev_type_t d_type = dev_in_data->input_dev_decl->dev[i]->dev_type;
                 if (d_type == input_dev_type_uinput) {
