@@ -67,7 +67,7 @@ static rc71l_xbox360_user_data_t controller_user_data = {
 		.id = -1,
 		.replay = {
 			.delay = 0x00,
-			.length = 500
+			.length = 1000
 		},
 		.u = {
 			.rumble = {
@@ -962,6 +962,17 @@ static void rc71l_timer_xbox360(
 			// upload the new effect to the device
 			const int effect_upload_res = ioctl(fd, EVIOCSFF, &xbox360_data->mode_switch_rumble_effect);
 			if (effect_upload_res == 0) {
+				struct input_event rumble_stop = {
+					.type = EV_FF,
+					.code = xbox360_data->mode_switch_rumble_effect.id,
+					.value = 0,
+				};
+
+				const int rumble_stop_res = write(fd, (const void*) &rumble_stop, sizeof(rumble_stop));
+				if (rumble_stop_res != sizeof(rumble_stop)) {
+					fprintf(stderr, "Unable to stop the previous rumble: %d\n", rumble_stop_res);
+				}
+
 				const struct input_event rumble_play = {
 					.type = EV_FF,
 					.code = xbox360_data->mode_switch_rumble_effect.id,
@@ -986,6 +997,7 @@ static void rc71l_timer_xbox360(
 				xbox360_data->mode_switch_rumbling = false;
 
 				if (xbox360_data->mode_switch_rumble_effect.id != -1) {
+					/*
 					struct input_event rumble_stop = {
 						.type = EV_FF,
 						.code = xbox360_data->mode_switch_rumble_effect.id,
@@ -996,6 +1008,7 @@ static void rc71l_timer_xbox360(
 					if (rumble_stop_res != sizeof(rumble_stop)) {
 						fprintf(stderr, "Unable to stop the previous rumble: %d\n", rumble_stop_res);
 					}
+					*/
 				}
 			}
 		}
