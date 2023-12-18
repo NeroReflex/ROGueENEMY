@@ -67,7 +67,7 @@ static rc71l_xbox360_user_data_t controller_user_data = {
 		.id = -1,
 		.replay = {
 			.delay = 0x00,
-			.length = 1000
+			.length = 800
 		},
 		.u = {
 			.rumble = {
