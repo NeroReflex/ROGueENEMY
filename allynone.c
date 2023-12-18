@@ -88,6 +88,7 @@ int main(int argc, char ** argv) {
     .settings = {
       .enable_qam = true,
       .ff_gain = 0xFFFF,
+      .rumble_on_mode_switch = true,
     }
   };
 
