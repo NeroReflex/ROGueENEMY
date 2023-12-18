@@ -20,7 +20,7 @@ void load_in_config(dev_in_settings_t *const out_conf, const char* const filepat
     }
 
     int rumble_on_mode_switch;
-    if (config_lookup_bool(&cfg, "rumble_on_mode_switch", &enable_qam) != CONFIG_FALSE) {
+    if (config_lookup_bool(&cfg, "rumble_on_mode_switch", &rumble_on_mode_switch) != CONFIG_FALSE) {
         out_conf->rumble_on_mode_switch = rumble_on_mode_switch;
     } else {
         fprintf(stderr, "rumble_on_mode_switch (bool) configuration not found. Default value will be used.\n");
