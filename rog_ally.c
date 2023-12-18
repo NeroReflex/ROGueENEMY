@@ -35,7 +35,9 @@ typedef struct rc71l_xbox360_user_data {
 
 	uint64_t mode_switched;
 
-	uint64_t expired_after_unaccounded_mode_switch;
+	uint64_t timeout_after_mode_switch;
+
+	bool mode_switch_rumbling;
 
 } rc71l_xbox360_user_data_t;
 
@@ -56,7 +58,8 @@ static rc71l_asus_kbd_user_data_t asus_userdata = {};
 static rc71l_xbox360_user_data_t controller_user_data = {
 	.accounted_mode_switches = 0,
 	.mode_switched = 0,
-	.expired_after_unaccounded_mode_switch = 0,
+	.timeout_after_mode_switch = 0,
+	.mode_switch_rumbling = false,
 };
 
 static rc71l_platform_t hw_platform = {
@@ -199,11 +202,11 @@ static int asus_kbd_ev_map(
 
 					messages[written_msg++] = current_message;
 				}
-			} else if ((e->ev[i].code == KEY_F17) && (e->ev[i].value != 0)) {
-				// this is right screen button, on long release, after passing short threshold both 0 and 1 events are emitted so just discard the 0
-
 			} else if ((e->ev[i].code == KEY_F18) && (e->ev[i].value != 0)) {
-				// this is right screen button, on release both 0 and 1 events are emitted so just discard the 0
+				// this is right screen button, on long release both 0 and 1 events are emitted so just discard the 0
+
+			} else if ((e->ev[i].code == KEY_F17) && (e->ev[i].value != 0)) {
+				// this is right screen button, on long press, after passing short threshold both 0 and 1 events are emitted so just discard the 0
 
 				// change controller mode
 				if (asus_kbd_user_data == NULL) {
@@ -927,11 +930,16 @@ static void rc71l_timer_xbox360(
 
 	if (xbox360_data->accounted_mode_switches != xbox360_data->mode_switched) {
 		xbox360_data->accounted_mode_switches = xbox360_data->mode_switched;
-		xbox360_data->expired_after_unaccounded_mode_switch = expired;
+
+		xbox360_data->mode_switch_rumbling = true;
 		printf("modeswitch rumble start\n");
-	} else if ((expired - xbox360_data->expired_after_unaccounded_mode_switch) == 4) {
-		xbox360_data->expired_after_unaccounded_mode_switch = expired;
-		printf("modeswitch rumble stop\n");
+	} else if (xbox360_data->mode_switch_rumbling) {
+		xbox360_data->timeout_after_mode_switch++;
+		
+		if (xbox360_data->timeout_after_mode_switch >= 4) {
+			xbox360_data->mode_switch_rumbling = false;
+			printf("modeswitch rumble stop\n");
+		}
 	}
 }
 
