@@ -39,6 +39,8 @@ typedef struct rc71l_xbox360_user_data {
 
 	bool mode_switch_rumbling;
 
+	struct ff_effect mode_switch_rumble_effect;
+
 } rc71l_xbox360_user_data_t;
 
 typedef struct rc71l_asus_kbd_user_data {
@@ -60,6 +62,20 @@ static rc71l_xbox360_user_data_t controller_user_data = {
 	.mode_switched = 0,
 	.timeout_after_mode_switch = 0,
 	.mode_switch_rumbling = false,
+	.mode_switch_rumble_effect = {
+		.type = FF_RUMBLE,
+		.id = -1,
+		.replay = {
+			.delay = 0x00,
+			.length = 5000
+		},
+		.u = {
+			.rumble = {
+				.strong_magnitude = 0xFFFF,
+				.weak_magnitude = 0xFFFF,
+			}
+		}
+	}
 };
 
 static rc71l_platform_t hw_platform = {
@@ -865,6 +881,7 @@ static input_dev_t in_iio_dev = {
 
 static void rc71l_timer_asus_kbd(
 	const dev_in_settings_t *const conf,
+	struct libevdev* evdev,
     const char* const timer_name,
     uint64_t expired,
     void* user_data
@@ -922,23 +939,65 @@ static input_dev_t in_asus_kb_3_dev = {
 
 static void rc71l_timer_xbox360(
 	const dev_in_settings_t *const conf,
+	struct libevdev* evdev,
     const char* const timer_name,
     uint64_t expired,
     void* user_data
 ) {
 	rc71l_xbox360_user_data_t *const xbox360_data = (rc71l_xbox360_user_data_t*)user_data;
+	
 
-	if (xbox360_data->accounted_mode_switches != xbox360_data->mode_switched) {
-		xbox360_data->accounted_mode_switches = xbox360_data->mode_switched;
+	if (conf->rumble_on_mode_switch) {
+		if (xbox360_data->accounted_mode_switches != xbox360_data->mode_switched) {
+			const int fd = libevdev_get_fd(evdev);
 
-		xbox360_data->mode_switch_rumbling = true;
-		printf("modeswitch rumble start\n");
-	} else if (xbox360_data->mode_switch_rumbling) {
-		xbox360_data->timeout_after_mode_switch++;
-		
-		if (xbox360_data->timeout_after_mode_switch >= 4) {
-			xbox360_data->mode_switch_rumbling = false;
-			printf("modeswitch rumble stop\n");
+			xbox360_data->accounted_mode_switches = xbox360_data->mode_switched;
+
+			xbox360_data->mode_switch_rumbling = true;
+
+			// load the new effect data
+			xbox360_data->mode_switch_rumble_effect.u.rumble.strong_magnitude = 0xFFFF;
+			xbox360_data->mode_switch_rumble_effect.u.rumble.weak_magnitude = 0xFFFF;
+
+			// upload the new effect to the device
+			const int effect_upload_res = ioctl(fd, EVIOCSFF, &xbox360_data->mode_switch_rumble_effect);
+			if (effect_upload_res == 0) {
+				const struct input_event rumble_play = {
+					.type = EV_FF,
+					.code = xbox360_data->mode_switch_rumble_effect.id,
+					.value = 1,
+				};
+
+				const int effect_start_res = write(fd, (const void*)&rumble_play, sizeof(rumble_play));
+				if (effect_start_res != sizeof(rumble_play)) {
+					fprintf(stderr, "Unable to write input event starting the mode-switch rumble: %d\n", effect_start_res);
+				}
+			} else {
+				fprintf(stderr, "Unable to update force-feedback effect for mode-switch rumble: %d\n", effect_upload_res);
+
+				xbox360_data->mode_switch_rumble_effect.id = -1;
+			}
+		} else if (xbox360_data->mode_switch_rumbling) {
+			const int fd = libevdev_get_fd(evdev);
+
+			xbox360_data->timeout_after_mode_switch++;
+			
+			if (xbox360_data->timeout_after_mode_switch >= 4) {
+				xbox360_data->mode_switch_rumbling = false;
+
+				if (xbox360_data->mode_switch_rumble_effect.id != -1) {
+					struct input_event rumble_stop = {
+						.type = EV_FF,
+						.code = xbox360_data->mode_switch_rumble_effect.id,
+						.value = 0,
+					};
+
+					const int rumble_stop_res = write(fd, (const void*) &rumble_stop, sizeof(rumble_stop));
+					if (rumble_stop_res != sizeof(rumble_stop)) {
+						fprintf(stderr, "Unable to stop the previous rumble: %d\n", rumble_stop_res);
+					}
+				}
+			}
 		}
 	}
 }
@@ -1007,6 +1066,16 @@ rc71l_hidraw_set_leds_err:
   return -EIO;
 }
 
+static void rc71l_hidraw_timer(
+    const dev_in_settings_t *const conf,
+    int fd,
+    const char* const timer_name,
+    uint64_t expired,
+    void* user_data
+) {
+
+}
+
 static input_dev_t nkey_dev = {
 	.dev_type = input_dev_type_hidraw,
 	.filters = {
@@ -1022,6 +1091,7 @@ static input_dev_t nkey_dev = {
 			.leds_callback = rc71l_hidraw_set_leds,
 			.rumble_callback = rc71l_hidraw_rumble,
 			.map_callback = rc71l_hidraw_map,
+			.timeout_callback = rc71l_hidraw_timer,
 		}
 	}
 };

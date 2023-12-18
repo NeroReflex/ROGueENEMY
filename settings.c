@@ -19,6 +19,13 @@ void load_in_config(dev_in_settings_t *const out_conf, const char* const filepat
         fprintf(stderr, "enable_qam (bool) configuration not found. Default value will be used.\n");
     }
 
+    int rumble_on_mode_switch;
+    if (config_lookup_bool(&cfg, "rumble_on_mode_switch", &enable_qam) != CONFIG_FALSE) {
+        out_conf->rumble_on_mode_switch = rumble_on_mode_switch;
+    } else {
+        fprintf(stderr, "rumble_on_mode_switch (bool) configuration not found. Default value will be used.\n");
+    }
+
     int ff_gain;
     if (config_lookup_int(&cfg, "ff_gain", &ff_gain) != CONFIG_FALSE) {
         if (ff_gain <= 0xFF) {

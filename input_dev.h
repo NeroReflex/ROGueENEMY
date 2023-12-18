@@ -27,6 +27,7 @@ typedef int (*ev_map)(
 );
 typedef void (*ev_timer)(
     const dev_in_settings_t *const conf,
+    struct libevdev* evdev,
     const char* const timer_name,
     uint64_t expired,
     void* user_data
@@ -53,15 +54,44 @@ typedef struct iio_filters {
     const char name[256];
 } iio_filters_t;
 
-typedef int (*hidraw_map)(const dev_in_settings_t *const conf, int hidraw_fd, in_message_t *const messages, size_t messages_len, void* user_data);
-typedef int (*hidraw_set_leds)(const dev_in_settings_t *const conf, int hidraw_fd, uint8_t r, uint8_t g, uint8_t b, void* user_data);
-typedef int (*hidraw_rumble)(const dev_in_settings_t *const conf, int hidraw_fd, uint8_t left_motor, uint8_t right_motor, void* user_data);
+typedef int (*hidraw_map)(
+    const dev_in_settings_t *const conf,
+    int hidraw_fd,
+    in_message_t *const messages,
+    size_t messages_len,
+    void* user_data
+);
+
+typedef int (*hidraw_set_leds)(
+    const dev_in_settings_t *const conf,
+    int hidraw_fd,
+    uint8_t r,
+    uint8_t g,
+    uint8_t b,
+    void* user_data
+);
+
+typedef int (*hidraw_rumble)(
+    const dev_in_settings_t *const conf,
+    int hidraw_fd,
+    uint8_t left_motor,
+    uint8_t right_motor,
+    void* user_data
+);
+
+typedef void (*hidraw_timer)(
+    const dev_in_settings_t *const conf,
+    int fd,
+    const char* const timer_name,
+    uint64_t expired,
+    void* user_data
+);
 
 typedef struct hidraw_callbacks {
     hidraw_set_leds leds_callback;
     hidraw_rumble rumble_callback;
     hidraw_map map_callback;
-    ev_timer timeout_callback;
+    hidraw_timer timeout_callback;
 } hidraw_callbacks_t;
 
 typedef struct iio_settings {

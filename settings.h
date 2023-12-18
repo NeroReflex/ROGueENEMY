@@ -4,6 +4,7 @@
 
 typedef struct dev_in_settings {
     bool enable_qam;
+    bool rumble_on_mode_switch;
     uint16_t ff_gain;
 } dev_in_settings_t;
 

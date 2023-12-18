@@ -397,9 +397,18 @@ static void handle_timeout(
         if (in_devs[i].type == DEV_IN_TYPE_EV) {
             in_devs[i].dev.evdev.callbacks.timeout_callback(
                 conf,
+                in_devs[i].dev.evdev.evdev,
                 name,
                 expirations,
                 in_devs[i].dev.evdev.user_data
+            );
+        } else if (in_devs[i].type == DEV_IN_TYPE_HIDRAW) {
+            in_devs[i].dev.hidraw.callbacks.timeout_callback(
+                conf,
+                dev_hidraw_get_fd(in_devs[i].dev.hidraw.hidrawdev),
+                name,
+                expirations,
+                in_devs[i].dev.hidraw.user_data
             );
         }
     }
