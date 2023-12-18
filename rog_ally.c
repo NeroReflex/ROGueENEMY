@@ -26,29 +26,43 @@ enum rc71l_leds_direction {
     ROG_ALLY_DIRECTION_LEFT         = 0x01
 } rc71l_leds_direction_t;
 
-typedef enum rc71l_platform_mode {
-  rc71l_platform_mode_hidraw,
-  rc71l_platform_mode_linux_and_asusctl,
-} rc71l_platform_mode_t;
+struct rc71l_platform;
 
-typedef struct rc71l_platform {
-  rc71l_platform_mode_t platform_mode;
-  
-  union {
-    dev_hidraw_t *hidraw;
-  } platform;
+typedef struct rc71l_xbox360_user_data {
+	struct rc71l_platform* parent;
 
-  unsigned long mode;
-  unsigned int modes_count;
-} rc71l_platform_t;
+	uint64_t accounted_mode_switches;
 
-static rc71l_platform_t hw_platform;
+	uint64_t mode_switched;
+
+	uint64_t expired_after_unaccounded_mode_switch;
+
+} rc71l_xbox360_user_data_t;
 
 typedef struct rc71l_asus_kbd_user_data {
+	struct rc71l_platform* parent;
+
 	struct udev *udev;
 } rc71l_asus_kbd_user_data_t;
 
-static rc71l_asus_kbd_user_data_t asus_userdata;
+typedef struct rc71l_platform {
+  rc71l_asus_kbd_user_data_t* kbd_user_data;
+
+  rc71l_xbox360_user_data_t* xbox360_user_data;
+} rc71l_platform_t;
+
+static rc71l_asus_kbd_user_data_t asus_userdata = {};
+
+static rc71l_xbox360_user_data_t controller_user_data = {
+	.accounted_mode_switches = 0,
+	.mode_switched = 0,
+	.expired_after_unaccounded_mode_switch = 0,
+};
+
+static rc71l_platform_t hw_platform = {
+	.kbd_user_data = &asus_userdata,
+	.xbox360_user_data = &controller_user_data,
+};
 
 static char* find_kernel_sysfs_device_path(struct udev *udev) {
     struct udev_enumerate *const enumerate = udev_enumerate_new(udev);
@@ -231,6 +245,8 @@ static int asus_kbd_ev_map(
 							if (gamepad_mode_fd > 0) {
 								if (write(gamepad_mode_fd, new_mode_str, strlen(new_mode_str)) > 0) {
 									printf("Controller mode switched successfully to %s\n", new_mode_str);
+
+									asus_kbd_user_data->parent->xbox360_user_data->mode_switched++;
 								} else {
 									fprintf(stderr, "Unable to switch controller mode to %s: %d -- expect bugs\n", new_mode_str, errno);
 								}
@@ -907,7 +923,16 @@ static void rc71l_timer_xbox360(
     uint64_t expired,
     void* user_data
 ) {
-	
+	rc71l_xbox360_user_data_t *const xbox360_data = (rc71l_xbox360_user_data_t*)user_data;
+
+	if (xbox360_data->accounted_mode_switches != xbox360_data->mode_switched) {
+		xbox360_data->accounted_mode_switches = xbox360_data->mode_switched;
+		xbox360_data->expired_after_unaccounded_mode_switch = expired;
+		printf("modeswitch rumble start\n");
+	} else if ((expired - xbox360_data->expired_after_unaccounded_mode_switch) == 4) {
+		xbox360_data->expired_after_unaccounded_mode_switch = expired;
+		printf("modeswitch rumble stop\n");
+	}
 }
 
 static input_dev_t in_xbox_dev = {
@@ -917,6 +942,7 @@ static input_dev_t in_xbox_dev = {
       .name = "Microsoft X-Box 360 pad"
     }
   },
+  .user_data = &controller_user_data,
   .map = {
 	.ev_callbacks = {
 		.input_map_fn = xbox360_ev_map,
@@ -931,9 +957,9 @@ static int rc71l_hidraw_map(const dev_in_settings_t *const conf, int hidraw_fd, 
 
 	if (read_res < 0) {
 		return -EIO;
-	} else {
-		printf("Got %d bytes from Asus MCU\n", read_res);
 	}
+	
+	//printf("Got %d bytes from Asus MCU\n", read_res); // either 6 or 32
 
 	return 0;
 }
@@ -996,18 +1022,13 @@ static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platf
 	int res = -EINVAL;
 
 	rc71l_platform_t *const platform = &hw_platform;
-	if (platform == NULL) {
-		fprintf(stderr, "Unable to setup platform\n");
-		res = -ENOMEM;
-		goto rc71l_platform_init_err;
-	}
-
 	*platform_data = (void*)platform;
 
 	// setup asus keyboard(s) user_data
-	asus_userdata.udev = udev_new();
-
-	if (asus_userdata.udev == NULL) {
+	platform->kbd_user_data->parent = platform;
+	platform->xbox360_user_data->parent = platform;
+	platform->kbd_user_data->udev = udev_new();
+	if (platform->kbd_user_data->udev == NULL) {
 		fprintf(stderr, "Unable to initialize udev\n");
 		res = -ENOMEM;
 		goto rc71l_platform_init_err;
@@ -1022,11 +1043,8 @@ rc71l_platform_init_err:
 static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** platform_data) {
 	rc71l_platform_t *const platform = (rc71l_platform_t *)(*platform_data);
 
-	udev_unref(asus_userdata.udev);
-
-	if ((platform->platform_mode == rc71l_platform_mode_hidraw) && (platform->platform.hidraw != NULL)) {
-		dev_hidraw_close(platform->platform.hidraw);
-		platform->platform.hidraw = NULL;
+	if (platform->kbd_user_data != NULL) {
+		udev_unref(platform->kbd_user_data->udev);
 	}
 
 	*platform_data = NULL;
