@@ -1,5 +1,5 @@
 enable_qam = true;
-ff_gain = 100;
+ff_gain = 255;
 nintendo_layout = false;
-gamepad_output_device = 1;
-rumble_dedicated_thread = false;
+default_gamepad = 1;
+rumble_on_mode_switch = true;
