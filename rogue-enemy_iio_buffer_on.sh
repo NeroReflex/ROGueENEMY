@@ -5,11 +5,11 @@ modprobe iio-trig-hrtimer
 
 # hrtimer
 if [! -d "/home/config"]; then
-    mkdir /home/config
+    mkdir -p /home/config
 fi
 
 mount -t configfs none /home/config
-mkdir /home/config/iio/triggers/hrtimer/rogue
+mkdir -p /home/config/iio/triggers/hrtimer/rogue
 
 cd /sys/bus/iio/devices/iio\:device0
 echo 1 > scan_elements/in_accel_x_en
