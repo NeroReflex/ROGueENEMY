@@ -4,7 +4,7 @@ modprobe iio-trig-sysfs
 modprobe iio-trig-hrtimer
 
 # hrtimer
-if [! -d "/home/config"]; then
+if [ ! -d "/home/config" ]; then
     mkdir -p /home/config
 fi
 
