@@ -85,7 +85,7 @@ static int create(int fd)
 
 	memset(&ev, 0, sizeof(ev));
 	ev.type = UHID_CREATE;
-	strcpy((char*)ev.u.create.name, "Sony Interactive Entertainment DualSense Wireless Controller");
+	strcpy((char*)ev.u.create.name, "Sony Corp. DualSense Edge wireless controller (PS5)");
 	ev.u.create.rd_data = rdesc;
 	ev.u.create.rd_size = sizeof(rdesc);
 	ev.u.create.bus = BUS_USB;
