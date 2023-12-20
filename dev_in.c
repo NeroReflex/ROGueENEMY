@@ -108,9 +108,9 @@ static int map_message_from_iio(dev_in_iio_t *const in_iio, in_message_t *const 
     //messages[0].data.gamepad_set.status.accel.x = scan_elements[0];
     //messages[0].data.gamepad_set.status.accel.y = scan_elements[1];
     //messages[0].data.gamepad_set.status.accel.z = scan_elements[2];
-    messages[0].data.gamepad_set.status.accel.x = (uint16_t)(-1) * scan_elements[0];
-    messages[0].data.gamepad_set.status.accel.y = scan_elements[1];
-    messages[0].data.gamepad_set.status.accel.z = scan_elements[2];
+    messages[0].data.gamepad_set.status.accel.x = scan_elements[0];
+    messages[0].data.gamepad_set.status.accel.y = (uint16_t)(-1) * scan_elements[2];
+    messages[0].data.gamepad_set.status.accel.z = (uint16_t)(-1) * scan_elements[1];
 
     messages[1].type = GAMEPAD_SET_ELEMENT;
     messages[1].data.gamepad_set.element = GAMEPAD_GYROSCOPE;
@@ -118,9 +118,9 @@ static int map_message_from_iio(dev_in_iio_t *const in_iio, in_message_t *const 
     //messages[1].data.gamepad_set.status.gyro.x = scan_elements[3];
     //messages[1].data.gamepad_set.status.gyro.y = scan_elements[4];
     //messages[1].data.gamepad_set.status.gyro.z = scan_elements[5];
-    messages[1].data.gamepad_set.status.gyro.x = (uint16_t)(-1) * scan_elements[3];
-    messages[1].data.gamepad_set.status.gyro.y = scan_elements[4];
-    messages[1].data.gamepad_set.status.gyro.z = scan_elements[5];
+    messages[1].data.gamepad_set.status.gyro.x = scan_elements[3];
+    messages[1].data.gamepad_set.status.gyro.y = (uint16_t)(-1) * scan_elements[5];
+    messages[1].data.gamepad_set.status.gyro.z = (uint16_t)(-1) * scan_elements[4];
 
     res = 2;
 
