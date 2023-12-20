@@ -3,3 +3,5 @@ ff_gain = 255;
 nintendo_layout = false;
 default_gamepad = 1;
 rumble_on_mode_switch = true;
+gamepad_rumble_control = true;
+gamepad_leds_control = true;

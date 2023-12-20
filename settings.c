@@ -67,6 +67,20 @@ void load_out_config(dev_out_settings_t *const out_conf, const char* const filep
         fprintf(stderr, "default_gamepad (int) configuration not found. Default value will be used.\n");
     }
 
+    int gamepad_leds_control;
+    if (config_lookup_bool(&cfg, "gamepad_leds_control", &gamepad_leds_control) != CONFIG_FALSE) {
+        out_conf->gamepad_leds_control = gamepad_leds_control;
+    } else {
+        fprintf(stderr, "gamepad_leds_control (bool) configuration not found. Default value will be used.\n");
+    }
+
+    int gamepad_rumble_control;
+    if (config_lookup_bool(&cfg, "gamepad_rumble_control", &gamepad_rumble_control) != CONFIG_FALSE) {
+        out_conf->gamepad_rumble_control = gamepad_rumble_control;
+    } else {
+        fprintf(stderr, "gamepad_rumble_control (bool) configuration not found. Default value will be used.\n");
+    }
+
     config_destroy(&cfg);
 
 load_out_config_err:

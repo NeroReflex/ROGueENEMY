@@ -581,7 +581,9 @@ void *dev_out_thread_func(void *ptr) {
                     }
                 };
 
-                out_msgs[out_msgs_count++] = msg;
+                if (dev_out_data->settings.gamepad_leds_control) {
+                    out_msgs[out_msgs_count++] = msg;
+                }
             }
 
             if (current_motors_events_count != prev_motors_events_count) {
@@ -595,7 +597,9 @@ void *dev_out_thread_func(void *ptr) {
                     }
                 };
 
-                out_msgs[out_msgs_count++] = msg;
+                if (dev_out_data->settings.gamepad_rumble_control) {
+                    out_msgs[out_msgs_count++] = msg;
+                }
             }
 
             // send out game-generated events to sockets

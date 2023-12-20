@@ -45,6 +45,8 @@ int main(int argc, char ** argv) {
         .settings = {
             .default_gamepad = 0,
             .nintendo_layout = false,
+            .gamepad_leds_control = true,
+            .gamepad_rumble_control = true,
         }
     };
 
