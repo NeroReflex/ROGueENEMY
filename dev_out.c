@@ -182,7 +182,7 @@ static void handle_incoming_message_gamepad_set(
         }
         case GAMEPAD_GYROSCOPE: {
             if (msg_payload->status.gyro.sample_time.tv_sec != lastsec) {
-                printf("%d\n", numpackets);
+                //printf("%d\n", numpackets);
                 lastsec = msg_payload->status.gyro.sample_time.tv_sec;
                 numpackets = 0;
             } else {
