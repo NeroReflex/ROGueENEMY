@@ -414,22 +414,22 @@ void *dev_out_thread_func(void *ptr) {
     } controller_data;
 
     virt_mouse_t mouse_data;
-    const int mouse_init_res = virt_mouse_init(&mouse_data);
+    /*const int mouse_init_res = virt_mouse_init(&mouse_data);
     if (mouse_init_res < 0) {
         fprintf(stderr, "Unable to initialize virtual mouse -- will continue regardless\n");
     } else {
         current_mouse_fd = virt_mouse_get_fd(&mouse_data);
         printf("Mouse initialized: fd=%d\n", current_mouse_fd);
-    }
+    }*/
 
     virt_kbd_t keyboard_data;
-    const int kbd_init_res = virt_kbd_init(&keyboard_data);
+    /*const int kbd_init_res = virt_kbd_init(&keyboard_data);
     if (kbd_init_res < 0) {
         fprintf(stderr, "Unable to initialize virtual keyboard -- will continue regardless\n");
     } else {
         current_keyboard_fd = virt_kbd_get_fd(&keyboard_data);
         printf("Keyboard initialized: fd=%d\n", current_keyboard_fd);
-    }
+    }*/
 
     const int64_t kbd_report_timing_us = 1125;
     const int64_t mouse_report_timing_us = 950;
