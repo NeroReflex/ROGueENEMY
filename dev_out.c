@@ -474,7 +474,7 @@ void *dev_out_thread_func(void *ptr) {
         const int64_t kbd_time_diff_usecs = get_timediff_usec(&keyboard_last_hid_report_sent, &now);
 
         gettimeofday(&now, NULL);
-        if (gamepad_time_diff_usecs >= gamepad_report_timing_us) {
+        if ((current_gamepad_fd > 0) && (gamepad_time_diff_usecs >= gamepad_report_timing_us)) {
             gamepad_last_hid_report_sent = now;
             
             if (current_gamepad == GAMEPAD_DUALSENSE) {
@@ -487,7 +487,7 @@ void *dev_out_thread_func(void *ptr) {
 
             // this does reset the for, ensuring every other device has nothing to say
             continue;
-        } else if (mouse_time_diff_usecs >= mouse_report_timing_us) {
+        } else if ((current_mouse_fd > 0) && (mouse_time_diff_usecs >= mouse_report_timing_us)) {
             mouse_last_hid_report_sent = now;
 
             virt_mouse_send(&mouse_data, &dev_out_data->dev_stats.mouse, &now);
@@ -498,7 +498,7 @@ void *dev_out_thread_func(void *ptr) {
 
             // this does reset the for, ensuring every other device has nothing to say
             continue;
-        } else if (kbd_time_diff_usecs >= kbd_report_timing_us) {
+        } else if ((current_keyboard_fd > 0) && (kbd_time_diff_usecs >= kbd_report_timing_us)) {
             keyboard_last_hid_report_sent = now;
 
             virt_kbd_send(&keyboard_data, &dev_out_data->dev_stats.kbd, &now);
@@ -689,17 +689,23 @@ void *dev_out_thread_func(void *ptr) {
     }
 
     // close the gamepad output device
-    if (current_gamepad == GAMEPAD_DUALSENSE) {
-        virt_dualsense_close(&controller_data.ds5);
-    } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
-        virt_dualshock_close(&controller_data.ds4);
+    if (current_gamepad_fd > 0) {
+        if (current_gamepad == GAMEPAD_DUALSENSE) {
+            virt_dualsense_close(&controller_data.ds5);
+        } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
+            virt_dualshock_close(&controller_data.ds4);
+        }
     }
 
     // close the mouse device
-    virt_mouse_close(&mouse_data);
+    if (current_mouse_fd > 0) {
+        virt_mouse_close(&mouse_data);
+    }
 
     // close the keyboard device
-    virt_kbd_close(&keyboard_data);
+    if (current_keyboard_fd > 0) {
+        virt_kbd_close(&keyboard_data);
+    }
 
     // end communication
     if (dev_out_data->communication.type == ipc_server_sockets) {
