@@ -13,6 +13,8 @@ typedef struct virt_dualsense {
 
     bool debug;
 
+    bool bluetooth;
+
     uint8_t seq_num;
 
     uint32_t dt_sum;
@@ -23,7 +25,7 @@ typedef struct virt_dualsense {
     uint64_t last_time;
 } virt_dualsense_t;
 
-int virt_dualsense_init(virt_dualsense_t *const gamepad);
+int virt_dualsense_init(virt_dualsense_t *const gamepad, bool bluetooth);
 
 int virt_dualsense_get_fd(virt_dualsense_t *const gamepad);
 

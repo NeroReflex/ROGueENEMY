@@ -1141,7 +1141,15 @@ static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** pl
 	*platform_data = NULL;
 }
 
+/**
+ * This function should use the following:
+ * pub static DBUS_NAME: &str = "org.asuslinux.Daemon";
+ * pub static DBUS_PATH: &str = "/org/asuslinux/Daemon";
+ * pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
+ */
 static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
+
+
 	return 0;
 }
 

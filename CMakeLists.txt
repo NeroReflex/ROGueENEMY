@@ -64,7 +64,7 @@ add_executable(${ALLINONE_EXECUTABLE_NAME}
 
 set_property(TARGET ${ALLINONE_EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
 
-target_link_libraries(${ALLINONE_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm)
+target_link_libraries(${ALLINONE_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm -lz)
 
 set_target_properties(${ALLINONE_EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
 
@@ -80,7 +80,7 @@ install(TARGETS ${ROGUE_EXECUTABLE_NAME} DESTINATION bin)
 
 set_property(TARGET ${STRAY_EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
 
-target_link_libraries(${STRAY_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm)
+target_link_libraries(${STRAY_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm -lz)
 
 set_target_properties(${STRAY_EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
 

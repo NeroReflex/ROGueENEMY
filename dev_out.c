@@ -427,7 +427,7 @@ void *dev_out_thread_func(void *ptr) {
     const int64_t gamepad_report_timing_us = 1250;
 
     if (current_gamepad == GAMEPAD_DUALSENSE) {
-        const int ds5_init_res = virt_dualsense_init(&controller_data.ds5);
+        const int ds5_init_res = virt_dualsense_init(&controller_data.ds5, true);
         if (ds5_init_res != 0) {
             fprintf(stderr, "Unable to initialize the DualSense device: %d\n", ds5_init_res);
         } else {
