@@ -17,6 +17,10 @@
 #define DS_INPUT_REPORT_USB_SIZE    64
 #define DS_INPUT_REPORT_BT          0x31
 #define DS_INPUT_REPORT_BT_SIZE     78
+#define DS_OUTPUT_REPORT_USB        0x02
+#define DS_OUTPUT_REPORT_USB_SIZE   63
+#define DS_OUTPUT_REPORT_BT         0x31
+#define DS_OUTPUT_REPORT_BT_SIZE    78
 
 #define DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT    0x02
 
@@ -1011,43 +1015,68 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
         if (ev.u.output.rtype != UHID_OUTPUT_REPORT)
             return 0;
         
-        if (ev.u.output.size != 48) {
-            fprintf(stderr, "Invalid data length: got %d, expected 48\n", (int)ev.u.output.size);
+        if (ev.u.output.size == 48) {
+            fprintf(stderr, "Ignored a 48 bytes report on purpose\n");
+        }
+
+        //if (ev.u.output.size != 48)
+        if (
+            (!gamepad->bluetooth) && (ev.u.output.size != DS_OUTPUT_REPORT_USB_SIZE) &&
+            (gamepad->bluetooth) && (ev.u.output.size != DS_OUTPUT_REPORT_BT_SIZE) 
+        ) {
+            fprintf(
+                stderr,
+                "Invalid data length: got %d, expected %d\n",
+                (int)ev.u.output.size,
+                (gamepad->bluetooth) ? DS_OUTPUT_REPORT_BT_SIZE : DS_OUTPUT_REPORT_USB_SIZE
+            );
 
             return 0;
         }
 
         // first byte is report-id which is 0x01
-        if (ev.u.output.data[0] != 0x02) {
-            fprintf(stderr, "Unrecognised report-id: got 0x%x expected 0x02\n", (int)ev.u.output.data[0]);
+        if (
+            (!gamepad->bluetooth) && (ev.u.output.data[0] != DS_OUTPUT_REPORT_USB) &&
+            (gamepad->bluetooth) && (ev.u.output.data[0] != DS_OUTPUT_REPORT_BT) 
+        ) {
+            fprintf(
+                stderr,
+                "Unrecognised report-id: got 0x%x expected 0x%x\n",
+                (int)ev.u.output.data[0],
+                (gamepad->bluetooth) ? DS_OUTPUT_REPORT_BT : DS_OUTPUT_REPORT_USB
+            );
             return 0;
         }
         
-        const uint8_t valid_flag0 = ev.u.output.data[1];
-        const uint8_t valid_flag1 = ev.u.output.data[2];
+        // When using bluetooth, the first byte after the reportID is uint8_t seq_tag,
+	    // while the next one is uint8_t tag, following bytes are the same.
+        const uint8_t *const common_report = (gamepad->bluetooth) ? &ev.u.output.data[3] : &ev.u.output.data[1];
+
+        const uint8_t valid_flag0 = common_report[0];
+        const uint8_t valid_flag1 = common_report[1];
         // For DualShock 4 compatibility mode.
-        const uint8_t motor_right = ev.u.output.data[3];
-        const uint8_t motor_left = ev.u.output.data[4];
+        const uint8_t motor_right = common_report[2];
+        const uint8_t motor_left = common_report[3];
 
         // Audio controls
-        const uint8_t reserved[4] = { ev.u.output.data[5], ev.u.output.data[6], ev.u.output.data[7], ev.u.output.data[8]};
-        const uint8_t mute_button_led = ev.u.output.data[9];
+        const uint8_t reserved[4] = { common_report[4], common_report[5], common_report[6], common_report[7]};
+        const uint8_t mute_button_led = common_report[8];
 
-        uint8_t power_save_control = ev.u.output.data[10];
+        uint8_t power_save_control = common_report[9];
         uint8_t reserved2[28];
 
         // LEDs and lightbar
-        uint8_t valid_flag2 = ev.u.output.data[39];
-        uint8_t reserved3[2] = {ev.u.output.data[40], ev.u.output.data[41]};
-        uint8_t lightbar_setup = ev.u.output.data[42];
-        uint8_t led_brightness = ev.u.output.data[43];
-        uint8_t player_leds = ev.u.output.data[44];
-        uint8_t lightbar_red = ev.u.output.data[45];
-        uint8_t lightbar_green = ev.u.output.data[46];
-        uint8_t lightbar_blue = ev.u.output.data[47];
+        uint8_t valid_flag2 = common_report[38];
+        uint8_t reserved3[2] = {common_report[39], common_report[40]};
+        uint8_t lightbar_setup = common_report[41];
+        uint8_t led_brightness = common_report[42];
+        uint8_t player_leds = common_report[43];
+        uint8_t lightbar_red = common_report[44];
+        uint8_t lightbar_green = common_report[45];
+        uint8_t lightbar_blue = common_report[46];
 
         if ((valid_flag0 & DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT)) {
-            if (/*(valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) ||*/ (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
+            if ((valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) || (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
                 out_device_status->motors_intensity[0] = motor_left;
                 out_device_status->motors_intensity[1] = motor_right;
                 ++out_device_status->rumble_events_count;
