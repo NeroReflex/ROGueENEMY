@@ -45,6 +45,8 @@ static void handle_incoming_message_gamepad_set(
     const in_message_gamepad_set_element_t *const msg_payload,
     gamepad_status_t *const inout_gamepad
 ) {
+    static int numpackets = 0;
+    static uint64_t lastsec = 0;
     switch (msg_payload->element) {
         case GAMEPAD_BTN_CROSS: {
             if (!in_settings->nintendo_layout) {
@@ -179,6 +181,13 @@ static void handle_incoming_message_gamepad_set(
             break;
         }
         case GAMEPAD_GYROSCOPE: {
+            if (msg_payload->status.gyro.sample_time.tv_sec != lastsec) {
+                printf("%d\n", numpackets);
+                lastsec = msg_payload->status.gyro.sample_time.tv_sec;
+                numpackets = 0;
+            } else {
+                ++numpackets;
+            }
             inout_gamepad->last_gyro_motion_time = msg_payload->status.gyro.sample_time;
             inout_gamepad->raw_gyro[0] = msg_payload->status.gyro.x;
             inout_gamepad->raw_gyro[1] = msg_payload->status.gyro.y;
