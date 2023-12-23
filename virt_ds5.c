@@ -1037,7 +1037,7 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
         // first byte is report-id which is 0x01
         if (
             (!gamepad->bluetooth) && (ev.u.output.data[0] != DS_OUTPUT_REPORT_USB) &&
-            (gamepad->bluetooth) && (ev.u.output.data[0] != DS_OUTPUT_REPORT_BT) 
+            (gamepad->bluetooth) && ((ev.u.output.data[0] != DS_OUTPUT_REPORT_BT) && (ev.u.output.data[0] < 0x10))
         ) {
             fprintf(
                 stderr,
@@ -1050,7 +1050,16 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
         
         // When using bluetooth, the first byte after the reportID is uint8_t seq_tag,
 	    // while the next one is uint8_t tag, following bytes are the same.
-        const uint8_t *const common_report = (gamepad->bluetooth) ? &ev.u.output.data[3] : &ev.u.output.data[1];
+        size_t offset = 1;
+        if ((gamepad->bluetooth) && (ev.u.output.data[0] > 0x10)) {
+            offset = 2;
+        } else if ((gamepad->bluetooth) && (ev.u.output.data[0] == 0x02)) {
+            offset = 3;
+        } else if ((gamepad->bluetooth) && (ev.u.output.data[0] == 0x01)) {
+            offset = 1;
+        }
+
+        const uint8_t *const common_report = &ev.u.output.data[offset];
 
         const uint8_t valid_flag0 = common_report[0];
         const uint8_t valid_flag1 = common_report[1];

@@ -374,13 +374,8 @@ static void handle_incoming_message(
     }
 }
 
-int64_t get_timediff_usec(const struct timeval *const past, const struct timeval *const now) {
-    struct timeval tdiff;
-    timersub(now, past, &tdiff);
-
-    //const int64_t sgn = ((now->tv_sec > past->tv_sec) || ((now->tv_sec == past->tv_sec) && (now->tv_usec > past->tv_usec))) ? -1 : +1;
-
-    return (int64_t)(tdiff.tv_sec) * (int64_t)1000000 + (int64_t)(tdiff.tv_usec);
+int64_t get_timediff_usec(const struct timespec *const start, const struct timespec *const end) {
+    return (end->tv_sec - start->tv_sec) * 1000000000LL + (end->tv_nsec - start->tv_nsec);
 }
 
 void *dev_out_thread_func(void *ptr) {
@@ -453,12 +448,12 @@ void *dev_out_thread_func(void *ptr) {
         }
     }
 
-    struct timeval now = {0};
-    gettimeofday(&now, NULL);
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
 
-    struct timeval gamepad_last_hid_report_sent = now;
-    struct timeval mouse_last_hid_report_sent = now;
-    struct timeval keyboard_last_hid_report_sent = now;
+    struct timespec gamepad_last_hid_report_sent = now;
+    struct timespec mouse_last_hid_report_sent = now;
+    struct timespec keyboard_last_hid_report_sent = now;
 
     uint8_t tmp_buf[256];
 
@@ -473,7 +468,7 @@ void *dev_out_thread_func(void *ptr) {
         const int64_t mouse_time_diff_usecs = get_timediff_usec(&mouse_last_hid_report_sent, &now);
         const int64_t kbd_time_diff_usecs = get_timediff_usec(&keyboard_last_hid_report_sent, &now);
 
-        gettimeofday(&now, NULL);
+        clock_gettime(CLOCK_MONOTONIC, &now);
         if ((current_gamepad_fd > 0) && (gamepad_time_diff_usecs >= gamepad_report_timing_us)) {
             gamepad_last_hid_report_sent = now;
             
