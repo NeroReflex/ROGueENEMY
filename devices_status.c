@@ -163,13 +163,15 @@ void gamepad_status_qam_quirk(gamepad_status_t *const gamepad_stats) {
     }
 }
 
-void gamepad_status_qam_quirk_ext_time(gamepad_status_t *const gamepad_stats, struct timeval *now) {
+void gamepad_status_qam_quirk_ext_time(gamepad_status_t *const gamepad_stats) {
     static struct timeval press_time;
     if (gamepad_stats->flags & GAMEPAD_STATUS_FLAGS_PRESS_AND_REALEASE_CENTER) {
+        struct timeval now;
+        gettimeofday(&now, NULL);
 
         // Calculate elapsed time in milliseconds
-        const int64_t elapsed_time = (now->tv_sec - press_time.tv_sec) * 1000 +
-                               (now->tv_usec - press_time.tv_usec) / 1000;
+        const int64_t elapsed_time = (now.tv_sec - press_time.tv_sec) * 1000 +
+                               (now.tv_usec - press_time.tv_usec) / 1000;
 
         if (gamepad_stats->center) {
             // If the center button is pressed and at least X ms have passed

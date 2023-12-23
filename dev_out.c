@@ -485,7 +485,7 @@ void *dev_out_thread_func(void *ptr) {
         } else if ((current_mouse_fd > 0) && (mouse_time_diff_usecs >= mouse_report_timing_us)) {
             mouse_last_hid_report_sent = now;
 
-            virt_mouse_send(&mouse_data, &dev_out_data->dev_stats.mouse, &now);
+            virt_mouse_send(&mouse_data, &dev_out_data->dev_stats.mouse, NULL);
             
             // reset mouse movements now
             dev_out_data->dev_stats.mouse.x = 0;
@@ -496,7 +496,7 @@ void *dev_out_thread_func(void *ptr) {
         } else if ((current_keyboard_fd > 0) && (kbd_time_diff_usecs >= kbd_report_timing_us)) {
             keyboard_last_hid_report_sent = now;
 
-            virt_kbd_send(&keyboard_data, &dev_out_data->dev_stats.kbd, &now);
+            virt_kbd_send(&keyboard_data, &dev_out_data->dev_stats.kbd, NULL);
 
             // this does reset the for, ensuring every other device has nothing to say
             continue;
@@ -525,7 +525,7 @@ void *dev_out_thread_func(void *ptr) {
             FD_SET(current_mouse_fd, &read_fds);
         }
         
-        if (current_mouse_fd > 0) {
+        if (current_keyboard_fd > 0) {
             FD_SET(current_keyboard_fd, &read_fds);
         }
 
@@ -533,12 +533,23 @@ void *dev_out_thread_func(void *ptr) {
             FD_SET(current_gamepad_fd, &read_fds);
         }
 
-        const int64_t timeout_gamepad_time_diff_usecs = gamepad_report_timing_us - gamepad_time_diff_usecs;
-        const int64_t timeout_mouse_time_diff_usecs = mouse_report_timing_us - mouse_time_diff_usecs;
-        const int64_t timeout_kbd_time_diff_usecs = kbd_report_timing_us - kbd_time_diff_usecs;
+        const int64_t timeout_gamepad_time_diff_usecs = (current_gamepad_fd > 0) ? gamepad_report_timing_us - gamepad_time_diff_usecs : 5000;
+        const int64_t timeout_mouse_time_diff_usecs = (current_mouse_fd > 0) ? mouse_report_timing_us - mouse_time_diff_usecs : 5000;
+        const int64_t timeout_kbd_time_diff_usecs = (current_keyboard_fd > 0) ? kbd_report_timing_us - kbd_time_diff_usecs : 5000;
 
-        int64_t next_timing_out_device_diff_usecs = timeout_kbd_time_diff_usecs < timeout_mouse_time_diff_usecs ? timeout_kbd_time_diff_usecs : timeout_mouse_time_diff_usecs;
-        next_timing_out_device_diff_usecs = next_timing_out_device_diff_usecs < timeout_gamepad_time_diff_usecs ? next_timing_out_device_diff_usecs : timeout_gamepad_time_diff_usecs;
+        int64_t next_timing_out_device_diff_usecs = 5000;
+        
+        if ((timeout_kbd_time_diff_usecs > 0) && (timeout_kbd_time_diff_usecs < next_timing_out_device_diff_usecs)) {
+            next_timing_out_device_diff_usecs = timeout_kbd_time_diff_usecs;
+        }
+        
+        if ((timeout_mouse_time_diff_usecs > 0) && (timeout_mouse_time_diff_usecs < next_timing_out_device_diff_usecs)) {
+            next_timing_out_device_diff_usecs = timeout_mouse_time_diff_usecs;
+        }
+
+        if ((timeout_gamepad_time_diff_usecs > 0) && (timeout_gamepad_time_diff_usecs < next_timing_out_device_diff_usecs)) {
+            next_timing_out_device_diff_usecs = timeout_gamepad_time_diff_usecs;
+        }
 
         // calculate the shortest timeout between one of the multiple device will needs to send out its hid report
         struct timeval timeout = {
@@ -547,7 +558,7 @@ void *dev_out_thread_func(void *ptr) {
         };
 
         int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
-        gamepad_status_qam_quirk_ext_time(&dev_out_data->dev_stats.gamepad, &now);
+        gamepad_status_qam_quirk_ext_time(&dev_out_data->dev_stats.gamepad);
 
         if (ready_fds == -1) {
             const int err = errno;
