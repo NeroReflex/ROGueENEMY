@@ -533,11 +533,11 @@ void *dev_out_thread_func(void *ptr) {
             FD_SET(current_gamepad_fd, &read_fds);
         }
 
-        const int64_t timeout_gamepad_time_diff_usecs = (current_gamepad_fd > 0) ? gamepad_report_timing_us - gamepad_time_diff_usecs : 5000;
-        const int64_t timeout_mouse_time_diff_usecs = (current_mouse_fd > 0) ? mouse_report_timing_us - mouse_time_diff_usecs : 5000;
-        const int64_t timeout_kbd_time_diff_usecs = (current_keyboard_fd > 0) ? kbd_report_timing_us - kbd_time_diff_usecs : 5000;
+        const int64_t timeout_gamepad_time_diff_usecs = (current_gamepad_fd > 0) ? gamepad_report_timing_us - gamepad_time_diff_usecs : 500;
+        const int64_t timeout_mouse_time_diff_usecs = (current_mouse_fd > 0) ? mouse_report_timing_us - mouse_time_diff_usecs : 500;
+        const int64_t timeout_kbd_time_diff_usecs = (current_keyboard_fd > 0) ? kbd_report_timing_us - kbd_time_diff_usecs : 500;
 
-        int64_t next_timing_out_device_diff_usecs = 5000;
+        int64_t next_timing_out_device_diff_usecs = 500;
         
         if ((timeout_kbd_time_diff_usecs > 0) && (timeout_kbd_time_diff_usecs < next_timing_out_device_diff_usecs)) {
             next_timing_out_device_diff_usecs = timeout_kbd_time_diff_usecs;
