@@ -1181,7 +1181,7 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
 	// Replace "org.asuslinux.Daemon" and "/org/asuslinux/Aura" with the actual service and object paths
     const char *service_name = "org.asuslinux.Daemon";
     const char *object_path = "/org/asuslinux/Aura";
-    const char *interface_name = "org.asuslinux.Aura";
+    const char *interface_name = "org.asuslinux.Daemon";
 
     // Replace "Brightness" with the actual property name
     const char *property_name = "Brightness";
