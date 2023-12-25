@@ -1186,6 +1186,16 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
     // Replace "Brightness" with the actual property name
     const char *property_name = "Brightness";
 
+	// try to connect
+	if (platform->dbus_conn == NULL) {
+		platform->dbus_conn = dbus_bus_get(DBUS_BUS_SYSTEM, &platform->dbus_error);
+		if (dbus_error_is_set(&platform->dbus_error)) {
+			fprintf(stderr, "DBus error connection : %s -- %s \n", platform->dbus_error.name, platform->dbus_error.message);
+			dbus_error_free(&platform->dbus_error);
+			return 0;
+		}
+	}
+
 	// Build the D-Bus message to set the property
     DBusMessage *const message = dbus_message_new_method_call(service_name, object_path, interface_name, "SetProperty");
     if (!message) {
@@ -1222,15 +1232,7 @@ int rc71l_timer_map(const dev_in_settings_t *const conf, int timer_fd, uint64_t 
 	}
 
 
-	// try to connect
-	if (platform_data->dbus_conn == NULL) {
-		platform_data->dbus_conn = dbus_bus_get(DBUS_BUS_SYSTEM, &platform_data->dbus_error);
-		if (dbus_error_is_set(&platform_data->dbus_error)) {
-			fprintf(stderr, "DBus error connection : %s -- %s \n", platform_data->dbus_error.name, platform_data->dbus_error.message);
-			dbus_error_free(&platform_data->dbus_error);
-			return 0;
-		}
-	}
+	
 	
 	return 0;
 }
