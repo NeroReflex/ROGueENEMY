@@ -1197,7 +1197,7 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
 	}
 
 	// Build the D-Bus message to set the property
-    DBusMessage *const message = dbus_message_new_method_call(service_name, object_path, interface_name, "SetProperty");
+    DBusMessage *const message = dbus_message_new_method_call(service_name, object_path, interface_name, "Set");
     if (!message) {
         fprintf(stderr, "Error creating D-Bus message\n");
         return -ENOMEM;
