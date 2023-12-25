@@ -3,8 +3,6 @@
 #include "dev_hidraw.h"
 #include "message.h"
 #include "xbox360.h"
-#include <linux/input-event-codes.h>
-#include <stdio.h>
 
 enum rc71l_leds_mode {
   ROG_ALLY_MODE_STATIC           = 0,
@@ -49,10 +47,24 @@ typedef struct rc71l_asus_kbd_user_data {
 	struct udev *udev;
 } rc71l_asus_kbd_user_data_t;
 
+typedef struct rc71l_timer_user_data {
+	struct rc71l_platform* parent;
+
+} rc71l_timer_user_data_t;
+
+rc71l_timer_user_data_t timer_user_data;
+
 typedef struct rc71l_platform {
   rc71l_asus_kbd_user_data_t* kbd_user_data;
 
   rc71l_xbox360_user_data_t* xbox360_user_data;
+
+  rc71l_timer_user_data_t* timer_data;
+
+  DBusError dbus_error;
+
+  DBusConnection * dbus_conn;
+
 } rc71l_platform_t;
 
 static rc71l_asus_kbd_user_data_t asus_userdata = {};
@@ -81,6 +93,8 @@ static rc71l_xbox360_user_data_t controller_user_data = {
 static rc71l_platform_t hw_platform = {
 	.kbd_user_data = &asus_userdata,
 	.xbox360_user_data = &controller_user_data,
+	.timer_data = &timer_user_data,
+	.dbus_conn = NULL,
 };
 
 static char* find_kernel_sysfs_device_path(struct udev *udev) {
@@ -1118,12 +1132,15 @@ static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platf
 	// setup asus keyboard(s) user_data
 	platform->kbd_user_data->parent = platform;
 	platform->xbox360_user_data->parent = platform;
+	platform->timer_data->parent = platform;
 	platform->kbd_user_data->udev = udev_new();
 	if (platform->kbd_user_data->udev == NULL) {
 		fprintf(stderr, "Unable to initialize udev\n");
 		res = -ENOMEM;
 		goto rc71l_platform_init_err;
 	}
+
+	dbus_error_init(&platform->dbus_error);
 
 	res = 0;
 
@@ -1134,8 +1151,13 @@ rc71l_platform_init_err:
 static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** platform_data) {
 	rc71l_platform_t *const platform = (rc71l_platform_t *)(*platform_data);
 
-	if (platform->kbd_user_data != NULL) {
-		udev_unref(platform->kbd_user_data->udev);
+	if (platform_data != NULL) {
+		if (platform->kbd_user_data != NULL) {
+			udev_unref(platform->kbd_user_data->udev);
+		}
+
+		// Close the D-Bus connection
+		dbus_connection_close(platform->dbus_conn);
 	}
 
 	*platform_data = NULL;
@@ -1148,12 +1170,68 @@ static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** pl
  * pub static DBUS_IFACE: &str = "org.asuslinux.Daemon";
  */
 static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
+	rc71l_platform_t *const platform = (rc71l_platform_t*)platform_data;
 
+	uint32_t new_brightness = (r << 24) | (g << 16) | (b << 8) | (3);
+
+	if (platform_data == NULL) {
+		return 0;
+	}
+
+	// Replace "org.asuslinux.Daemon" and "/org/asuslinux/Aura" with the actual service and object paths
+    const char *service_name = "org.asuslinux.Daemon";
+    const char *object_path = "/org/asuslinux/Aura";
+    const char *interface_name = "org.asuslinux.Aura";
+
+    // Replace "Brightness" with the actual property name
+    const char *property_name = "Brightness";
+
+	// Build the D-Bus message to set the property
+    DBusMessage *const message = dbus_message_new_method_call(service_name, object_path, interface_name, "SetProperty");
+    if (!message) {
+        fprintf(stderr, "Error creating D-Bus message\n");
+        return -ENOMEM;
+    }
+
+	// Append the property name and the new value to the message
+    dbus_message_append_args(message, DBUS_TYPE_STRING, &property_name, DBUS_TYPE_UINT32, &new_brightness, DBUS_TYPE_INVALID);
+
+    // Send the message
+    DBusMessage *reply = dbus_connection_send_with_reply_and_block(platform->dbus_conn, message, -1, &platform->dbus_error);
+    dbus_message_unref(message);
+
+    if (!reply || dbus_error_is_set(&platform->dbus_error)) {
+        fprintf(stderr, "D-Bus method call error: %s\n", platform->dbus_error.message);
+        dbus_error_free(&platform->dbus_error);
+        return -EIO;
+    }
+
+    // Handle the reply if needed
+
+    
 
 	return 0;
 }
 
 int rc71l_timer_map(const dev_in_settings_t *const conf, int timer_fd, uint64_t expirations, in_message_t *const messages, size_t messages_len, void* user_data) {
+	rc71l_timer_user_data_t *const timer_data = (rc71l_timer_user_data_t*)user_data;
+	rc71l_platform_t *const platform_data = timer_data->parent;
+
+	if (platform_data == NULL) {
+		return 0;
+	}
+
+
+	// try to connect
+	if (platform_data->dbus_conn == NULL) {
+		platform_data->dbus_conn = dbus_bus_get(DBUS_BUS_SYSTEM, &platform_data->dbus_error);
+		if (dbus_error_is_set(&platform_data->dbus_error)) {
+			fprintf(stderr, "DBus error connection : %s -- %s \n", platform_data->dbus_error.name, platform_data->dbus_error.message);
+			dbus_error_free(&platform_data->dbus_error);
+			return 0;
+		}
+	}
+	
 	return 0;
 }
 
@@ -1165,7 +1243,7 @@ input_dev_t timer_dev = {
 			.ticktime_ms = 60,
 		}
 	},
-	.user_data = NULL,
+	.user_data = &timer_user_data,
 	.map = {
 		.timer_callbacks = {
 			.map_fn = rc71l_timer_map,
@@ -1181,9 +1259,9 @@ input_dev_composite_t rc71l_composite = {
     &in_asus_kb_2_dev,
     &in_asus_kb_3_dev,
 	//&nkey_dev,
-	//&timer_dev,
+	&timer_dev,
   },
-  .dev_count = 5,
+  .dev_count = 6,
   .init_fn = rc71l_platform_init,
   .deinit_fn = rc71l_platform_deinit,
   .leds_fn = rc71l_platform_leds,

@@ -13,6 +13,13 @@ set(ROGUE_EXECUTABLE_NAME "rogue-enemy")
 set(STRAY_EXECUTABLE_NAME "stray-ally")
 set(ALLINONE_EXECUTABLE_NAME "allynone")
 
+find_package(PkgConfig REQUIRED) # Include functions provided by PkgConfig module.
+
+pkg_check_modules(DBUS REQUIRED dbus-1) # This calls pkgconfig with appropriate arguments
+# Use results of pkg_check_modules() call.
+include_directories(${DBUS_INCLUDE_DIRS})
+link_directories(${DBUS_LIBRARY_DIRS})
+
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
@@ -64,7 +71,7 @@ add_executable(${ALLINONE_EXECUTABLE_NAME}
 
 set_property(TARGET ${ALLINONE_EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
 
-target_link_libraries(${ALLINONE_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm -lz)
+target_link_libraries(${ALLINONE_EXECUTABLE_NAME} PRIVATE Threads::Threads ${DBUS_LIBRARIES} -levdev -ludev -lconfig -lm -lz)
 
 set_target_properties(${ALLINONE_EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
 
@@ -72,7 +79,7 @@ install(TARGETS ${ALLINONE_EXECUTABLE_NAME} DESTINATION bin)
 
 set_property(TARGET ${ROGUE_EXECUTABLE_NAME} PROPERTY C_STANDARD 17)
 
-target_link_libraries(${ROGUE_EXECUTABLE_NAME} PRIVATE Threads::Threads -levdev -ludev -lconfig -lm)
+target_link_libraries(${ROGUE_EXECUTABLE_NAME} PRIVATE Threads::Threads ${DBUS_LIBRARIES} -levdev -ludev -lconfig -lm)
 
 set_target_properties(${ROGUE_EXECUTABLE_NAME} PROPERTIES LINKER_LANGUAGE C)
 
