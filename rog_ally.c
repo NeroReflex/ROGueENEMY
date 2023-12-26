@@ -1181,7 +1181,8 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
 	// Replace "org.asuslinux.Daemon" and "/org/asuslinux/Aura" with the actual service and object paths
     const char *service_name = "org.asuslinux.Daemon";
     const char *object_path = "/org/asuslinux/Aura";
-    const char *interface_name = "org.asuslinux.Daemon";
+    const char *interface_name = "org.freedesktop.DBus.Properties";
+	const char *target_interface_name = "org.asuslinux.Daemon";
 
     // Replace "Brightness" with the actual property name
     const char *property_name = "Brightness";
@@ -1204,7 +1205,7 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
     }
 
 	// Append the property name and the new value to the message
-    dbus_message_append_args(message, DBUS_TYPE_STRING, &property_name, DBUS_TYPE_UINT32, &new_brightness, DBUS_TYPE_INVALID);
+    dbus_message_append_args(message, DBUS_TYPE_STRING, &target_interface_name, DBUS_TYPE_STRING, &property_name, DBUS_TYPE_UINT32, &new_brightness, DBUS_TYPE_INVALID);
 
     // Send the message
     DBusMessage *reply = dbus_connection_send_with_reply_and_block(platform->dbus_conn, message, -1, &platform->dbus_error);
