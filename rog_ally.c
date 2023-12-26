@@ -1211,8 +1211,6 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
 	DBusMessageIter iter;
     dbus_message_iter_init_append(message, &iter);
 
-	dbus_message_iter_append_basic(&iter, DBUS_TYPE_VARIANT, "u");
-
 	// Open the variant container
     DBusMessageIter variantIter;
     dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, "u", &variantIter);
