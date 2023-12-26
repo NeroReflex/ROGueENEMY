@@ -1278,15 +1278,15 @@ input_dev_t timer_dev = {
 
 input_dev_composite_t rc71l_composite = {
   .dev = {
-    //&in_xbox_dev,
+    &in_xbox_dev,
     &in_iio_dev,
-    //&in_asus_kb_1_dev,
-    //&in_asus_kb_2_dev,
-    //&in_asus_kb_3_dev,
-	//&nkey_dev,
-	//&timer_dev,
+    &in_asus_kb_1_dev,
+    &in_asus_kb_2_dev,
+    &in_asus_kb_3_dev,
+	&nkey_dev,
+	&timer_dev,
   },
-  .dev_count = 1,
+  .dev_count = 7,
   .init_fn = rc71l_platform_init,
   .deinit_fn = rc71l_platform_deinit,
   .leds_fn = rc71l_platform_leds,

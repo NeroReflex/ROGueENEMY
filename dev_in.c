@@ -453,11 +453,6 @@ void* dev_in_thread_func(void *ptr) {
         fprintf(stderr, "Error setting up platform data: %d\n", platform_init_res);
     }
 
-    struct timeval timeout = {
-        .tv_sec = (__time_t)dev_in_data->timeout_ms / (__time_t)1000,
-        .tv_usec = ((__suseconds_t)dev_in_data->timeout_ms % (__suseconds_t)1000) * (__suseconds_t)1000000,
-    };
-
     fd_set read_fds;
     
     const size_t max_devices = dev_in_data->input_dev_decl->dev_count;
@@ -581,6 +576,11 @@ void* dev_in_thread_func(void *ptr) {
                 }
             }
         }
+
+        struct timeval timeout = {
+            .tv_sec = (__time_t)dev_in_data->timeout_ms / (__time_t)1000,
+            .tv_usec = ((__suseconds_t)dev_in_data->timeout_ms % (__suseconds_t)1000) * (__suseconds_t)1000000,
+        };
 
         int ready_fds = select(FD_SETSIZE, &read_fds, NULL, NULL, &timeout);
 
