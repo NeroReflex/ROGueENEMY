@@ -1172,7 +1172,7 @@ static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** pl
 static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
 	rc71l_platform_t *const platform = (rc71l_platform_t*)platform_data;
 
-	uint32_t new_brightness = (r << 24) | (g << 16) | (b << 8) | (3);
+	dbus_uint32_t new_brightness = (r << 24) | (g << 16) | (b << 8) | (3);
 
 	if (platform_data == NULL) {
 		return 0;
@@ -1205,7 +1205,23 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
     }
 
 	// Append the property name and the new value to the message
-    dbus_message_append_args(message, DBUS_TYPE_STRING, &target_interface_name, DBUS_TYPE_STRING, &property_name, DBUS_TYPE_UINT32, &new_brightness, DBUS_TYPE_INVALID);
+    dbus_message_append_args(message, DBUS_TYPE_STRING, &target_interface_name, DBUS_TYPE_STRING, &property_name, DBUS_TYPE_INVALID);
+
+	// Initialize an iterator for the message arguments
+	DBusMessageIter iter;
+    dbus_message_iter_init_append(message, &iter);
+
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_VARIANT, "u");
+
+	// Open the variant container
+    DBusMessageIter variantIter;
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, "u", &variantIter);
+
+    // Append the uint32 value to the variant container
+    dbus_message_iter_append_basic(&variantIter, DBUS_TYPE_UINT32, &new_brightness);
+
+    // Close the variant container
+    dbus_message_iter_close_container(&iter, &variantIter);
 
     // Send the message
     DBusMessage *reply = dbus_connection_send_with_reply_and_block(platform->dbus_conn, message, -1, &platform->dbus_error);
@@ -1214,12 +1230,14 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
     if (!reply || dbus_error_is_set(&platform->dbus_error)) {
         fprintf(stderr, "D-Bus method call error: %s\n", platform->dbus_error.message);
         dbus_error_free(&platform->dbus_error);
+		dbus_message_unref(message);
         return -EIO;
     }
 
     // Handle the reply if needed
 
-    
+    // Free the D-Bus message
+    dbus_message_unref(message);
 
 	return 0;
 }
