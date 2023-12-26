@@ -1205,7 +1205,25 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
     }
 
 	// Append the property name and the new value to the message
-    dbus_message_append_args(message, DBUS_TYPE_STRING, &target_interface_name, DBUS_TYPE_STRING, &property_name, DBUS_TYPE_VARIANT, "v", DBUS_TYPE_UINT32, &new_brightness, DBUS_TYPE_INVALID);
+    //dbus_message_append_args(message, DBUS_TYPE_STRING, &target_interface_name, DBUS_TYPE_STRING, &property_name, DBUS_TYPE_INVALID);
+
+	// Initialize an iterator for the message arguments
+	DBusMessageIter iter;
+    dbus_message_iter_init_append(message, &iter);
+
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &target_interface_name);
+
+	dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &property_name);
+
+	// Open the variant container
+    DBusMessageIter variantIter;
+    dbus_message_iter_open_container(&iter, DBUS_TYPE_VARIANT, "u", &variantIter);
+
+    // Append the uint32 value to the variant container
+    dbus_message_iter_append_basic(&variantIter, DBUS_TYPE_UINT32, &new_brightness);
+
+    // Close the variant container
+    dbus_message_iter_close_container(&iter, &variantIter);
 
     // Send the message
     DBusMessage *reply = dbus_connection_send_with_reply_and_block(platform->dbus_conn, message, -1, &platform->dbus_error);
