@@ -479,10 +479,9 @@ void *dev_out_thread_func(void *ptr) {
                 virt_dualshock_compose(&controller_data.ds4, &dev_out_data->dev_stats.gamepad, tmp_buf);
                 virt_dualshock_send(&controller_data.ds4, tmp_buf);
             }
-
-            // this does reset the for, ensuring every other device has nothing to say
-            continue;
-        } else if ((current_mouse_fd > 0) && (mouse_time_diff_usecs >= mouse_report_timing_us)) {
+        }
+        
+        if ((current_mouse_fd > 0) && (mouse_time_diff_usecs >= mouse_report_timing_us)) {
             mouse_last_hid_report_sent = now;
 
             virt_mouse_send(&mouse_data, &dev_out_data->dev_stats.mouse, NULL);
@@ -490,16 +489,12 @@ void *dev_out_thread_func(void *ptr) {
             // reset mouse movements now
             dev_out_data->dev_stats.mouse.x = 0;
             dev_out_data->dev_stats.mouse.y = 0;
-
-            // this does reset the for, ensuring every other device has nothing to say
-            continue;
-        } else if ((current_keyboard_fd > 0) && (kbd_time_diff_usecs >= kbd_report_timing_us)) {
+        }
+        
+        if ((current_keyboard_fd > 0) && (kbd_time_diff_usecs >= kbd_report_timing_us)) {
             keyboard_last_hid_report_sent = now;
 
             virt_kbd_send(&keyboard_data, &dev_out_data->dev_stats.kbd, NULL);
-
-            // this does reset the for, ensuring every other device has nothing to say
-            continue;
         }
 
 
@@ -533,11 +528,11 @@ void *dev_out_thread_func(void *ptr) {
             FD_SET(current_gamepad_fd, &read_fds);
         }
 
-        const int64_t timeout_gamepad_time_diff_usecs = (current_gamepad_fd > 0) ? gamepad_report_timing_us - gamepad_time_diff_usecs : 500;
-        const int64_t timeout_mouse_time_diff_usecs = (current_mouse_fd > 0) ? mouse_report_timing_us - mouse_time_diff_usecs : 500;
-        const int64_t timeout_kbd_time_diff_usecs = (current_keyboard_fd > 0) ? kbd_report_timing_us - kbd_time_diff_usecs : 500;
+        const int64_t timeout_gamepad_time_diff_usecs = (current_gamepad_fd > 0) ? gamepad_report_timing_us - gamepad_time_diff_usecs : 5000;
+        const int64_t timeout_mouse_time_diff_usecs = (current_mouse_fd > 0) ? mouse_report_timing_us - mouse_time_diff_usecs : 5000;
+        const int64_t timeout_kbd_time_diff_usecs = (current_keyboard_fd > 0) ? kbd_report_timing_us - kbd_time_diff_usecs : 5000;
 
-        int64_t next_timing_out_device_diff_usecs = 500;
+        int64_t next_timing_out_device_diff_usecs = 5000;
         
         if ((timeout_kbd_time_diff_usecs > 0) && (timeout_kbd_time_diff_usecs < next_timing_out_device_diff_usecs)) {
             next_timing_out_device_diff_usecs = timeout_kbd_time_diff_usecs;
@@ -563,6 +558,7 @@ void *dev_out_thread_func(void *ptr) {
         if (ready_fds == -1) {
             const int err = errno;
             fprintf(stderr, "Error reading events for output devices: %d\n", err);
+            usleep(1000);
             continue;
         } else if (ready_fds == 0) {
             // timeout: do nothing but continue. next iteration will take care
