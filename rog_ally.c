@@ -1172,6 +1172,8 @@ static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** pl
 static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
 	rc71l_platform_t *const platform = (rc71l_platform_t*)platform_data;
 
+	return 0;
+
 	dbus_uint32_t new_brightness = (r << 24) | (g << 16) | (b << 8) | (3);
 
 	if (platform_data == NULL) {
@@ -1232,7 +1234,6 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
     if (!reply || dbus_error_is_set(&platform->dbus_error)) {
         fprintf(stderr, "D-Bus method call error: %s\n", platform->dbus_error.message);
         dbus_error_free(&platform->dbus_error);
-		dbus_message_unref(message);
         return -EIO;
     }
 
@@ -1281,10 +1282,10 @@ input_dev_composite_t rc71l_composite = {
     &in_asus_kb_1_dev,
     &in_asus_kb_2_dev,
     &in_asus_kb_3_dev,
-	//&nkey_dev,
+	&nkey_dev,
 	&timer_dev,
   },
-  .dev_count = 6,
+  .dev_count = 7,
   .init_fn = rc71l_platform_init,
   .deinit_fn = rc71l_platform_deinit,
   .leds_fn = rc71l_platform_leds,
