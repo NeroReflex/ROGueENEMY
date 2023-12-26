@@ -1172,6 +1172,7 @@ static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** pl
 static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, uint8_t g, uint8_t b, void* platform_data) {
 	rc71l_platform_t *const platform = (rc71l_platform_t*)platform_data;
 
+	// TODO: before removing this make sure to disable the hidraw backend
 	return 0;
 
 	dbus_uint32_t new_brightness = (r << 24) | (g << 16) | (b << 8) | (3);
