@@ -590,6 +590,7 @@ void* dev_in_thread_func(void *ptr) {
             continue;
         } else if (ready_fds == 0) {
             // Timeout... simply retry
+            printf("TIMEOUT\n");
             continue;
         }
 
