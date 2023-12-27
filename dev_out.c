@@ -374,7 +374,7 @@ static void handle_incoming_message(
     }
 }
 
-int64_t get_timediff_usec(const struct timespec *const start, const struct timespec *const end) {
+int64_t get_timediff_nsec(const struct timespec *const start, const struct timespec *const end) {
     return (end->tv_sec - start->tv_sec) * 1000000000LL + (end->tv_nsec - start->tv_nsec);
 }
 
@@ -464,11 +464,12 @@ void *dev_out_thread_func(void *ptr) {
             break;
         }
 
-        const int64_t gamepad_time_diff_usecs = get_timediff_usec(&gamepad_last_hid_report_sent, &now);
-        const int64_t mouse_time_diff_usecs = get_timediff_usec(&mouse_last_hid_report_sent, &now);
-        const int64_t kbd_time_diff_usecs = get_timediff_usec(&keyboard_last_hid_report_sent, &now);
-
         clock_gettime(CLOCK_MONOTONIC, &now);
+
+        const int64_t gamepad_time_diff_usecs = get_timediff_nsec(&gamepad_last_hid_report_sent, &now) / 1000;
+        const int64_t mouse_time_diff_usecs = get_timediff_nsec(&mouse_last_hid_report_sent, &now) / 1000;
+        const int64_t kbd_time_diff_usecs = get_timediff_nsec(&keyboard_last_hid_report_sent, &now) / 1000;
+
         if ((current_gamepad_fd > 0) && (gamepad_time_diff_usecs >= gamepad_report_timing_us)) {
             gamepad_last_hid_report_sent = now;
             
