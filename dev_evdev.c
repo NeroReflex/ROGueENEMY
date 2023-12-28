@@ -2,6 +2,7 @@
 #include <libevdev-1.0/libevdev/libevdev.h>
 
 static const char *input_path = "/dev/input/";
+static const char *hidden_input_path = "/dev/input/.hidden/";
 
 static pthread_mutex_t input_acquire_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -133,6 +134,12 @@ int dev_evdev_open(
 
     int open_sysfs_idx = -1;
 
+    struct stat st = {0};
+
+    if (stat(hidden_input_path, &st) == -1) {
+        mkdir(hidden_input_path, 0700);
+    }
+
     const int mutex_lock_res = pthread_mutex_lock(&input_acquire_mutex);
     if (mutex_lock_res != 0) {
         fprintf(stderr, "Cannot lock input mutex: %d\n", mutex_lock_res);
@@ -146,6 +153,13 @@ int dev_evdev_open(
         goto dev_evdev_open_err;
     }
     
+    char *const hidden_path = malloc(MAX_PATH_LEN);
+    if (path == NULL) {
+        free(path);
+        res = -ENOMEM;
+        goto dev_evdev_open_err;
+    }
+
     DIR *d;
     struct dirent *dir;
     d = opendir(input_path);
@@ -159,6 +173,7 @@ int dev_evdev_open(
                 continue;
             }
 
+            snprintf(hidden_path, MAX_PATH_LEN - 1, "%s%s", hidden_input_path, dir->d_name);
             snprintf(path, MAX_PATH_LEN - 1, "%s%s", input_path, dir->d_name);
 
             //printf("Testing for device %s\n", path);
@@ -197,6 +212,14 @@ int dev_evdev_open(
                 libevdev_free(*out_evdev);
                 close(fd);
                 continue;
+            }
+
+            if (rename(path, hidden_path) != 0) {
+                libevdev_free(*out_evdev);
+                close(fd);
+                continue;
+            } else {
+                chmod(hidden_path, 000);
             }
 
             // register the device as being opened already
