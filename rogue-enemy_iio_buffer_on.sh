@@ -17,7 +17,7 @@ for i in /sys/bus/iio/devices/* ; do
     if [ -f "$i/name" ]; then
       name=$(cat "$i/name")
       if [ "$name" = "rogue" ]; then
-        echo "800" > "$i/sampling_frequency"
+        echo "1600" > "$i/sampling_frequency"
       fi
     fi
   fi
@@ -31,8 +31,8 @@ for i in /sys/bus/iio/devices/* ; do
       if [ "$name" = "bmi323-imu" ]; then
 
         # change chip sampling frequency
-        echo "800.000000" > "$i/in_accel_sampling_frequency"
-        echo "800.000000" > "$i/in_anglvel_sampling_frequency"
+        echo "1600.000000" > "$i/in_accel_sampling_frequency"
+        echo "1600.000000" > "$i/in_anglvel_sampling_frequency"
 
         # enable accel data acquisition
         echo 1 > "$i/scan_elements/in_accel_x_en"
