@@ -137,7 +137,12 @@ int dev_evdev_open(
     struct stat st = {0};
 
     if (stat(hidden_input_path, &st) == -1) {
-        mkdir(hidden_input_path, 0700);
+        printf("Directory %s does not exits -- creating it\n", hidden_input_path);
+        if (mkdir(hidden_input_path, 0700) == 0) {
+            printf("Directory %s creates successfully", hidden_input_path);
+        } else {
+            fprintf(stderr, "Error creating %s directory: %d\n", hidden_input_path, errno);
+        }
     }
 
     const int mutex_lock_res = pthread_mutex_lock(&input_acquire_mutex);
@@ -215,11 +220,14 @@ int dev_evdev_open(
             }
 
             if (rename(path, hidden_path) != 0) {
+                fprintf(stderr, "Unable to move the device: %d\n", errno);
                 libevdev_free(*out_evdev);
                 close(fd);
                 continue;
             } else {
-                chmod(hidden_path, 000);
+                if (chmod(hidden_path, 000) != 0) {
+                    fprintf(stderr, "Unable to perform chmod 000 to opened device\n");
+                }
             }
 
             // register the device as being opened already
