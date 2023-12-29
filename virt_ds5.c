@@ -1297,8 +1297,8 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
                 (uint8_t)ds5_dpad_from_gamepad(in_device_status->dpad);
     out_shifted_buf[9] = (in_device_status->l1 ? 0x01 : 0x00) |
             (in_device_status->r1 ? 0x02 : 0x00) |
-            (in_device_status->l2_trigger >= 225 ? 0x04 : 0x00) |
-            (in_device_status->r2_trigger >= 225 ? 0x08 : 0x00) |
+            /*(in_device_status->l2_trigger >= 225 ? 0x04 : 0x00)*/ 0x00 |
+            /*(in_device_status->r2_trigger >= 225 ? 0x08 : 0x00)*/ 0x00 |
             (in_device_status->option ? 0x10 : 0x00) |
             (in_device_status->share ? 0x20 : 0x00) |
             (in_device_status->l3 ? 0x40 : 0x00) |
