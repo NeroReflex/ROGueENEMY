@@ -46,6 +46,10 @@ typedef struct gamepad_status {
 
     uint8_t touchpad_press;
 
+    int16_t touchpad_touch_num; // touchpad is inactive when this is -1
+    int16_t touchpad_x;
+    int16_t touchpad_y;
+
     struct timeval last_gyro_motion_time;
     struct timeval last_accel_motion_time;
 

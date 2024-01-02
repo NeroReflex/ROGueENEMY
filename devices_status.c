@@ -95,6 +95,9 @@ void gamepad_status_init(gamepad_status_t *const stats) {
     stats->leds_colors[0] = 0;
     stats->leds_colors[1] = 0;
     stats->leds_colors[2] = 0;
+    stats->touchpad_touch_num = -1;
+    stats->touchpad_x = 0;
+    stats->touchpad_y = 0;
     stats->flags = 0;
 }
 

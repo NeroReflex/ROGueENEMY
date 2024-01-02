@@ -3,6 +3,7 @@
 #include "dev_hidraw.h"
 #include "message.h"
 #include "xbox360.h"
+#include <linux/input-event-codes.h>
 
 enum rc71l_leds_mode {
   ROG_ALLY_MODE_STATIC           = 0,
@@ -946,6 +947,98 @@ static input_dev_t in_iio_dev = {
   //.input_filter_fn = input_filter_imu_identity,
 };
 
+static void rc71l_timer_touchscreen(
+	const dev_in_settings_t *const conf,
+	struct libevdev* evdev,
+    const char* const timer_name,
+    uint64_t expired,
+    void* user_data
+) {
+	
+}
+
+static int touchscreen_ev_map(
+	const dev_in_settings_t *const conf,
+	const evdev_collected_t *const e,
+	in_message_t *const messages,
+	size_t messages_len,
+	void* user_data
+) {
+	int written_msg = 0;
+
+	for (size_t i = 0; i < e->ev_count; ++i) {
+		if (e->ev[i].type == EV_ABS) {
+			if (e->ev[i].code == ABS_MT_TRACKING_ID) {
+				const in_message_t current_message = {
+					.type = GAMEPAD_SET_ELEMENT,
+					.data = {
+						.gamepad_set = {
+							.element = GAMEPAD_TOUCHPAD_TOUCH_ACTIVE,
+							.status = {
+								.touchpad_active = {
+									.status = e->ev[i].value,
+								}
+							}
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == ABS_MT_POSITION_X) {
+				const in_message_t current_message = {
+					.type = GAMEPAD_SET_ELEMENT,
+					.data = {
+						.gamepad_set = {
+							.element = GAMEPAD_TOUCHPAD_X,
+							.status = {
+								.touchpad_active = {
+									.status = e->ev[i].value,
+								}
+							}
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			} else if (e->ev[i].code == ABS_MT_POSITION_Y) {
+				const in_message_t current_message = {
+					.type = GAMEPAD_SET_ELEMENT,
+					.data = {
+						.gamepad_set = {
+							.element = GAMEPAD_TOUCHPAD_Y,
+							.status = {
+								.touchpad_active = {
+									.status = e->ev[i].value,
+								}
+							}
+						}
+					}
+				};
+
+				messages[written_msg++] = current_message;
+			}
+		}
+	}
+
+	return written_msg;
+}
+
+static input_dev_t in_touchscreen_dev = {
+	.dev_type = input_dev_type_uinput,
+	.filters = {
+		.ev = {
+			.name = "NVTK0603:00 0603:F200"
+		}
+	},
+	.user_data = NULL,
+	.map = {
+		.ev_callbacks = {
+			.input_map_fn = touchscreen_ev_map,
+			.timeout_callback = rc71l_timer_touchscreen,
+		},
+	}
+};
+
 static void rc71l_timer_asus_kbd(
 	const dev_in_settings_t *const conf,
 	struct libevdev* evdev,
@@ -1338,8 +1431,9 @@ input_dev_composite_t rc71l_composite = {
     &in_asus_kb_3_dev,
 	&nkey_dev,
 	&timer_dev,
+	&in_touchscreen_dev,
   },
-  .dev_count = 7,
+  .dev_count = 8,
   .init_fn = rc71l_platform_init,
   .deinit_fn = rc71l_platform_deinit,
   .leds_fn = rc71l_platform_leds,

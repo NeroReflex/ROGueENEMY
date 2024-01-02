@@ -192,6 +192,18 @@ static void handle_incoming_message_gamepad_set(
             inout_gamepad->raw_accel[2] = msg_payload->status.accel.z;
             break;
         }
+        case GAMEPAD_TOUCHPAD_TOUCH_ACTIVE: {
+            inout_gamepad->touchpad_touch_num = msg_payload->status.touchpad_active.status;
+            break;
+        }
+        case GAMEPAD_TOUCHPAD_X: {
+            inout_gamepad->touchpad_x = msg_payload->status.touchpad_x.value;
+            break;
+        }
+        case GAMEPAD_TOUCHPAD_Y: {
+            inout_gamepad->touchpad_y = msg_payload->status.touchpad_y.value;
+            break;
+        }
         default: {
             fprintf(stderr, "Unknown gamepad element: %d\n", msg_payload->element);
             break;

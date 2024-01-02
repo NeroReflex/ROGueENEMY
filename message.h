@@ -35,7 +35,23 @@ typedef enum in_message_gamepad_btn {
 
     GAMEPAD_GYROSCOPE,
     GAMEPAD_ACCELEROMETER,
+
+    GAMEPAD_TOUCHPAD_X,
+    GAMEPAD_TOUCHPAD_Y,
+    GAMEPAD_TOUCHPAD_TOUCH_ACTIVE,
 }  in_gamepad_element_t;
+
+typedef struct in_message_gamepad_touchpad_x {
+    int16_t value;
+} in_message_gamepad_touchpad_x_t;
+
+typedef struct in_message_gamepad_touchpad_y {
+    int16_t value;
+} in_message_gamepad_touchpad_y_t;
+
+typedef struct in_message_gamepad_touchpad_active {
+    int16_t status;
+} in_message_gamepad_touchpad_active_t;
 
 typedef struct in_message_gamepad_gyro {
     struct timeval sample_time;
@@ -61,6 +77,9 @@ typedef struct in_message_gamepad_set_element {
         int8_t dpad; // -1 | 0 | +1
         in_message_gamepad_accel_t accel;
         in_message_gamepad_gyro_t gyro;
+        in_message_gamepad_touchpad_active_t touchpad_active;
+        in_message_gamepad_touchpad_x_t touchpad_x;
+        in_message_gamepad_touchpad_y_t touchpad_y;
     } status;
 }  in_message_gamepad_set_element_t;
 

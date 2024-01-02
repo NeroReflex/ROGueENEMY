@@ -1322,9 +1322,17 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     memcpy(&out_shifted_buf[26], &a_z, sizeof(int16_t));
     memcpy(&out_shifted_buf[28], &timestamp, sizeof(timestamp));
 
-    // TODO: when touch is detected send 0x7F, when not 0x80
-    out_shifted_buf[33] = 0x80; //touch0 active?
-    out_shifted_buf[37] = 0x80; //touch1 active?
+    // point of contact number 0
+    out_shifted_buf[33] = in_device_status->touchpad_touch_num == -1 ? 0x80 : 0x7F; //contact
+    out_shifted_buf[34] = in_device_status->touchpad_x & (int16_t)0x00FF; //x_lo
+    out_shifted_buf[35] = ((in_device_status->touchpad_x & (int16_t)0x0F00) >> (int16_t)8) | ((in_device_status->touchpad_y & (int16_t)0x000F) >> (int16_t)0); //x_hi:4 y_lo:4
+    out_shifted_buf[36] = ((in_device_status->touchpad_y & (int16_t)0x0FF0) >> (int16_t)4); //y_hi
+
+    // point of contact number 1
+    out_shifted_buf[37] = 0x80; //contact
+    out_shifted_buf[38] = 0x00; //x_lo
+    out_shifted_buf[39] = 0x00; //x_hi:4 y_lo:4
+    out_shifted_buf[40] = 0x00; //y_hi
 
 /*
     buf[30] = 0x1b; // no headset attached
