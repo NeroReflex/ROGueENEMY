@@ -89,6 +89,7 @@ int main(int argc, char ** argv) {
       .enable_qam = true,
       .ff_gain = 0xFFFF,
       .rumble_on_mode_switch = true,
+      .m1m2_mode = 0,
     }
   };
 

@@ -45,6 +45,8 @@ typedef struct rc71l_asus_kbd_user_data {
 	struct rc71l_platform* parent;
 
 	struct udev *udev;
+
+	int m1, m2;
 } rc71l_asus_kbd_user_data_t;
 
 typedef struct rc71l_timer_user_data {
@@ -67,7 +69,12 @@ typedef struct rc71l_platform {
 
 } rc71l_platform_t;
 
-static rc71l_asus_kbd_user_data_t asus_userdata = {};
+static rc71l_asus_kbd_user_data_t asus_userdata = {
+	.parent = NULL,
+	.udev = NULL,
+	.m1 = 0,
+	.m2 = 0,
+};
 
 static rc71l_xbox360_user_data_t controller_user_data = {
 	.accounted_mode_switches = 0,
@@ -182,34 +189,80 @@ static int asus_kbd_ev_map(
 
 			if (e->ev[i].code == KEY_F14) {
 				// this is left back paddle, works as expected
-				const in_message_t current_message = {
-					.type = GAMEPAD_SET_ELEMENT,
-					.data = {
-						.gamepad_set = {
-							.element = GAMEPAD_BTN_L5,
-							.status = {
-								.btn = e->ev[1].value,
+
+				if (e->ev[i].value == 0) {
+					asus_kbd_user_data->m1 -= (asus_kbd_user_data->m1 == 0) ? 0 : 1;
+				} else if (e->ev[i].value == 1) {
+					asus_kbd_user_data->m1 += 1;
+				}
+
+				if (conf->m1m2_mode == 0) {
+					const in_message_t current_message = {
+						.type = GAMEPAD_SET_ELEMENT,
+						.data = {
+							.gamepad_set = {
+								.element = GAMEPAD_BTN_L5,
+								.status = {
+									.btn = e->ev[1].value,
+								}
 							}
 						}
-					}
-				};
+					};
 
-				messages[written_msg++] = current_message;
+					messages[written_msg++] = current_message;
+				} else if (conf->m1m2_mode == 1) {
+					const in_message_t current_message = {
+						.type = GAMEPAD_SET_ELEMENT,
+						.data = {
+							.gamepad_set = {
+								.element = GAMEPAD_BTN_TOUCHPAD,
+								.status = {
+									.btn = (asus_kbd_user_data->m1 + asus_kbd_user_data->m2) == 0 ? 0 : 1,
+								}
+							}
+						}
+					};
+
+					messages[written_msg++] = current_message;
+				}
 			} else if (e->ev[i].code == KEY_F15) {
 				// this is right back paddle, works as expected
-				const in_message_t current_message = {
-					.type = GAMEPAD_SET_ELEMENT,
-					.data = {
-						.gamepad_set = {
-							.element = GAMEPAD_BTN_R5,
-							.status = {
-								.btn = e->ev[1].value,
+
+				if (e->ev[i].value == 0) {
+					asus_kbd_user_data->m2 -= (asus_kbd_user_data->m2 == 0) ? 0 : 1;
+				} else if (e->ev[i].value == 1) {
+					asus_kbd_user_data->m2 += 1;
+				}
+
+				if (conf->m1m2_mode == 0) {
+					const in_message_t current_message = {
+						.type = GAMEPAD_SET_ELEMENT,
+						.data = {
+							.gamepad_set = {
+								.element = GAMEPAD_BTN_R5,
+								.status = {
+									.btn = e->ev[1].value,
+								}
 							}
 						}
-					}
-				};
+					};
 
-				messages[written_msg++] = current_message;
+					messages[written_msg++] = current_message;
+				} else if (conf->m1m2_mode == 1) {
+					const in_message_t current_message = {
+						.type = GAMEPAD_SET_ELEMENT,
+						.data = {
+							.gamepad_set = {
+								.element = GAMEPAD_BTN_TOUCHPAD,
+								.status = {
+									.btn = (asus_kbd_user_data->m1 + asus_kbd_user_data->m2) == 0 ? 0 : 1,
+								}
+							}
+						}
+					};
+
+					messages[written_msg++] = current_message;
+				}
 			} else if ((e->ev[i].code == KEY_F16) && (e->ev[i].value != 0)) {
 				// this is left screen button, on release both 0 and 1 events are emitted so just discard the 0
 				const in_message_t current_message = {

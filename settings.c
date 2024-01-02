@@ -37,6 +37,17 @@ void load_in_config(dev_in_settings_t *const out_conf, const char* const filepat
         fprintf(stderr, "ff_gain (int) configuration not found. Default value will be used.\n");
     }
 
+    int m1m2_mode;
+    if (config_lookup_int(&cfg, "m1m2_mode", &m1m2_mode) != CONFIG_FALSE) {
+        if (m1m2_mode <= 2) {
+            out_conf->m1m2_mode = m1m2_mode;
+        } else {
+            fprintf(stderr, "m1m2_mode (int) must be a number between 0 and 2");
+        }
+    } else {
+        fprintf(stderr, "m1m2_mode (int) configuration not found. Default value will be used.\n");
+    }
+
     config_destroy(&cfg);
 
 load_in_config_err:
