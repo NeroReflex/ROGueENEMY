@@ -1084,21 +1084,26 @@ int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *cons
         uint8_t lightbar_green = common_report[45];
         uint8_t lightbar_blue = common_report[46];
 
-        if ((valid_flag0 & DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT)) {
+        if ((valid_flag0 & DS_OUTPUT_VALID_FLAG0_HAPTICS_SELECT) || ((motor_left == 0) && (motor_right == 0))) {
+            uint8_t motors_shift = 0;
             if ((valid_flag2 & DS_OUTPUT_VALID_FLAG2_COMPATIBLE_VIBRATION2) || (valid_flag0 & DS_OUTPUT_VALID_FLAG0_COMPATIBLE_VIBRATION)) {
+                out_device_status->motors_intensity[0] = (motor_left << 1) | ((motor_left == 0) ? 0 : 1);
+                out_device_status->motors_intensity[1] = (motor_right << 1) | ((motor_right == 0) ? 0 : 1);
+            } else {
                 out_device_status->motors_intensity[0] = motor_left;
                 out_device_status->motors_intensity[1] = motor_right;
-                ++out_device_status->rumble_events_count;
+            }
 
-                if (gamepad->debug) {
-                    printf(
-                        "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
-                        motor_left,
-                        motor_right,
-                        valid_flag0,
-                        valid_flag1
-                    );
-                }
+            ++out_device_status->rumble_events_count;
+
+            if (gamepad->debug) {
+                printf(
+                    "Updated rumble -- motor_left: %d, motor_right: %d, valid_flag0; %d, valid_flag1: %d\n",
+                    motor_left,
+                    motor_right,
+                    valid_flag0,
+                    valid_flag1
+                );
             }
         }
 
