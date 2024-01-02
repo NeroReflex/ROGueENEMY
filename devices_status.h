@@ -47,11 +47,11 @@ typedef struct gamepad_status {
     uint8_t touchpad_press;
 
     int16_t touchpad_touch_num; // touchpad is inactive when this is -1
-    int16_t touchpad_x;
-    int16_t touchpad_y;
+    int16_t touchpad_x; // 0 to 1920
+    int16_t touchpad_y; // 0 to 1080
 
-    struct timeval last_gyro_motion_time;
-    struct timeval last_accel_motion_time;
+    int64_t last_gyro_motion_timestamp_ns;
+    int64_t last_accel_motion_timestamp_ns;
 
     double gyro[3]; // | x, y, z| right-hand-rules -- in rad/s
     double accel[3]; // | x, y, z| positive: right, up, towards player -- in m/s^2

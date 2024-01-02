@@ -22,7 +22,7 @@ typedef struct virt_dualsense {
     uint32_t dt_buffer[30];
 
     uint32_t empty_reports;
-    uint64_t last_time;
+    int64_t last_time;
 } virt_dualsense_t;
 
 int virt_dualsense_init(virt_dualsense_t *const gamepad, bool bluetooth);

@@ -7,6 +7,7 @@ typedef struct dev_in_settings {
     bool rumble_on_mode_switch;
     uint16_t ff_gain;
     uint8_t m1m2_mode;
+    bool touchbar;
 } dev_in_settings_t;
 
 void load_in_config(dev_in_settings_t *const out_conf, const char* const filepath);

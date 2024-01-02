@@ -1439,6 +1439,11 @@ input_dev_composite_t rc71l_composite = {
   .leds_fn = rc71l_platform_leds,
 };
 
-input_dev_composite_t* rog_ally_device_def(void) {
+input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const settings) {
+	if (!settings->touchbar) {
+		// this is because the touchscreen is the latest in the list
+		rc71l_composite.dev_count -= 1;
+	}
+
 	return &rc71l_composite;
 }

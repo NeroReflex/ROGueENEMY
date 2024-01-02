@@ -48,6 +48,13 @@ void load_in_config(dev_in_settings_t *const out_conf, const char* const filepat
         fprintf(stderr, "m1m2_mode (int) configuration not found. Default value will be used.\n");
     }
 
+    int touchbar;
+    if (config_lookup_bool(&cfg, "touchbar", &touchbar) != CONFIG_FALSE) {
+        out_conf->touchbar = touchbar;
+    } else {
+        fprintf(stderr, "touchbar (bool) configuration not found. Default value will be used.\n");
+    }
+
     config_destroy(&cfg);
 
 load_in_config_err:

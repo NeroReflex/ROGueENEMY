@@ -12,6 +12,15 @@ static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 int main(int argc, char ** argv) {
     int ret = 0;
 
+    dev_out_settings_t out_settings = {
+        .default_gamepad = 0,
+        .nintendo_layout = false,
+        .gamepad_leds_control = true,
+        .gamepad_rumble_control = true,
+    };
+
+    load_out_config(&out_settings, configuration_file);
+
     // Create a signal set containing only SIGTERM
     sigset_t mask;
     sigemptyset(&mask);
@@ -42,12 +51,7 @@ int main(int argc, char ** argv) {
                 }
             }
         },
-        .settings = {
-            .default_gamepad = 0,
-            .nintendo_layout = false,
-            .gamepad_leds_control = true,
-            .gamepad_rumble_control = true,
-        }
+        .settings = out_settings,
     };
 
     load_out_config(&dev_out_thread_data.settings, configuration_file);

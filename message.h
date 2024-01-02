@@ -54,7 +54,7 @@ typedef struct in_message_gamepad_touchpad_active {
 } in_message_gamepad_touchpad_active_t;
 
 typedef struct in_message_gamepad_gyro {
-    struct timeval sample_time;
+    int64_t sample_timestamp_ns;
 
     uint16_t x;
     uint16_t y;
@@ -62,7 +62,7 @@ typedef struct in_message_gamepad_gyro {
 } in_message_gamepad_gyro_t;
 
 typedef struct in_message_gamepad_accel {
-    struct timeval sample_time;
+    int64_t sample_timestamp_ns;
 
     uint16_t x;
     uint16_t y;

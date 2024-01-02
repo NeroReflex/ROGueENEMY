@@ -84,14 +84,6 @@ static int map_message_from_iio(dev_in_iio_t *const in_iio, in_message_t *const 
 
     uint8_t data[32];
 
-/*
-    struct timeval read_time;
-    gettimeofday(&read_time, NULL);
-*/
-
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-
     res = read(dev_iio_get_buffer_fd(in_iio->iiodev), &data[0], sizeof(data));
     if (res == -1) {
         res = errno;
@@ -106,27 +98,18 @@ static int map_message_from_iio(dev_in_iio_t *const in_iio, in_message_t *const 
     }
 
     uint16_t *const scan_elements = (uint16_t*)&data[0];
+    int64_t *const timestamp = (int64_t*)&data[16]; // either that or (int64_t*)&data[12]
 
     messages[0].type = GAMEPAD_SET_ELEMENT;
     messages[0].data.gamepad_set.element = GAMEPAD_ACCELEROMETER;
-    messages[1].data.gamepad_set.status.accel.sample_time.tv_sec = now.tv_sec;
-    messages[1].data.gamepad_set.status.accel.sample_time.tv_usec = now.tv_nsec / 1000;
-    //messages[0].data.gamepad_set.status.accel.sample_time = read_time;
-    //messages[0].data.gamepad_set.status.accel.x = scan_elements[0];
-    //messages[0].data.gamepad_set.status.accel.y = scan_elements[1];
-    //messages[0].data.gamepad_set.status.accel.z = scan_elements[2];
+    messages[1].data.gamepad_set.status.accel.sample_timestamp_ns = *timestamp;
     messages[0].data.gamepad_set.status.accel.x = scan_elements[0];
     messages[0].data.gamepad_set.status.accel.y = (uint16_t)(-1) * scan_elements[2];
     messages[0].data.gamepad_set.status.accel.z = scan_elements[1];
 
     messages[1].type = GAMEPAD_SET_ELEMENT;
     messages[1].data.gamepad_set.element = GAMEPAD_GYROSCOPE;
-    messages[1].data.gamepad_set.status.gyro.sample_time.tv_sec = now.tv_sec;
-    messages[1].data.gamepad_set.status.gyro.sample_time.tv_usec = now.tv_nsec / 1000;
-    //messages[0].data.gamepad_set.status.gyro.sample_time = read_time;
-    //messages[1].data.gamepad_set.status.gyro.x = scan_elements[3];
-    //messages[1].data.gamepad_set.status.gyro.y = scan_elements[4];
-    //messages[1].data.gamepad_set.status.gyro.z = scan_elements[5];
+    messages[1].data.gamepad_set.status.gyro.sample_timestamp_ns = *timestamp;
     messages[1].data.gamepad_set.status.gyro.x = scan_elements[3];
     messages[1].data.gamepad_set.status.gyro.y = (uint16_t)(-1) * scan_elements[5];
     messages[1].data.gamepad_set.status.gyro.z = scan_elements[4];

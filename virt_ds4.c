@@ -642,9 +642,9 @@ void virt_dualshock_close(virt_dualshock_t *const out_gamepad) {
  * This function arranges HID packets as described on https://www.psdevwiki.com/ps4/DS4-USB
  */
 void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf) {
-    const int64_t time_us = in_device_status->last_gyro_motion_time.tv_sec * 1000000 + in_device_status->last_gyro_motion_time.tv_usec;
+    const int64_t time_us = in_device_status->last_gyro_motion_timestamp_ns / (int64_t)1000;
 
-    const int delta_time = time_us - gamepad->last_time;
+    const int64_t delta_time = time_us - gamepad->last_time;
     gamepad->last_time = time_us;
 
     // find the average Δt in the last 30 non-zero inputs;

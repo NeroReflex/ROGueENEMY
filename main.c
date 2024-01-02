@@ -15,6 +15,16 @@ static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 int main(int argc, char ** argv) {
   int ret = 0;
 
+  dev_in_settings_t in_settings = {
+    .enable_qam = true,
+    .ff_gain = 0xFFFF,
+    .rumble_on_mode_switch = true,
+    .m1m2_mode = 1,
+    .touchbar = true,
+  };
+  
+  load_in_config(&in_settings, configuration_file);
+
   input_dev_composite_t* in_devs = NULL;
   
   int dmi_name_fd = open("/sys/class/dmi/id/board_name", O_RDONLY | O_NONBLOCK);
@@ -28,7 +38,7 @@ int main(int argc, char ** argv) {
   read(dmi_name_fd, bname, sizeof(bname));
   if (strstr(bname, "RC71L") != NULL) {
     printf("Running in an Asus ROG Ally device\n");
-    in_devs = rog_ally_device_def();
+    in_devs = rog_ally_device_def(&in_settings);
   } else if (strstr(bname, "LNVNB161216")) {
     printf("Running in an Lenovo Legion Go device\n");
     in_devs = legion_go_device_def();
@@ -51,12 +61,7 @@ int main(int argc, char ** argv) {
         },
       }
     },
-    .settings = {
-      .enable_qam = true,
-      .ff_gain = 0xFFFF,
-      .rumble_on_mode_switch = true,
-      .m1m2_mode = 0,
-    }
+    .settings = in_settings,
   };
 
   // fill in configuration from file: automatic fallback to default

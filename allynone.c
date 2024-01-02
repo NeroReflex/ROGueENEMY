@@ -15,6 +15,26 @@ static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 int main(int argc, char ** argv) {
   int ret = 0;
 
+  // fill in configuration from file: automatic fallback to default
+  dev_in_settings_t in_settings = {
+    .enable_qam = true,
+    .ff_gain = 0xFFFF,
+    .rumble_on_mode_switch = true,
+    .m1m2_mode = 0,
+    .touchbar = true,
+  };
+  
+  load_in_config(&in_settings, configuration_file);
+
+  dev_out_settings_t out_settings = {
+    .default_gamepad = 0,
+    .nintendo_layout = false,
+    .gamepad_leds_control = true,
+    .gamepad_rumble_control = true,
+  };
+
+  load_out_config(&out_settings, configuration_file);
+
   input_dev_composite_t* in_devs = NULL;
   
   int dmi_name_fd = open("/sys/class/dmi/id/board_name", O_RDONLY | O_NONBLOCK);
@@ -28,7 +48,7 @@ int main(int argc, char ** argv) {
   read(dmi_name_fd, bname, sizeof(bname));
   if (strstr(bname, "RC71L") != NULL) {
     printf("Running in an Asus ROG Ally device\n");
-    in_devs = rog_ally_device_def();
+    in_devs = rog_ally_device_def(&in_settings);
   } else if (strstr(bname, "LNVNB161216")) {
     printf("Running in an Lenovo Legion Go device\n");
     in_devs = legion_go_device_def();
@@ -85,16 +105,8 @@ int main(int argc, char ** argv) {
         }
       }
     },
-    .settings = {
-      .enable_qam = true,
-      .ff_gain = 0xFFFF,
-      .rumble_on_mode_switch = true,
-      .m1m2_mode = 0,
-    }
+    .settings = in_settings,
   };
-
-  // fill in configuration from file: automatic fallback to default
-  load_in_config(&dev_in_thread_data.settings, configuration_file);
 
   // populate the output device thread data
   dev_out_data_t dev_out_thread_data = {
@@ -108,15 +120,8 @@ int main(int argc, char ** argv) {
         }
       }
     },
-    .settings = {
-        .default_gamepad = 0,
-        .nintendo_layout = false,
-        .gamepad_leds_control = true,
-        .gamepad_rumble_control = true,
-    }
+    .settings = out_settings,
   };
-
-  load_out_config(&dev_out_thread_data.settings, configuration_file);
 
   pthread_t dev_in_thread;
   dev_in_thread_creation = pthread_create(&dev_in_thread, NULL, dev_in_thread_func, (void*)(&dev_in_thread_data));
