@@ -1,0 +1,1 @@
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="045E", ATTRS{idProduct}=="028E", RUN+="/bin/sh -c 'echo 0 > /sys$DEVPATH/authorized'"

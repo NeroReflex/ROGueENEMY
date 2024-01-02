@@ -1,0 +1,1 @@
+KERNEL=="js[0-9]*|event[0-9]*", SUBSYSTEM=="input", ATTRS{idVendor}=="045e", ATTRS{idProduct}=="028e",  MODE="000", GROUP="root", TAG="", RUN+="/bin/chmod 000 /dev/input/%k"
