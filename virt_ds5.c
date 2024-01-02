@@ -1329,7 +1329,7 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[36] = 0 /*((in_device_status->touchpad_y & (int16_t)0x0FF0) >> (int16_t)4)*/; //y_hi
 
     if (in_device_status->touchpad_touch_num != -1) {
-        printf("%d -> %d\n", (int)in_device_status->touchpad_x, (int)out_shifted_buf[35]);
+        printf("%4x -> %2x\n", (int)in_device_status->touchpad_x, (int)out_shifted_buf[35]);
     }
 
     // point of contact number 1
