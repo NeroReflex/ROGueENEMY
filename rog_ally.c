@@ -991,8 +991,8 @@ static int touchscreen_ev_map(
 						.gamepad_set = {
 							.element = GAMEPAD_TOUCHPAD_X,
 							.status = {
-								.touchpad_active = {
-									.status = e->ev[i].value,
+								.touchpad_x = {
+									.value = e->ev[i].value,
 								}
 							}
 						}
@@ -1007,8 +1007,8 @@ static int touchscreen_ev_map(
 						.gamepad_set = {
 							.element = GAMEPAD_TOUCHPAD_Y,
 							.status = {
-								.touchpad_active = {
-									.status = e->ev[i].value,
+								.touchpad_y = {
+									.value = e->ev[i].value,
 								}
 							}
 						}
