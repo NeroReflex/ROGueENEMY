@@ -1328,12 +1328,6 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[38] = 0x00; //x_lo
     out_shifted_buf[39] = 0x00; //x_hi:4 y_lo:4
     out_shifted_buf[40] = 0x00; //y_hi
-
-    if (gamepad->bluetooth) {
-        uint32_t crc = crc32_le(0xFFFFFFFFU, (const uint8_t*)&PS_FEATURE_CRC32_SEED, sizeof(PS_FEATURE_CRC32_SEED));
-        crc = ~crc32_le(crc, (const Bytef *)&out_shifted_buf[0], DS_INPUT_REPORT_BT_SIZE - 4);
-        memcpy(&out_shifted_buf[DS_INPUT_REPORT_BT_SIZE - sizeof(crc)], &crc, sizeof(crc));
-    }
 }
 
 int virt_dualsense_send(virt_dualsense_t *const gamepad, uint8_t *const out_shifted_buf) {

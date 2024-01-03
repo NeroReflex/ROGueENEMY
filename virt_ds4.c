@@ -854,12 +854,6 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[48] = 0x80; // IDK... it seems constant...
     out_shifted_buf[35] = 0x80; // IDK... it seems constant...
     out_shifted_buf[44] = 0x80; // IDK... it seems constant...
-
-    if (gamepad->bluetooth) {
-        uint32_t crc = crc32_le(0xFFFFFFFFU, (const uint8_t*)&PS_FEATURE_CRC32_SEED, sizeof(PS_FEATURE_CRC32_SEED));
-        crc = ~crc32_le(crc, (const Bytef *)&out_shifted_buf[0], DS4_INPUT_REPORT_BT_SIZE - 4);
-        memcpy(&out_shifted_buf[DS4_INPUT_REPORT_BT_SIZE - sizeof(crc)], &crc, sizeof(crc));
-    }
 }
 
 int virt_dualshock_send(virt_dualshock_t *const gamepad, uint8_t *const out_buf) {
