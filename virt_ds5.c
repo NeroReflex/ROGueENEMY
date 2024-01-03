@@ -1285,50 +1285,44 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
 
     if (in_device_status->join_left_analog_and_gyroscope) {
-        const int64_t gyro_to_analog_x = ((int64_t)in_device_status->raw_gyro[0] + (int64_t)32768) >> (int64_t)8;
-        const int64_t gyro_to_analog_y = ((int64_t)in_device_status->raw_gyro[1] + (int64_t)32768) >> (int64_t)8;
+        const int64_t joint_x = (int64_t)in_device_status->joystick_positions[0][0] + (int64_t)in_device_status->raw_gyro[0];
+        const int64_t joint_y = (int64_t)in_device_status->joystick_positions[0][1] + (int64_t)in_device_status->raw_gyro[1];
 
-        const int64_t joint_x = (gyro_to_analog_x - (int64_t)128) + ((int64_t)out_shifted_buf[0] - (int64_t)128);
-        const int64_t joint_y = (gyro_to_analog_y - (int64_t)128) + ((int64_t)out_shifted_buf[1] - (int64_t)128);
-
-        if (joint_x < (int64_t)(-256)) {
+        if (joint_x <= (int64_t)(-32768)) {
             out_shifted_buf[0] = 0x00;
-        } else if (joint_x > (int64_t)(+254)) {
+        } else if (joint_x >= (int64_t)(+32767)) {
             out_shifted_buf[0] = 0xFF;
         } else {
-            out_shifted_buf[0] = div_round_closest_i64(joint_x + (int64_t)256, (int64_t)256 * (int64_t)2);
+            out_shifted_buf[0] = ((uint64_t)(joint_x + (int64_t)32768) >> (uint64_t)8);
         }
 
-        if (joint_y < (int64_t)(-256)) {
+        if (joint_y <= (int64_t)(-32768)) {
             out_shifted_buf[1] = 0x00;
-        } else if (joint_y > (int64_t)(+254)) {
+        } else if (joint_x >= (int64_t)(+32767)) {
             out_shifted_buf[1] = 0xFF;
         } else {
-            out_shifted_buf[1] = div_round_closest_i64(joint_y + (int64_t)256, (int64_t)256 * (int64_t)2);
+            out_shifted_buf[1] = ((uint64_t)(joint_y + (int64_t)32768) >> (uint64_t)8);
         }
     }
 
     if (in_device_status->join_right_analog_and_gyroscope) {
-        const int64_t gyro_to_analog_x = ((int64_t)in_device_status->raw_gyro[0] + (int64_t)32768) >> (int64_t)8;
-        const int64_t gyro_to_analog_y = ((int64_t)in_device_status->raw_gyro[1] + (int64_t)32768) >> (int64_t)8;
+        const int64_t joint_x = (int64_t)in_device_status->joystick_positions[1][0] + (int64_t)in_device_status->raw_gyro[0];
+        const int64_t joint_y = (int64_t)in_device_status->joystick_positions[1][1] + (int64_t)in_device_status->raw_gyro[1];
 
-        const int64_t joint_x = (gyro_to_analog_x - (int64_t)128) + ((int64_t)out_shifted_buf[3] - (int64_t)128);
-        const int64_t joint_y = (gyro_to_analog_y - (int64_t)128) + ((int64_t)out_shifted_buf[4] - (int64_t)128);
-
-        if (joint_x < (int64_t)(-256)) {
-            out_shifted_buf[3] = 0x00;
-        } else if (joint_x > (int64_t)(+254)) {
-            out_shifted_buf[3] = 0xFF;
+        if (joint_x <= (int64_t)(-32768)) {
+            out_shifted_buf[2] = 0x00;
+        } else if (joint_x >= (int64_t)(+32767)) {
+            out_shifted_buf[2] = 0xFF;
         } else {
-            out_shifted_buf[3] = div_round_closest_i64(joint_x + (int64_t)256, (int64_t)256 * (int64_t)2);
+            out_shifted_buf[2] = ((uint64_t)(joint_x + (int64_t)32768) >> (uint64_t)8);
         }
 
-        if (joint_y < (int64_t)(-256)) {
-            out_shifted_buf[4] = 0x00;
-        } else if (joint_y > (int64_t)(+254)) {
-            out_shifted_buf[4] = 0xFF;
+        if (joint_y <= (int64_t)(-32768)) {
+            out_shifted_buf[3] = 0x00;
+        } else if (joint_x >= (int64_t)(+32767)) {
+            out_shifted_buf[3] = 0xFF;
         } else {
-            out_shifted_buf[4] = div_round_closest_i64(joint_y + (int64_t)256, (int64_t)256 * (int64_t)2);
+            out_shifted_buf[3] = ((uint64_t)(joint_y + (int64_t)32768) >> (uint64_t)8);
         }
     }
 
