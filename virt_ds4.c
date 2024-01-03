@@ -607,7 +607,7 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
-                        .size = 16,
+                        .size = DS4_FEATURE_REPORT_PAIRING_INFO_SIZE,
                         .id = ev.u.get_report.id,
                         .err = 0,
                         .data = {
@@ -627,16 +627,16 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
             }
 
             uhid_write(gamepad->fd, &mac_addr_response);
-        } else if (ev.u.get_report.rnum == 0xa3) {
+        } else if (ev.u.get_report.rnum == DS4_FEATURE_REPORT_FIRMWARE_INFO) {
             struct uhid_event firmware_info_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
-                        .size = 49,
+                        .size = DS4_FEATURE_REPORT_FIRMWARE_INFO_SIZE,
                         .id = ev.u.get_report.id,
                         .err = 0,
                         .data = {
-                            0xa3, 0x53, 0x65, 0x70, 0x20, 0x32, 0x31, 0x20,
+                            DS4_FEATURE_REPORT_FIRMWARE_INFO, 0x53, 0x65, 0x70, 0x20, 0x32, 0x31, 0x20,
                             0x32, 0x30, 0x31, 0x38, 0x00, 0x00, 0x00, 0x00,
                             0x00, 0x30, 0x34, 0x3a, 0x35, 0x30, 0x3a, 0x35,
                             0x31, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -655,21 +655,25 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
             }
 
             uhid_write(gamepad->fd, &firmware_info_response);
-        } else if (ev.u.get_report.rnum == 0x02) { // dualshock4_get_calibration_data
+        } else if (
+            ((gamepad->bluetooth) && (ev.u.get_report.rnum == DS4_FEATURE_REPORT_CALIBRATION_BT)) ||
+            ((!gamepad->bluetooth) && (ev.u.get_report.rnum == DS4_FEATURE_REPORT_CALIBRATION))
+        ) { // dualshock4_get_calibration_data
             struct uhid_event calibration_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
-                        .size = 37,
+                        .size = gamepad->bluetooth ? DS4_FEATURE_REPORT_CALIBRATION_BT_SIZE : DS4_FEATURE_REPORT_CALIBRATION_SIZE,
                         .id = ev.u.get_report.id,
                         .err = 0,
                         .data = {
-                            0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                            gamepad->bluetooth ? DS4_FEATURE_REPORT_CALIBRATION_BT : DS4_FEATURE_REPORT_CALIBRATION,
+                            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                            0x00, 0x00, 0x00, 0x06, 0x00,
-
+                            0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x00,
+                            0x00,
                         }
                     }
                 }
