@@ -59,6 +59,8 @@ static uint32_t crc32_le(uint32_t crc_initial, const uint8_t *const buf, size_t 
     return crc32(crc_initial ^ 0xffffffff, buf, len) ^ 0xffffffff;
 }
 
+static const uint8_t MAC_ADDR[] = { 0xf2, 0xa5, 0x71, 0x68, 0xaf, 0xdc };
+
 static unsigned char rdesc[] = {
     0x05, 0x01,         /*  Usage Page (Desktop),               */
     0x09, 0x05,         /*  Usage (Gamepad),                    */
@@ -376,6 +378,10 @@ static int create(int fd, bool bluetooth)
 	ev.u.create.version = 0;
 	ev.u.create.country = 0;
 
+    sprintf((char*)ev.u.create.uniq, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
+        MAC_ADDR[5], MAC_ADDR[4], MAC_ADDR[3], MAC_ADDR[2], MAC_ADDR[1], MAC_ADDR[0]
+    );
+
 	return uhid_write(fd, &ev);
 }
 
@@ -605,7 +611,9 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
                         .id = ev.u.get_report.id,
                         .err = 0,
                         .data = {
-                            0x12, 0xf2, 0xa5, 0x71, 0x68, 0xaf, 0xdc, 0x08,
+                            DS4_FEATURE_REPORT_PAIRING_INFO,
+                            MAC_ADDR[0], MAC_ADDR[1], MAC_ADDR[2], MAC_ADDR[3], MAC_ADDR[4], MAC_ADDR[5],
+                            0x08,
                             0x25, 0x00, 0x4c, 0x46, 0x49, 0x0e, 0x41, 0x00
                         }
                     }
