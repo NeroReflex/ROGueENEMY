@@ -1282,6 +1282,45 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[2] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
     out_shifted_buf[3] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
     out_shifted_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
+
+    if (in_device_status->join_left_analog_and_gyroscope) {
+        int64_t joint_x = ((int64_t)out_shifted_buf[1] - (int64_t)128) + (div_round_closest_i64((int64_t)255 * ((int64_t)32768 + (int64_t)in_device_status->raw_gyro[0]), 0xFFFF) - (int64_t)128);
+        if (joint_x < (int64_t)-128) {
+            joint_x = -128;
+        } else if (joint_x < (int64_t)127) {
+            joint_x = 127;
+        }
+
+        int64_t joint_y = ((int64_t)out_shifted_buf[2] - (int64_t)128) + (div_round_closest_i64((int64_t)255 * ((int64_t)32768 + (int64_t)in_device_status->raw_gyro[1]), 0xFFFF) - (int64_t)128);
+        if (joint_y < (int64_t)-128) {
+            joint_y = -128;
+        } else if (joint_x < (int64_t)127) {
+            joint_y = 127;
+        }
+
+        out_shifted_buf[1] = joint_x + (int64_t)128;
+        out_shifted_buf[2] = joint_y + (int64_t)128;
+    }
+
+    if (in_device_status->join_right_analog_and_gyroscope) {
+        int64_t joint_x = ((int64_t)out_shifted_buf[3] - (int64_t)128) + (div_round_closest_i64((int64_t)255 * ((int64_t)32768 + (int64_t)in_device_status->raw_gyro[0]), 0xFFFF) - (int64_t)128);
+        if (joint_x < (int64_t)-128) {
+            joint_x = -128;
+        } else if (joint_x < (int64_t)127) {
+            joint_x = 127;
+        }
+
+        int64_t joint_y = ((int64_t)out_shifted_buf[4] - (int64_t)128) + (div_round_closest_i64((int64_t)255 * ((int64_t)32768 + (int64_t)in_device_status->raw_gyro[1]), 0xFFFF) - (int64_t)128);
+        if (joint_y < (int64_t)-128) {
+            joint_y = -128;
+        } else if (joint_x < (int64_t)127) {
+            joint_y = 127;
+        }
+
+        out_shifted_buf[3] = joint_x + (int64_t)128;
+        out_shifted_buf[4] = joint_y + (int64_t)128;
+    }
+
     out_shifted_buf[5] = in_device_status->l2_trigger; // Z
     out_shifted_buf[6] = in_device_status->r2_trigger; // RZ
     out_shifted_buf[7] = gamepad->seq_num++; // seq_number

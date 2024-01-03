@@ -225,6 +225,20 @@ static int asus_kbd_ev_map(
 					};
 
 					messages[written_msg++] = current_message;
+				} else if (conf->m1m2_mode == 2) {
+					const in_message_t current_message = {
+						.type = GAMEPAD_SET_ELEMENT,
+						.data = {
+							.gamepad_set = {
+								.element = GAMEPAD_BTN_JOIN_RIGHT_ANALOG_AND_GYROSCOPE,
+								.status = {
+									.btn = e->ev[1].value,
+								}
+							}
+						}
+					};
+
+					messages[written_msg++] = current_message;
 				}
 			} else if (e->ev[i].code == KEY_F15) {
 				// this is right back paddle, works as expected
@@ -257,6 +271,20 @@ static int asus_kbd_ev_map(
 								.element = GAMEPAD_BTN_TOUCHPAD,
 								.status = {
 									.btn = (asus_kbd_user_data->m1 + asus_kbd_user_data->m2) == 0 ? 0 : 1,
+								}
+							}
+						}
+					};
+
+					messages[written_msg++] = current_message;
+				} else if (conf->m1m2_mode == 2) {
+					const in_message_t current_message = {
+						.type = GAMEPAD_SET_ELEMENT,
+						.data = {
+							.gamepad_set = {
+								.element = GAMEPAD_BTN_JOIN_LEFT_ANALOG_AND_GYROSCOPE,
+								.status = {
+									.btn = e->ev[1].value,
 								}
 							}
 						}

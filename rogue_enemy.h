@@ -61,3 +61,5 @@
 
 // also courtesy of linux kernel
 int32_t div_round_closest(int32_t x, int32_t divisor);
+
+int64_t div_round_closest_i64(int64_t x, int64_t divisor);

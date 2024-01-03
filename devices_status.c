@@ -98,6 +98,8 @@ void gamepad_status_init(gamepad_status_t *const stats) {
     stats->touchpad_touch_num = -1;
     stats->touchpad_x = 0;
     stats->touchpad_y = 0;
+    stats->join_left_analog_and_gyroscope = 0;
+    stats->join_right_analog_and_gyroscope = 0;
     stats->flags = 0;
 }
 

@@ -65,6 +65,9 @@ typedef struct gamepad_status {
     uint64_t leds_events_count;
     uint8_t leds_colors[3]; // r | g | b
 
+    uint8_t join_left_analog_and_gyroscope;
+    uint8_t join_right_analog_and_gyroscope;
+
     volatile uint32_t flags;
 
 } gamepad_status_t;
