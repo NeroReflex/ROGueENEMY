@@ -806,7 +806,7 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
 
     out_buf[0] = gamepad->bluetooth ? DS4_INPUT_REPORT_BT : DS4_INPUT_REPORT_USB;  // [00] report ID (0x01)
 
-    uint8_t *const out_shifted_buf = gamepad->bluetooth ? &out_buf[1] : &out_buf[0];
+    uint8_t *const out_shifted_buf = gamepad->bluetooth ? &out_buf[2] : &out_buf[0];
 
     out_shifted_buf[1] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
     out_shifted_buf[2] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
