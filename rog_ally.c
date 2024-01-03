@@ -230,7 +230,7 @@ static int asus_kbd_ev_map(
 						.type = GAMEPAD_SET_ELEMENT,
 						.data = {
 							.gamepad_set = {
-								.element = GAMEPAD_BTN_JOIN_RIGHT_ANALOG_AND_GYROSCOPE,
+								.element = GAMEPAD_BTN_JOIN_LEFT_ANALOG_AND_GYROSCOPE,
 								.status = {
 									.btn = e->ev[1].value,
 								}
@@ -282,7 +282,7 @@ static int asus_kbd_ev_map(
 						.type = GAMEPAD_SET_ELEMENT,
 						.data = {
 							.gamepad_set = {
-								.element = GAMEPAD_BTN_JOIN_LEFT_ANALOG_AND_GYROSCOPE,
+								.element = GAMEPAD_BTN_JOIN_RIGHT_ANALOG_AND_GYROSCOPE,
 								.status = {
 									.btn = e->ev[1].value,
 								}
