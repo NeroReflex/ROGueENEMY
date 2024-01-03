@@ -434,7 +434,7 @@ void *dev_out_thread_func(void *ptr) {
     const int64_t gamepad_report_timing_us = 1250;
 
     if (current_gamepad == GAMEPAD_DUALSENSE) {
-        const int ds5_init_res = virt_dualsense_init(&controller_data.ds5, true);
+        const int ds5_init_res = virt_dualsense_init(&controller_data.ds5, dev_out_data->settings.controller_bluetooth);
         if (ds5_init_res != 0) {
             fprintf(stderr, "Unable to initialize the DualSense device: %d\n", ds5_init_res);
         } else {
@@ -442,7 +442,7 @@ void *dev_out_thread_func(void *ptr) {
             printf("DualSense initialized: fd=%d\n", current_gamepad_fd);
         }
     } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
-        const int ds4_init_res = virt_dualshock_init(&controller_data.ds4, false);
+        const int ds4_init_res = virt_dualshock_init(&controller_data.ds4, dev_out_data->settings.controller_bluetooth);
         if (ds4_init_res != 0) {
             fprintf(stderr, "Unable to initialize the DualShock device: %d\n", ds4_init_res);
         } else {

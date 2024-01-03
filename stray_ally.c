@@ -17,6 +17,7 @@ int main(int argc, char ** argv) {
         .nintendo_layout = false,
         .gamepad_leds_control = true,
         .gamepad_rumble_control = true,
+        .controller_bluetooth = false,
     };
 
     load_out_config(&out_settings, configuration_file);

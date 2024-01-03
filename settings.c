@@ -99,6 +99,13 @@ void load_out_config(dev_out_settings_t *const out_conf, const char* const filep
         fprintf(stderr, "gamepad_rumble_control (bool) configuration not found. Default value will be used.\n");
     }
 
+    int controller_bluetooth;
+    if (config_lookup_bool(&cfg, "controller_bluetooth", &controller_bluetooth) != CONFIG_FALSE) {
+        out_conf->controller_bluetooth = controller_bluetooth;
+    } else {
+        fprintf(stderr, "controller_bluetooth (bool) configuration not found. Default value will be used.\n");
+    }
+
     config_destroy(&cfg);
 
 load_out_config_err:
