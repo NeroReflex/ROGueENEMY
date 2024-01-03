@@ -46,6 +46,7 @@ add_executable(${STRAY_EXECUTABLE_NAME}
                   virt_mouse.c
                   virt_kbd.c
                   devices_status.c
+                  rogue_enemy.c
 )
 
 add_executable(${ALLINONE_EXECUTABLE_NAME}
