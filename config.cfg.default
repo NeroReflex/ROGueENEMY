@@ -6,4 +6,5 @@ rumble_on_mode_switch = true;
 gamepad_rumble_control = true;
 gamepad_leds_control = true;
 m1m2_mode = 1;
+touchbar = true;
 controller_bluetooth = false;
