@@ -442,7 +442,7 @@ void *dev_out_thread_func(void *ptr) {
             printf("DualSense initialized: fd=%d\n", current_gamepad_fd);
         }
     } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
-        const int ds4_init_res = virt_dualshock_init(&controller_data.ds4, true);
+        const int ds4_init_res = virt_dualshock_init(&controller_data.ds4, false);
         if (ds4_init_res != 0) {
             fprintf(stderr, "Unable to initialize the DualShock device: %d\n", ds4_init_res);
         } else {
