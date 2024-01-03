@@ -1,12 +1,7 @@
 #include "virt_ds4.h"
 #include "message.h"
 
-#include <bits/types/time_t.h>
 #include <linux/uhid.h>
-#include <fcntl.h>
-#include <poll.h>
-#include <pthread.h>
-#include <stdint.h>
 
 #define DS4_GYRO_RES_PER_DEG_S	1024
 #define DS4_ACC_RES_PER_G       8192
@@ -16,6 +11,24 @@
 #define DS4_OUTPUT_VALID_FLAG0_MOTOR		0x01
 #define DS4_OUTPUT_VALID_FLAG0_LED		    0x02
 #define DS4_OUTPUT_VALID_FLAG0_LED_BLINK	0x04
+
+#define DS4_INPUT_REPORT_USB			0x01
+#define DS4_INPUT_REPORT_USB_SIZE		64
+#define DS4_INPUT_REPORT_BT			0x11
+#define DS4_INPUT_REPORT_BT_SIZE		78
+#define DS4_OUTPUT_REPORT_USB			0x05
+#define DS4_OUTPUT_REPORT_USB_SIZE		32
+#define DS4_OUTPUT_REPORT_BT			0x11
+#define DS4_OUTPUT_REPORT_BT_SIZE		78
+
+#define DS4_FEATURE_REPORT_CALIBRATION		0x02
+#define DS4_FEATURE_REPORT_CALIBRATION_SIZE	37
+#define DS4_FEATURE_REPORT_CALIBRATION_BT	0x05
+#define DS4_FEATURE_REPORT_CALIBRATION_BT_SIZE	41
+#define DS4_FEATURE_REPORT_FIRMWARE_INFO	0xa3
+#define DS4_FEATURE_REPORT_FIRMWARE_INFO_SIZE	49
+#define DS4_FEATURE_REPORT_PAIRING_INFO		0x12
+#define DS4_FEATURE_REPORT_PAIRING_INFO_SIZE	16
 
 static const uint16_t gyro_pitch_bias  = 0xfff9;
 static const uint16_t gyro_yaw_bias    = 0x0009;
@@ -36,6 +49,15 @@ static const uint16_t acc_z_plus       = 0x1ebc;
 static const uint16_t acc_z_minus      = 0xe086;
 
 static const char* path = "/dev/uhid";
+
+/* Seed values for DualShock4 / DualSense CRC32 for different report types. */
+static uint8_t PS_INPUT_CRC32_SEED = 0xA1;
+static uint8_t PS_OUTPUT_CRC32_SEED = 0xA2;
+static uint8_t PS_FEATURE_CRC32_SEED = 0xA3;
+
+static uint32_t crc32_le(uint32_t crc_initial, const uint8_t *const buf, size_t len) {
+    return crc32(crc_initial ^ 0xffffffff, buf, len) ^ 0xffffffff;
+}
 
 static unsigned char rdesc[] = {
     0x05, 0x01,         /*  Usage Page (Desktop),               */
@@ -291,6 +313,37 @@ static unsigned char rdesc[] = {
     0xC0                /*  End Collection                      */
 };
 
+static unsigned char rdesc_bt[] = {
+0x05, 0x01, 0x09, 0x05, 0xa1, 0x01, 0x85, 0x01, 0x09, 0x30, 0x09, 0x31, 0x09, 0x32, 0x09, 0x35,
+0x15, 0x00, 0x26, 0xff, 0x00, 0x75, 0x08, 0x95, 0x04, 0x81, 0x02, 0x09, 0x39, 0x15, 0x00, 0x25,
+0x07, 0x75, 0x04, 0x95, 0x01, 0x81, 0x42, 0x05, 0x09, 0x19, 0x01, 0x29, 0x0e, 0x15, 0x00, 0x25,
+0x01, 0x75, 0x01, 0x95, 0x0e, 0x81, 0x02, 0x75, 0x06, 0x95, 0x01, 0x81, 0x01, 0x05, 0x01, 0x09,
+0x33, 0x09, 0x34, 0x15, 0x00, 0x26, 0xff, 0x00, 0x75, 0x08, 0x95, 0x02, 0x81, 0x02, 0x06, 0x04,
+0xff, 0x85, 0x02, 0x09, 0x24, 0x95, 0x24, 0xb1, 0x02, 0x85, 0xa3, 0x09, 0x25, 0x95, 0x30, 0xb1,
+0x02, 0x85, 0x05, 0x09, 0x26, 0x95, 0x28, 0xb1, 0x02, 0x85, 0x06, 0x09, 0x27, 0x95, 0x34, 0xb1,
+0x02, 0x85, 0x07, 0x09, 0x28, 0x95, 0x30, 0xb1, 0x02, 0x85, 0x08, 0x09, 0x29, 0x95, 0x2f, 0xb1,
+0x02, 0x85, 0x09, 0x09, 0x2a, 0x95, 0x13, 0xb1, 0x02, 0x06, 0x03, 0xff, 0x85, 0x03, 0x09, 0x21,
+0x95, 0x26, 0xb1, 0x02, 0x85, 0x04, 0x09, 0x22, 0x95, 0x2e, 0xb1, 0x02, 0x85, 0xf0, 0x09, 0x47,
+0x95, 0x3f, 0xb1, 0x02, 0x85, 0xf1, 0x09, 0x48, 0x95, 0x3f, 0xb1, 0x02, 0x85, 0xf2, 0x09, 0x49,
+0x95, 0x0f, 0xb1, 0x02, 0x06, 0x00, 0xff, 0x85, 0x11, 0x09, 0x20, 0x15, 0x00, 0x26, 0xff, 0x00,
+0x75, 0x08, 0x95, 0x4d, 0x81, 0x02, 0x09, 0x21, 0x91, 0x02, 0x85, 0x12, 0x09, 0x22, 0x95, 0x8d,
+0x81, 0x02, 0x09, 0x23, 0x91, 0x02, 0x85, 0x13, 0x09, 0x24, 0x95, 0xcd, 0x81, 0x02, 0x09, 0x25,
+0x91, 0x02, 0x85, 0x14, 0x09, 0x26, 0x96, 0x0d, 0x01, 0x81, 0x02, 0x09, 0x27, 0x91, 0x02, 0x85,
+0x15, 0x09, 0x28, 0x96, 0x4d, 0x01, 0x81, 0x02, 0x09, 0x29, 0x91, 0x02, 0x85, 0x16, 0x09, 0x2a,
+0x96, 0x8d, 0x01, 0x81, 0x02, 0x09, 0x2b, 0x91, 0x02, 0x85, 0x17, 0x09, 0x2c, 0x96, 0xcd, 0x01,
+0x81, 0x02, 0x09, 0x2d, 0x91, 0x02, 0x85, 0x18, 0x09, 0x2e, 0x96, 0x0d, 0x02, 0x81, 0x02, 0x09,
+0x2f, 0x91, 0x02, 0x85, 0x19, 0x09, 0x30, 0x96, 0x22, 0x02, 0x81, 0x02, 0x09, 0x31, 0x91, 0x02,
+0x06, 0x80, 0xff, 0x85, 0x82, 0x09, 0x22, 0x95, 0x3f, 0xb1, 0x02, 0x85, 0x83, 0x09, 0x23, 0xb1,
+0x02, 0x85, 0x84, 0x09, 0x24, 0xb1, 0x02, 0x85, 0x90, 0x09, 0x30, 0xb1, 0x02, 0x85, 0x91, 0x09,
+0x31, 0xb1, 0x02, 0x85, 0x92, 0x09, 0x32, 0xb1, 0x02, 0x85, 0x93, 0x09, 0x33, 0xb1, 0x02, 0x85,
+0x94, 0x09, 0x34, 0xb1, 0x02, 0x85, 0xa0, 0x09, 0x40, 0xb1, 0x02, 0x85, 0xa4, 0x09, 0x44, 0xb1,
+0x02, 0x85, 0xa7, 0x09, 0x45, 0xb1, 0x02, 0x85, 0xa8, 0x09, 0x45, 0xb1, 0x02, 0x85, 0xa9, 0x09,
+0x45, 0xb1, 0x02, 0x85, 0xaa, 0x09, 0x45, 0xb1, 0x02, 0x85, 0xab, 0x09, 0x45, 0xb1, 0x02, 0x85,
+0xac, 0x09, 0x45, 0xb1, 0x02, 0x85, 0xad, 0x09, 0x45, 0xb1, 0x02, 0x85, 0xb3, 0x09, 0x45, 0xb1,
+0x02, 0x85, 0xb4, 0x09, 0x46, 0xb1, 0x02, 0x85, 0xb5, 0x09, 0x47, 0xb1, 0x02, 0x85, 0xd0, 0x09,
+0x40, 0xb1, 0x02, 0x85, 0xd4, 0x09, 0x44, 0xb1, 0x02, 0xc0, 0x00
+};
+
 static int uhid_write(int fd, const struct uhid_event *ev)
 {
 	ssize_t ret;
@@ -308,16 +361,16 @@ static int uhid_write(int fd, const struct uhid_event *ev)
 	}
 }
 
-static int create(int fd)
+static int create(int fd, bool bluetooth)
 {
 	struct uhid_event ev;
 
 	memset(&ev, 0, sizeof(ev));
 	ev.type = UHID_CREATE;
 	strcpy((char*)ev.u.create.name, "Sony Corp. DualShock 4 [CUH-ZCT2x]");
-	ev.u.create.rd_data = rdesc;
-	ev.u.create.rd_size = sizeof(rdesc);
-	ev.u.create.bus = BUS_USB;
+	ev.u.create.rd_data = bluetooth ? rdesc_bt : rdesc;
+	ev.u.create.rd_size = bluetooth ? sizeof(rdesc_bt) : sizeof(rdesc);
+	ev.u.create.bus = bluetooth ? BUS_BLUETOOTH : BUS_USB;
 	ev.u.create.vendor = 0x054C;
 	ev.u.create.product = 0x09CC;
 	ev.u.create.version = 0;
@@ -370,7 +423,7 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
     return DPAD_RELEASED;
 }
 
-int virt_dualshock_init(virt_dualshock_t *const out_gamepad) {
+int virt_dualshock_init(virt_dualshock_t *const out_gamepad, bool bluetooth) {
     int ret = 0;
 
     out_gamepad->dt_sum = 0;
@@ -379,6 +432,7 @@ int virt_dualshock_init(virt_dualshock_t *const out_gamepad) {
     out_gamepad->debug = false;
     out_gamepad->empty_reports = 0;
     out_gamepad->last_time = 0;
+    out_gamepad->bluetooth = bluetooth;
 
     out_gamepad->fd = open(path, O_RDWR | O_CLOEXEC /* | O_NONBLOCK */);
     if (out_gamepad->fd < 0) {
@@ -387,7 +441,7 @@ int virt_dualshock_init(virt_dualshock_t *const out_gamepad) {
         goto virt_dualshock_init_err;
     }
 
-    ret = create(out_gamepad->fd);
+    ret = create(out_gamepad->fd, out_gamepad->bluetooth);
     if (ret) {
         fprintf(stderr, "Error creating uhid device: %d\n", ret);
         close(out_gamepad->fd);
@@ -452,57 +506,57 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
         if (ev.u.output.rtype != UHID_OUTPUT_REPORT)
             return 0;
 
-        /*
-        if (ds4->update_rumble) {
-            * Select classic rumble style haptics and enable it. *
-            common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_MOTOR;
-            common->motor_left = ds4->motor_left;
-            common->motor_right = ds4->motor_right;
-            ds4->update_rumble = false;
-        }
-
-        if (ds4->update_lightbar) {
-            common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED;
-            * Comptabile behavior with hid-sony, which used a dummy global LED to
-            * allow enabling/disabling the lightbar. The global LED maps to
-            * lightbar_enabled.
-            *
-            common->lightbar_red = ds4->lightbar_enabled ? ds4->lightbar_red : 0;
-            common->lightbar_green = ds4->lightbar_enabled ? ds4->lightbar_green : 0;
-            common->lightbar_blue = ds4->lightbar_enabled ? ds4->lightbar_blue : 0;
-            ds4->update_lightbar = false;
-        }
-
-        if (ds4->update_lightbar_blink) {
-            common->valid_flag0 |= DS4_OUTPUT_VALID_FLAG0_LED_BLINK;
-            common->lightbar_blink_on = ds4->lightbar_blink_on;
-            common->lightbar_blink_off = ds4->lightbar_blink_off;
-            ds4->update_lightbar_blink = false;
-        }
-        */
-        
-        if (ev.u.output.size != 32) {
-            fprintf(stderr, "Invalid data length: got %d, expected 32\n", (int)ev.u.output.size);
+        if (
+            (!gamepad->bluetooth) && (ev.u.output.size != DS4_OUTPUT_REPORT_USB_SIZE) &&
+            (gamepad->bluetooth) && (ev.u.output.size != DS4_OUTPUT_REPORT_BT_SIZE) 
+        ) {
+            fprintf(
+                stderr,
+                "Invalid data length: got %d, expected %d\n",
+                (int)ev.u.output.size,
+                (gamepad->bluetooth) ? DS4_OUTPUT_REPORT_BT_SIZE : DS4_OUTPUT_REPORT_USB_SIZE
+            );
 
             return 0;
         }
 
         // first byte is report-id which is 0x01
-        if (ev.u.output.data[0] != 0x05) {
-            fprintf(stderr, "Unrecognised report-id: %d\n", (int)ev.u.output.data[0]);
+        if (
+            (!gamepad->bluetooth) && (ev.u.output.data[0] != DS4_OUTPUT_REPORT_USB) &&
+            (gamepad->bluetooth) && ((ev.u.output.data[0] != DS4_OUTPUT_REPORT_BT) && (ev.u.output.data[0] < 0x10))
+        ) {
+            fprintf(
+                stderr,
+                "Unrecognised report-id: got 0x%x expected 0x%x\n",
+                (int)ev.u.output.data[0],
+                (gamepad->bluetooth) ? DS4_OUTPUT_REPORT_BT : DS4_OUTPUT_REPORT_USB
+            );
             return 0;
         }
         
-        const uint8_t valid_flag0 = ev.u.output.data[1];
-        const uint8_t valid_flag1 = ev.u.output.data[2];
-        const uint8_t reserved = ev.u.output.data[3];
-        const uint8_t motor_right = ev.u.output.data[4];
-        const uint8_t motor_left = ev.u.output.data[5];
-        const uint8_t lightbar_red = ev.u.output.data[6];
-        const uint8_t lightbar_green = ev.u.output.data[7];
-        const uint8_t lightbar_blue = ev.u.output.data[8];
-        const uint8_t lightbar_blink_on = ev.u.output.data[9];
-        const uint8_t lightbar_blink_off = ev.u.output.data[10];
+        // When using bluetooth, the first byte after the reportID is uint8_t seq_tag,
+	    // while the next one is uint8_t tag, following bytes are the same.
+        size_t offset = 1;
+        if ((gamepad->bluetooth) && (ev.u.output.data[0] > 0x10)) {
+            offset = 2;
+        } else if ((gamepad->bluetooth) && (ev.u.output.data[0] == 0x02)) {
+            offset = 3;
+        } else if ((gamepad->bluetooth) && (ev.u.output.data[0] == 0x01)) {
+            offset = 1;
+        }
+
+        const uint8_t *const common_report = &ev.u.output.data[offset];
+
+        const uint8_t valid_flag0 = common_report[0];
+        const uint8_t valid_flag1 = common_report[1];
+        const uint8_t reserved = common_report[2];
+        const uint8_t motor_right = common_report[3];
+        const uint8_t motor_left = common_report[4];
+        const uint8_t lightbar_red = common_report[5];
+        const uint8_t lightbar_green = common_report[6];
+        const uint8_t lightbar_blue = common_report[7];
+        const uint8_t lightbar_blink_on = common_report[8];
+        const uint8_t lightbar_blink_off = common_report[9];
 
         if ((valid_flag0 & DS4_OUTPUT_VALID_FLAG0_LED)) {
             out_device_status->leds_colors[0] = lightbar_red;
@@ -543,7 +597,7 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
         }
         
         if (ev.u.get_report.rnum == 18) {
-            const struct uhid_event mac_addr_response = {
+            struct uhid_event mac_addr_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
@@ -558,9 +612,15 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
                 }
             };
 
+            if (gamepad->bluetooth) {
+                uint32_t crc = crc32_le(0xFFFFFFFFU, (const uint8_t*)&PS_FEATURE_CRC32_SEED, sizeof(PS_FEATURE_CRC32_SEED));
+                crc = ~crc32_le(crc, (const Bytef *)&mac_addr_response.u.get_report_reply.data[0], mac_addr_response.u.get_report_reply.size - 4);
+                memcpy(&mac_addr_response.u.get_report_reply.data[mac_addr_response.u.get_report_reply.size - sizeof(crc)], &crc, sizeof(crc));
+            }
+
             uhid_write(gamepad->fd, &mac_addr_response);
         } else if (ev.u.get_report.rnum == 0xa3) {
-            const struct uhid_event firmware_info_response = {
+            struct uhid_event firmware_info_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
@@ -580,9 +640,15 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
                 }
             };
 
+            if (gamepad->bluetooth) {
+                uint32_t crc = crc32_le(0xFFFFFFFFU, (const uint8_t*)&PS_FEATURE_CRC32_SEED, sizeof(PS_FEATURE_CRC32_SEED));
+                crc = ~crc32_le(crc, (const Bytef *)&firmware_info_response.u.get_report_reply.data[0], firmware_info_response.u.get_report_reply.size - 4);
+                memcpy(&firmware_info_response.u.get_report_reply.data[firmware_info_response.u.get_report_reply.size - sizeof(crc)], &crc, sizeof(crc));
+            }
+
             uhid_write(gamepad->fd, &firmware_info_response);
         } else if (ev.u.get_report.rnum == 0x02) { // dualshock4_get_calibration_data
-            struct uhid_event firmware_info_response = {
+            struct uhid_event calibration_response = {
                 .type = UHID_GET_REPORT_REPLY,
                 .u = {
                     .get_report_reply = {
@@ -605,25 +671,31 @@ int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *cons
             // speed_2x = speed_2x*DS4_GYRO_RES_PER_DEG_S; calculated by the kernel will be 1080.
             // As a consequence sens_numer (for every axis) is 1080*1024.
             // that number will be 1105920
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[1], (const void*)&gyro_pitch_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[3], (const void*)&gyro_yaw_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[5], (const void*)&gyro_roll_bias, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[7], (const void*)&gyro_pitch_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[9], (const void*)&gyro_pitch_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[11], (const void*)&gyro_yaw_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[13], (const void*)&gyro_yaw_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[15], (const void*)&gyro_roll_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[17], (const void*)&gyro_roll_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[19], (const void*)&gyro_speed_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[21], (const void*)&gyro_speed_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[23], (const void*)&acc_x_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[25], (const void*)&acc_x_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[27], (const void*)&acc_y_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[29], (const void*)&acc_y_minus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[31], (const void*)&acc_z_plus, sizeof(int16_t));
-            memcpy((void*)&firmware_info_response.u.get_report_reply.data[33], (const void*)&acc_z_minus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[1], (const void*)&gyro_pitch_bias, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[3], (const void*)&gyro_yaw_bias, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[5], (const void*)&gyro_roll_bias, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[7], (const void*)&gyro_pitch_plus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[9], (const void*)&gyro_pitch_minus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[11], (const void*)&gyro_yaw_plus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[13], (const void*)&gyro_yaw_minus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[15], (const void*)&gyro_roll_plus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[17], (const void*)&gyro_roll_minus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[19], (const void*)&gyro_speed_plus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[21], (const void*)&gyro_speed_minus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[23], (const void*)&acc_x_plus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[25], (const void*)&acc_x_minus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[27], (const void*)&acc_y_plus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[29], (const void*)&acc_y_minus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[31], (const void*)&acc_z_plus, sizeof(int16_t));
+            memcpy((void*)&calibration_response.u.get_report_reply.data[33], (const void*)&acc_z_minus, sizeof(int16_t));
 
-            uhid_write(gamepad->fd, &firmware_info_response);
+            if (gamepad->bluetooth) {
+                uint32_t crc = crc32_le(0xFFFFFFFFU, (const uint8_t*)&PS_FEATURE_CRC32_SEED, sizeof(PS_FEATURE_CRC32_SEED));
+                crc = ~crc32_le(crc, (const Bytef *)&calibration_response.u.get_report_reply.data[0], calibration_response.u.get_report_reply.size - 4);
+                memcpy(&calibration_response.u.get_report_reply.data[calibration_response.u.get_report_reply.size - sizeof(crc)], &crc, sizeof(crc));
+            }
+
+            uhid_write(gamepad->fd, &calibration_response);
         }
 
 		break;
@@ -720,18 +792,21 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
     const int16_t a_y = (int16_t)(-1) * in_device_status->raw_accel[1];  // Swap Y and Z
     const int16_t a_z = (int16_t)(-1) * in_device_status->raw_accel[2];  // Swap Y and Z
 
-    out_buf[0] = 0x01;  // [00] report ID (0x01)
-    out_buf[1] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
-    out_buf[2] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
-    out_buf[3] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
-    out_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
-    out_buf[5] =
+    out_buf[0] = gamepad->bluetooth ? DS4_INPUT_REPORT_BT : DS4_INPUT_REPORT_USB;  // [00] report ID (0x01)
+
+    uint8_t *const out_shifted_buf = gamepad->bluetooth ? &out_buf[1] : &out_buf[0];
+
+    out_shifted_buf[1] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][0] + (int64_t)32768) >> (uint64_t)8); // L stick, X axis
+    out_shifted_buf[2] = ((uint64_t)((int64_t)in_device_status->joystick_positions[0][1] + (int64_t)32768) >> (uint64_t)8); // L stick, Y axis
+    out_shifted_buf[3] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
+    out_shifted_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
+    out_shifted_buf[5] =
         (in_device_status->triangle ? 0x80 : 0x00) |
         (in_device_status->circle ? 0x40 : 0x00) |
         (in_device_status->cross ? 0x20 : 0x00) |
         (in_device_status->square ? 0x10 : 0x00) |
         (uint8_t)ds4_dpad_from_gamepad(in_device_status->dpad);
-    out_buf[6] =
+    out_shifted_buf[6] =
         (in_device_status->r3 ? 0x80 : 0x00) |
         (in_device_status->l3 ? 0x40 : 0x00) | 
         (in_device_status->share ? 0x20 : 0x00) |
@@ -746,27 +821,33 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
     buf[7] = (((counter++) % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
     */
     
-    out_buf[7] = in_device_status->center ? 0x01 : 0x00;
+    out_shifted_buf[7] = in_device_status->center ? 0x01 : 0x00;
 
-    out_buf[8] = in_device_status->l2_trigger;
-    out_buf[9] = in_device_status->r2_trigger;
-    memcpy(&out_buf[10], &timestamp, sizeof(timestamp));
-    out_buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
-    memcpy(&out_buf[13], &g_x, sizeof(int16_t));
-    memcpy(&out_buf[15], &g_y, sizeof(int16_t));
-    memcpy(&out_buf[17], &g_z, sizeof(int16_t));
-    memcpy(&out_buf[19], &a_x, sizeof(int16_t));
-    memcpy(&out_buf[21], &a_y, sizeof(int16_t));
-    memcpy(&out_buf[23], &a_z, sizeof(int16_t));
+    out_shifted_buf[8] = in_device_status->l2_trigger;
+    out_shifted_buf[9] = in_device_status->r2_trigger;
+    memcpy(&out_shifted_buf[10], &timestamp, sizeof(timestamp));
+    out_shifted_buf[12] = 0x20; // [12] battery level | this is called sensor_temparature in the kernel driver but is never used...
+    memcpy(&out_shifted_buf[13], &g_x, sizeof(int16_t));
+    memcpy(&out_shifted_buf[15], &g_y, sizeof(int16_t));
+    memcpy(&out_shifted_buf[17], &g_z, sizeof(int16_t));
+    memcpy(&out_shifted_buf[19], &a_x, sizeof(int16_t));
+    memcpy(&out_shifted_buf[21], &a_y, sizeof(int16_t));
+    memcpy(&out_shifted_buf[23], &a_z, sizeof(int16_t));
 
-    out_buf[30] = 0x1b; // no headset attached
+    out_shifted_buf[30] = 0x1b; // no headset attached
 
-    out_buf[62] = 0x80; // IDK... it seems constant...
-    out_buf[57] = 0x80; // IDK... it seems constant...
-    out_buf[53] = 0x80; // IDK... it seems constant...
-    out_buf[48] = 0x80; // IDK... it seems constant...
-    out_buf[35] = 0x80; // IDK... it seems constant...
-    out_buf[44] = 0x80; // IDK... it seems constant...
+    out_shifted_buf[62] = 0x80; // IDK... it seems constant...
+    out_shifted_buf[57] = 0x80; // IDK... it seems constant...
+    out_shifted_buf[53] = 0x80; // IDK... it seems constant...
+    out_shifted_buf[48] = 0x80; // IDK... it seems constant...
+    out_shifted_buf[35] = 0x80; // IDK... it seems constant...
+    out_shifted_buf[44] = 0x80; // IDK... it seems constant...
+
+    if (gamepad->bluetooth) {
+        uint32_t crc = crc32_le(0xFFFFFFFFU, (const uint8_t*)&PS_FEATURE_CRC32_SEED, sizeof(PS_FEATURE_CRC32_SEED));
+        crc = ~crc32_le(crc, (const Bytef *)&out_shifted_buf[0], DS4_INPUT_REPORT_BT_SIZE - 4);
+        memcpy(&out_shifted_buf[DS4_INPUT_REPORT_BT_SIZE - sizeof(crc)], &crc, sizeof(crc));
+    }
 }
 
 int virt_dualshock_send(virt_dualshock_t *const gamepad, uint8_t *const out_buf) {
@@ -774,12 +855,18 @@ int virt_dualshock_send(virt_dualshock_t *const gamepad, uint8_t *const out_buf)
         .type = UHID_INPUT2,
         .u = {
             .input2 = {
-                .size = 64,
+                .size = gamepad->bluetooth ? DS4_INPUT_REPORT_BT_SIZE : DS4_INPUT_REPORT_USB_SIZE,
             }
         }
     };
 
     memcpy(&l.u.input2.data[0], &out_buf[0], l.u.input2.size);
+
+    if (gamepad->bluetooth) {
+        uint32_t crc = crc32_le(0xFFFFFFFFU, (const uint8_t*)&PS_INPUT_CRC32_SEED, sizeof(PS_INPUT_CRC32_SEED));
+        crc = ~crc32_le(crc, (const uint8_t *)&l.u.input2.data[0], l.u.input2.size - 4);
+        memcpy(&l.u.input2.data[l.u.input2.size - sizeof(crc)], &crc, sizeof(crc));
+    }
 
     return uhid_write(gamepad->fd, &l);
 }

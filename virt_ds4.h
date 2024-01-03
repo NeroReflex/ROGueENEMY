@@ -13,6 +13,8 @@ typedef struct virt_dualshock {
 
     bool debug;
 
+    bool bluetooth;
+
     uint32_t dt_sum;
     uint8_t dt_buffer_current;
     uint32_t dt_buffer[30];
@@ -21,7 +23,7 @@ typedef struct virt_dualshock {
     int64_t last_time;
 } virt_dualshock_t;
 
-int virt_dualshock_init(virt_dualshock_t *const gamepad);
+int virt_dualshock_init(virt_dualshock_t *const gamepad, bool bluetooth);
 
 int virt_dualshock_get_fd(virt_dualshock_t *const gamepad);
 

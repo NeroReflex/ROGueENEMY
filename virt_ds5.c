@@ -1,7 +1,6 @@
 #include "virt_ds5.h"
 #include "message.h"
 
-#include <bits/types/time_t.h>
 #include <linux/uhid.h>
 
 #define DS_FEATURE_REPORT_PAIRING_INFO      0x09
@@ -30,15 +29,6 @@
 #define DS_OUTPUT_VALID_FLAG1_LIGHTBAR_CONTROL_ENABLE 0x04
 
 #define DS5_SPEC_DELTA_TIME         4096.0f
-
-static uint32_t le(uint32_t num) {
-    const uint32_t b0 = (num & 0x000000ff) << 24u;
-    const uint32_t b1 = (num & 0x0000ff00) << 8u;
-    const uint32_t b2 = (num & 0x00ff0000) >> 8u;
-    const uint32_t b3 = (num & 0xff000000) >> 24u;
-
-    return b0 | b1 | b2 | b3;
-}
 
 static uint32_t crc32_le(uint32_t crc_initial, const uint8_t *const buf, size_t len) {
     return crc32(crc_initial ^ 0xffffffff, buf, len) ^ 0xffffffff;
