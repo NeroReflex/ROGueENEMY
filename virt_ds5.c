@@ -1298,7 +1298,7 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
 
         if (joint_y <= (int64_t)(-32768)) {
             out_shifted_buf[1] = 0x00;
-        } else if (joint_x >= (int64_t)(+32767)) {
+        } else if (joint_y >= (int64_t)(+32767)) {
             out_shifted_buf[1] = 0xFF;
         } else {
             out_shifted_buf[1] = ((uint64_t)(joint_y + (int64_t)32768) >> (uint64_t)8);
@@ -1319,7 +1319,7 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
 
         if (joint_y <= (int64_t)(-32768)) {
             out_shifted_buf[3] = 0x00;
-        } else if (joint_x >= (int64_t)(+32767)) {
+        } else if (joint_y >= (int64_t)(+32767)) {
             out_shifted_buf[3] = 0xFF;
         } else {
             out_shifted_buf[3] = ((uint64_t)(joint_y + (int64_t)32768) >> (uint64_t)8);
