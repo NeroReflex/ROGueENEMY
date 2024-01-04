@@ -3,7 +3,6 @@
 #include "dev_hidraw.h"
 #include "message.h"
 #include "xbox360.h"
-#include <linux/input-event-codes.h>
 
 enum rc71l_leds_mode {
   ROG_ALLY_MODE_STATIC           = 0,
