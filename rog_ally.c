@@ -202,7 +202,7 @@ static int asus_kbd_ev_map(
 						.type = GAMEPAD_SET_ELEMENT,
 						.data = {
 							.gamepad_set = {
-								.element = GAMEPAD_BTN_L5,
+								.element = GAMEPAD_BTN_L4,
 								.status = {
 									.btn = e->ev[1].value,
 								}
@@ -254,7 +254,7 @@ static int asus_kbd_ev_map(
 						.type = GAMEPAD_SET_ELEMENT,
 						.data = {
 							.gamepad_set = {
-								.element = GAMEPAD_BTN_R5,
+								.element = GAMEPAD_BTN_R4,
 								.status = {
 									.btn = e->ev[1].value,
 								}
