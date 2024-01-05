@@ -879,6 +879,143 @@ static unsigned char rdesc_edge_bt[] = {
         0x00,
 };
 
+static unsigned char rdesc[] = {
+    0x05, 0x01,                    // Usage Page (Generic Desktop)        0
+    0x09, 0x05,                    // Usage (Game Pad)                    2
+    0xa1, 0x01,                    // Collection (Application)            4
+    0x85, 0x01,                    //  Report ID (1)                      6
+    0x09, 0x30,                    //  Usage (X)                          8
+    0x09, 0x31,                    //  Usage (Y)                          10
+    0x09, 0x32,                    //  Usage (Z)                          12
+    0x09, 0x35,                    //  Usage (Rz)                         14
+    0x09, 0x33,                    //  Usage (Rx)                         16
+    0x09, 0x34,                    //  Usage (Ry)                         18
+    0x15, 0x00,                    //  Logical Minimum (0)                20
+    0x26, 0xff, 0x00,              //  Logical Maximum (255)              22
+    0x75, 0x08,                    //  Report Size (8)                    25
+    0x95, 0x06,                    //  Report Count (6)                   27
+    0x81, 0x02,                    //  Input (Data,Var,Abs)               29
+    0x06, 0x00, 0xff,              //  Usage Page (Vendor Defined Page 1) 31
+    0x09, 0x20,                    //  Usage (Vendor Usage 0x20)          34
+    0x95, 0x01,                    //  Report Count (1)                   36
+    0x81, 0x02,                    //  Input (Data,Var,Abs)               38
+    0x05, 0x01,                    //  Usage Page (Generic Desktop)       40
+    0x09, 0x39,                    //  Usage (Hat switch)                 42
+    0x15, 0x00,                    //  Logical Minimum (0)                44
+    0x25, 0x07,                    //  Logical Maximum (7)                46
+    0x35, 0x00,                    //  Physical Minimum (0)               48
+    0x46, 0x3b, 0x01,              //  Physical Maximum (315)             50
+    0x65, 0x14,                    //  Unit (EnglishRotation: deg)        53
+    0x75, 0x04,                    //  Report Size (4)                    55
+    0x95, 0x01,                    //  Report Count (1)                   57
+    0x81, 0x42,                    //  Input (Data,Var,Abs,Null)          59
+    0x65, 0x00,                    //  Unit (None)                        61
+    0x05, 0x09,                    //  Usage Page (Button)                63
+    0x19, 0x01,                    //  Usage Minimum (1)                  65
+    0x29, 0x0f,                    //  Usage Maximum (15)                 67
+    0x15, 0x00,                    //  Logical Minimum (0)                69
+    0x25, 0x01,                    //  Logical Maximum (1)                71
+    0x75, 0x01,                    //  Report Size (1)                    73
+    0x95, 0x0f,                    //  Report Count (15)                  75
+    0x81, 0x02,                    //  Input (Data,Var,Abs)               77
+    0x06, 0x00, 0xff,              //  Usage Page (Vendor Defined Page 1) 79
+    0x09, 0x21,                    //  Usage (Vendor Usage 0x21)          82
+    0x95, 0x0d,                    //  Report Count (13)                  84
+    0x81, 0x02,                    //  Input (Data,Var,Abs)               86
+    0x06, 0x00, 0xff,              //  Usage Page (Vendor Defined Page 1) 88
+    0x09, 0x22,                    //  Usage (Vendor Usage 0x22)          91
+    0x15, 0x00,                    //  Logical Minimum (0)                93
+    0x26, 0xff, 0x00,              //  Logical Maximum (255)              95
+    0x75, 0x08,                    //  Report Size (8)                    98
+    0x95, 0x34,                    //  Report Count (52)                  100
+    0x81, 0x02,                    //  Input (Data,Var,Abs)               102
+    0x85, 0x02,                    //  Report ID (2)                      104
+    0x09, 0x23,                    //  Usage (Vendor Usage 0x23)          106
+    0x95, 0x2f,                    //  Report Count (47)                  108
+    0x91, 0x02,                    //  Output (Data,Var,Abs)              110
+    0x85, 0x05,                    //  Report ID (5)                      112
+    0x09, 0x33,                    //  Usage (Vendor Usage 0x33)          114
+    0x95, 0x28,                    //  Report Count (40)                  116
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             118
+    0x85, 0x08,                    //  Report ID (8)                      120
+    0x09, 0x34,                    //  Usage (Vendor Usage 0x34)          122
+    0x95, 0x2f,                    //  Report Count (47)                  124
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             126
+    0x85, 0x09,                    //  Report ID (9)                      128
+    0x09, 0x24,                    //  Usage (Vendor Usage 0x24)          130
+    0x95, 0x13,                    //  Report Count (19)                  132
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             134
+    0x85, 0x0a,                    //  Report ID (10)                     136
+    0x09, 0x25,                    //  Usage (Vendor Usage 0x25)          138
+    0x95, 0x1a,                    //  Report Count (26)                  140
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             142
+    0x85, 0x20,                    //  Report ID (32)                     144
+    0x09, 0x26,                    //  Usage (Vendor Usage 0x26)          146
+    0x95, 0x3f,                    //  Report Count (63)                  148
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             150
+    0x85, 0x21,                    //  Report ID (33)                     152
+    0x09, 0x27,                    //  Usage (Vendor Usage 0x27)          154
+    0x95, 0x04,                    //  Report Count (4)                   156
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             158
+    0x85, 0x22,                    //  Report ID (34)                     160
+    0x09, 0x40,                    //  Usage (Vendor Usage 0x40)          162
+    0x95, 0x3f,                    //  Report Count (63)                  164
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             166
+    0x85, 0x80,                    //  Report ID (128)                    168
+    0x09, 0x28,                    //  Usage (Vendor Usage 0x28)          170
+    0x95, 0x3f,                    //  Report Count (63)                  172
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             174
+    0x85, 0x81,                    //  Report ID (129)                    176
+    0x09, 0x29,                    //  Usage (Vendor Usage 0x29)          178
+    0x95, 0x3f,                    //  Report Count (63)                  180
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             182
+    0x85, 0x82,                    //  Report ID (130)                    184
+    0x09, 0x2a,                    //  Usage (Vendor Usage 0x2a)          186
+    0x95, 0x09,                    //  Report Count (9)                   188
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             190
+    0x85, 0x83,                    //  Report ID (131)                    192
+    0x09, 0x2b,                    //  Usage (Vendor Usage 0x2b)          194
+    0x95, 0x3f,                    //  Report Count (63)                  196
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             198
+    0x85, 0x84,                    //  Report ID (132)                    200
+    0x09, 0x2c,                    //  Usage (Vendor Usage 0x2c)          202
+    0x95, 0x3f,                    //  Report Count (63)                  204
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             206
+    0x85, 0x85,                    //  Report ID (133)                    208
+    0x09, 0x2d,                    //  Usage (Vendor Usage 0x2d)          210
+    0x95, 0x02,                    //  Report Count (2)                   212
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             214
+    0x85, 0xa0,                    //  Report ID (160)                    216
+    0x09, 0x2e,                    //  Usage (Vendor Usage 0x2e)          218
+    0x95, 0x01,                    //  Report Count (1)                   220
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             222
+    0x85, 0xe0,                    //  Report ID (224)                    224
+    0x09, 0x2f,                    //  Usage (Vendor Usage 0x2f)          226
+    0x95, 0x3f,                    //  Report Count (63)                  228
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             230
+    0x85, 0xf0,                    //  Report ID (240)                    232
+    0x09, 0x30,                    //  Usage (Vendor Usage 0x30)          234
+    0x95, 0x3f,                    //  Report Count (63)                  236
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             238
+    0x85, 0xf1,                    //  Report ID (241)                    240
+    0x09, 0x31,                    //  Usage (Vendor Usage 0x31)          242
+    0x95, 0x3f,                    //  Report Count (63)                  244
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             246
+    0x85, 0xf2,                    //  Report ID (242)                    248
+    0x09, 0x32,                    //  Usage (Vendor Usage 0x32)          250
+    0x95, 0x0f,                    //  Report Count (15)                  252
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             254
+    0x85, 0xf4,                    //  Report ID (244)                    256
+    0x09, 0x35,                    //  Usage (Vendor Usage 0x35)          258
+    0x95, 0x3f,                    //  Report Count (63)                  260
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             262
+    0x85, 0xf5,                    //  Report ID (245)                    264
+    0x09, 0x36,                    //  Usage (Vendor Usage 0x36)          266
+    0x95, 0x03,                    //  Report Count (3)                   268
+    0xb1, 0x02,                    //  Feature (Data,Var,Abs)             270
+    0xc0,                          // End Collection                      272
+};
+
 static int uhid_write(int fd, const struct uhid_event *ev)
 {
 	ssize_t ret;
@@ -917,6 +1054,9 @@ static int create(int fd, bool bluetooth, bool dualsense_edge)
     if (dualsense_edge) {
         ev.u.create.rd_data = bluetooth ? rdesc_edge_bt : rdesc_edge;
         ev.u.create.rd_size = bluetooth ? sizeof(rdesc_edge_bt) : sizeof(rdesc_edge);
+    } else {
+        ev.u.create.rd_data = bluetooth ? rdesc_edge_bt : rdesc;
+        ev.u.create.rd_size = bluetooth ? sizeof(rdesc_edge_bt) : sizeof(rdesc);
     }
 
 	ev.u.create.bus = bluetooth ? BUS_BLUETOOTH : BUS_USB;
