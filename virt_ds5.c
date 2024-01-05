@@ -40,9 +40,15 @@ static uint8_t PS_INPUT_CRC32_SEED = 0xA1;
 static uint8_t PS_OUTPUT_CRC32_SEED = 0xA2;
 static uint8_t PS_FEATURE_CRC32_SEED = 0xA3;
 
+#define DS5_EDGE_NAME "Sony Corp. DualSense Edge wireless controller (PS5)"
 #define DS5_EDGE_VERSION 256
 #define DS5_EDGE_VENDOR 0x054C
 #define DS5_EDGE_PRODUCT 0x0DF2
+
+#define DS5_NAME "Sony Corp. DualSense Edge wireless controller (PS5)"
+#define DS5_VERSION 256
+#define DS5_VENDOR 0x054C
+#define DS5_PRODUCT 0x0DF2
 
 static const char* path = "/dev/uhid";
 
@@ -890,22 +896,32 @@ static int uhid_write(int fd, const struct uhid_event *ev)
 	}
 }
 
-static int create(int fd, bool bluetooth)
+static int create(int fd, bool bluetooth, bool dualsense_edge)
 {
 	struct uhid_event ev;
 
+    char uniq[sizeof(ev.u.create.uniq)];
+    sprintf(uniq, "%02hhx:%02hhx:%02hhx:%02hhx:%02hhx:%02hhx",
+        MAC_ADDR[5], MAC_ADDR[4], MAC_ADDR[3], MAC_ADDR[2], MAC_ADDR[1], MAC_ADDR[0]
+    );
+
 	memset(&ev, 0, sizeof(ev));
 	ev.type = UHID_CREATE;
-	strcpy((char*)ev.u.create.name, "Sony Corp. DualSense Edge wireless controller (PS5)");
-	ev.u.create.rd_data = bluetooth ? rdesc_bt : rdesc;
+    
+    if (dualsense_edge) {
+	    strcpy((char*)ev.u.create.name, DS5_EDGE_NAME);
+    } else {
+        strcpy((char*)ev.u.create.name, DS5_NAME);
+    }
+
+    ev.u.create.rd_data = bluetooth ? rdesc_bt : rdesc;
 	ev.u.create.rd_size = bluetooth ? sizeof(rdesc_bt) : sizeof(rdesc);
 	ev.u.create.bus = bluetooth ? BUS_BLUETOOTH : BUS_USB;
-	ev.u.create.vendor = DS5_EDGE_VENDOR;
-	ev.u.create.product = DS5_EDGE_PRODUCT;
-	ev.u.create.version = DS5_EDGE_VERSION;
+	ev.u.create.vendor = dualsense_edge ? DS5_EDGE_VENDOR : DS5_VENDOR;
+	ev.u.create.product = dualsense_edge ? DS5_EDGE_PRODUCT : DS5_PRODUCT;
+	ev.u.create.version = dualsense_edge ? DS5_EDGE_VERSION : DS5_VERSION;
 	ev.u.create.country = 0;
-    memset(&ev.u.create.uniq, 0, sizeof(ev.u.create.uniq));
-    memcpy(&ev.u.create.uniq, (void*)MAC_ADDR, sizeof(MAC_ADDR));
+    memcpy(&ev.u.create.uniq, (void*)uniq, sizeof(uniq));
 
 	return uhid_write(fd, &ev);
 }
@@ -920,9 +936,10 @@ static void destroy(int fd)
 	uhid_write(fd, &ev);
 }
 
-int virt_dualsense_init(virt_dualsense_t *const out_gamepad, bool bluetooth) {
+int virt_dualsense_init(virt_dualsense_t *const out_gamepad, bool bluetooth, bool dualsense_edge) {
     int ret = 0;
 
+    out_gamepad->edge_model = dualsense_edge;
     out_gamepad->bluetooth = bluetooth;
     out_gamepad->dt_sum = 0;
     out_gamepad->dt_buffer_current = 0;
@@ -939,7 +956,7 @@ int virt_dualsense_init(virt_dualsense_t *const out_gamepad, bool bluetooth) {
         goto virt_dualshock_init_err;
     }
 
-    ret = create(out_gamepad->fd, bluetooth);
+    ret = create(out_gamepad->fd, bluetooth, dualsense_edge);
     if (ret) {
         fprintf(stderr, "Error creating uhid device: %d\n", ret);
         close(out_gamepad->fd);

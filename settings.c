@@ -106,6 +106,13 @@ void load_out_config(dev_out_settings_t *const out_conf, const char* const filep
         fprintf(stderr, "controller_bluetooth (bool) configuration not found. Default value will be used.\n");
     }
 
+    int dualsense_edge;
+    if (config_lookup_bool(&cfg, "dualsense_edge", &dualsense_edge) != CONFIG_FALSE) {
+        out_conf->dualsense_edge = dualsense_edge;
+    } else {
+        fprintf(stderr, "dualsense_edge (bool) configuration not found. Default value will be used.\n");
+    }
+
     config_destroy(&cfg);
 
 load_out_config_err:

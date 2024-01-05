@@ -15,6 +15,8 @@ typedef struct virt_dualsense {
 
     bool bluetooth;
 
+    bool edge_model;
+
     uint8_t seq_num;
 
     uint32_t dt_sum;
@@ -25,15 +27,33 @@ typedef struct virt_dualsense {
     int64_t last_time;
 } virt_dualsense_t;
 
-int virt_dualsense_init(virt_dualsense_t *const gamepad, bool bluetooth);
+int virt_dualsense_init(
+    virt_dualsense_t *const gamepad,
+    bool bluetooth,
+    bool dualsense_edge
+);
 
-int virt_dualsense_get_fd(virt_dualsense_t *const gamepad);
+int virt_dualsense_get_fd(
+    virt_dualsense_t *const gamepad
+);
 
-int virt_dualsense_event(virt_dualsense_t *const gamepad, gamepad_status_t *const out_device_status);
+int virt_dualsense_event(
+    virt_dualsense_t *const gamepad,
+    gamepad_status_t *const out_device_status
+);
 
-void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf);
+void virt_dualsense_compose(
+    virt_dualsense_t *const gamepad,
+    gamepad_status_t *const in_device_status,
+    uint8_t *const out_buf
+);
 
-int virt_dualsense_send(virt_dualsense_t *const gamepad, uint8_t *const out_buf);
+int virt_dualsense_send(
+    virt_dualsense_t *const gamepad,
+    uint8_t *const out_buf
+);
 
-void virt_dualsense_close(virt_dualsense_t *const gamepad);
+void virt_dualsense_close(
+    virt_dualsense_t *const gamepad
+);
 

@@ -8,8 +8,6 @@
 #include "virt_mouse.h"
 #include "virt_kbd.h"
 
-#include <libconfig.h>
-
 static void handle_incoming_message_gamepad_action(
     const dev_out_settings_t *const in_settings,
     const in_message_gamepad_action_t *const msg_payload,
@@ -442,7 +440,12 @@ void *dev_out_thread_func(void *ptr) {
     const int64_t gamepad_report_timing_us = 1250;
 
     if (current_gamepad == GAMEPAD_DUALSENSE) {
-        const int ds5_init_res = virt_dualsense_init(&controller_data.ds5, dev_out_data->settings.controller_bluetooth);
+        const int ds5_init_res = virt_dualsense_init(
+            &controller_data.ds5,
+            dev_out_data->settings.controller_bluetooth,
+            dev_out_data->settings.dualsense_edge           
+        );
+
         if (ds5_init_res != 0) {
             fprintf(stderr, "Unable to initialize the DualSense device: %d\n", ds5_init_res);
         } else {
@@ -450,7 +453,11 @@ void *dev_out_thread_func(void *ptr) {
             printf("DualSense initialized: fd=%d, bluetooth=%s\n", current_gamepad_fd, dev_out_data->settings.controller_bluetooth ? "true" : "false");
         }
     } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
-        const int ds4_init_res = virt_dualshock_init(&controller_data.ds4, dev_out_data->settings.controller_bluetooth);
+        const int ds4_init_res = virt_dualshock_init(
+            &controller_data.ds4,
+            dev_out_data->settings.controller_bluetooth
+        );
+
         if (ds4_init_res != 0) {
             fprintf(stderr, "Unable to initialize the DualShock device: %d\n", ds4_init_res);
         } else {

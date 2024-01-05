@@ -7,4 +7,5 @@ gamepad_rumble_control = true;
 gamepad_leds_control = true;
 m1m2_mode = 1;
 touchbar = true;
-controller_bluetooth = false;
+controller_bluetooth = true;
+dualsense_edge = false;

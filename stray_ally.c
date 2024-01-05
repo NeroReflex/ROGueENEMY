@@ -18,6 +18,7 @@ int main(int argc, char ** argv) {
         .gamepad_leds_control = true,
         .gamepad_rumble_control = true,
         .controller_bluetooth = false,
+        .dualsense_edge = false,
     };
 
     load_out_config(&out_settings, configuration_file);
