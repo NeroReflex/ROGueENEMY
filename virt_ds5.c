@@ -1429,11 +1429,11 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     const uint32_t timestamp = sim_time + (int)((double)gamepad->empty_reports * DS5_SPEC_DELTA_TIME);
 
     const int16_t g_x = in_device_status->raw_gyro[0];
-    const int16_t g_y = (int16_t)(-1) * in_device_status->raw_gyro[1];  // Swap Y and Z
-    const int16_t g_z = (int16_t)(-1) * in_device_status->raw_gyro[2];  // Swap Y and Z
+    const int16_t g_y = in_device_status->raw_gyro[1];  // Swap Y and Z
+    const int16_t g_z = in_device_status->raw_gyro[2];  // Swap Y and Z
     const int16_t a_x = in_device_status->raw_accel[0];
-    const int16_t a_y = (int16_t)(-1) * in_device_status->raw_accel[1];  // Swap Y and Z
-    const int16_t a_z = (int16_t)(-1) * in_device_status->raw_accel[2];  // Swap Y and Z
+    const int16_t a_y = in_device_status->raw_accel[1];  // Swap Y and Z
+    const int16_t a_z = in_device_status->raw_accel[2];  // Swap Y and Z
 
 
     out_buf[0] = gamepad->bluetooth ? DS_INPUT_REPORT_BT : DS_INPUT_REPORT_USB;  // [00] report ID (0x01)

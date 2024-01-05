@@ -779,30 +779,13 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
      * 
      * as we know sens_numer is 0, hence calib_data is zero.
      */
-    /*
-    const int16_t g_x = ((in_device_status->gyro[0]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t g_y = ((in_device_status->gyro[1]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t g_z = ((in_device_status->gyro[2]) * ((double)(180.0)/(double)(M_PI))) / (double)DS4_GYRO_RES_PER_DEG_S;
-    const int16_t a_x = ((in_device_status->accel[0]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    const int16_t a_y = ((in_device_status->accel[1]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    const int16_t a_z = ((in_device_status->accel[2]) / ((double)9.8)) / (double)DS4_ACC_RES_PER_G; // TODO: IDK how to test...
-    */
-
-    /*
-    const int16_t g_x = (in_device_status->gyro[0]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t g_y = (in_device_status->gyro[1]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t g_z = (in_device_status->gyro[2]) / LSB_PER_RAD_S_2000_DEG_S;
-    const int16_t a_x = (in_device_status->accel[0]) / LSB_PER_16G; // TODO: IDK how to test...
-    const int16_t a_y = (in_device_status->accel[1]) / LSB_PER_16G; // TODO: IDK how to test...
-    const int16_t a_z = (in_device_status->accel[2]) / LSB_PER_16G; // TODO: IDK how to test...
-    */
 
     const int16_t g_x = in_device_status->raw_gyro[0];
-    const int16_t g_y = (int16_t)(-1) * in_device_status->raw_gyro[1];  // Swap Y and Z
-    const int16_t g_z = (int16_t)(-1) * in_device_status->raw_gyro[2];  // Swap Y and Z
+    const int16_t g_y = in_device_status->raw_gyro[1];  // Swap Y and Z
+    const int16_t g_z = in_device_status->raw_gyro[2];  // Swap Y and Z
     const int16_t a_x = in_device_status->raw_accel[0];
-    const int16_t a_y = (int16_t)(-1) * in_device_status->raw_accel[1];  // Swap Y and Z
-    const int16_t a_z = (int16_t)(-1) * in_device_status->raw_accel[2];  // Swap Y and Z
+    const int16_t a_y = in_device_status->raw_accel[1];  // Swap Y and Z
+    const int16_t a_z = in_device_status->raw_accel[2];  // Swap Y and Z
 
     out_buf[0] = gamepad->bluetooth ? DS4_INPUT_REPORT_BT : DS4_INPUT_REPORT_USB;  // [00] report ID (0x01)
 
