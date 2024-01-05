@@ -45,17 +45,17 @@ static uint8_t PS_FEATURE_CRC32_SEED = 0xA3;
 #define DS5_EDGE_VENDOR 0x054C
 #define DS5_EDGE_PRODUCT 0x0DF2
 
-#define DS5_NAME "Sony Corp. DualSense Edge wireless controller (PS5)"
-#define DS5_VERSION 256
+#define DS5_NAME "Sony Corp. DualSense wireless controller (PS5)"
+#define DS5_VERSION 0x8111
 #define DS5_VENDOR 0x054C
-#define DS5_PRODUCT 0x0DF2
+#define DS5_PRODUCT 0x0ce6
 
 static const char* path = "/dev/uhid";
 
 //static const char* const MAC_ADDR_STR = "e8:47:3a:d6:e7:74";
 static const uint8_t MAC_ADDR[] = { 0x74, 0xe7, 0xd6, 0x3a, 0x47, 0xe8 };
 
-static unsigned char rdesc[] = {
+static unsigned char rdesc_edge[] = {
     0x05,
         0x01,  // Usage Page (Generic Desktop)        0
         0x09,
@@ -447,7 +447,7 @@ static unsigned char rdesc[] = {
         0xC0,  // End Collection                      388
 };
 
-static unsigned char rdesc_bt[] = {
+static unsigned char rdesc_edge_bt[] = {
         0x05,
         0x01,
         0x09,
@@ -914,8 +914,11 @@ static int create(int fd, bool bluetooth, bool dualsense_edge)
         strcpy((char*)ev.u.create.name, DS5_NAME);
     }
 
-    ev.u.create.rd_data = bluetooth ? rdesc_bt : rdesc;
-	ev.u.create.rd_size = bluetooth ? sizeof(rdesc_bt) : sizeof(rdesc);
+    if (dualsense_edge) {
+        ev.u.create.rd_data = bluetooth ? rdesc_edge_bt : rdesc_edge;
+        ev.u.create.rd_size = bluetooth ? sizeof(rdesc_edge_bt) : sizeof(rdesc_edge);
+    }
+
 	ev.u.create.bus = bluetooth ? BUS_BLUETOOTH : BUS_USB;
 	ev.u.create.vendor = dualsense_edge ? DS5_EDGE_VENDOR : DS5_VENDOR;
 	ev.u.create.product = dualsense_edge ? DS5_EDGE_PRODUCT : DS5_PRODUCT;
