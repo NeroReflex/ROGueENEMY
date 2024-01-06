@@ -821,22 +821,22 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
         (in_device_status->r1 ? 0x02 : 0x00) |
         (in_device_status->l1 ? 0x01 : 0x00);
     
-    if (contrib_y > gamepad->gyro_to_analog_activation_treshold) {
+    if (contrib_y >= gamepad->gyro_to_analog_activation_treshold) {
         if (absolute_value(contrib_x) > gamepad->gyro_to_analog_activation_treshold) {
-            out_shifted_buf[1] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[3] - (int64_t)127) + contrib_x), 0, 255);
+            out_shifted_buf[1] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[1] - (int64_t)127) + contrib_x), 0, 255);
         }
         
-        if (absolute_value(contrib_y) > gamepad->gyro_to_analog_activation_treshold) {
-            out_shifted_buf[2] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[4] - (int64_t)127) + contrib_y), 0, 255);
+        if (absolute_value(contrib_y) >= gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[2] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[2] - (int64_t)127) + contrib_y), 0, 255);
         }
     }
 
     if (in_device_status->join_right_analog_and_gyroscope) {
-        if (absolute_value(contrib_x) > gamepad->gyro_to_analog_activation_treshold) {
+        if (absolute_value(contrib_x) >= gamepad->gyro_to_analog_activation_treshold) {
             out_shifted_buf[3] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[3] - (int64_t)127) + contrib_x), 0, 255);
         }
         
-        if (absolute_value(contrib_y) > gamepad->gyro_to_analog_activation_treshold) {
+        if (absolute_value(contrib_y) >= gamepad->gyro_to_analog_activation_treshold) {
             out_shifted_buf[4] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[4] - (int64_t)127) + contrib_y), 0, 255);
         }
     }
