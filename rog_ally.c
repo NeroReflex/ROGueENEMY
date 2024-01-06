@@ -57,17 +57,19 @@ typedef struct rc71l_timer_user_data {
 rc71l_timer_user_data_t timer_user_data;
 
 typedef struct rc71l_platform {
-  rc71l_asus_kbd_user_data_t* kbd_user_data;
+	rc71l_asus_kbd_user_data_t* kbd_user_data;
 
-  rc71l_xbox360_user_data_t* xbox360_user_data;
+	rc71l_xbox360_user_data_t* xbox360_user_data;
 
-  rc71l_timer_user_data_t* timer_data;
+	rc71l_timer_user_data_t* timer_data;
 
-  struct {
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
-  } static_led_color;
+	struct {
+		uint8_t r;
+		uint8_t g;
+		uint8_t b;
+	} static_led_color;
+
+	size_t thermal_profile;
 
 } rc71l_platform_t;
 
@@ -103,6 +105,12 @@ static rc71l_platform_t hw_platform = {
 	.kbd_user_data = &asus_userdata,
 	.xbox360_user_data = &controller_user_data,
 	.timer_data = &timer_user_data,
+	.static_led_color = {
+		.r = 0x00,
+		.g = 0x00,
+		.b = 0x00,
+	},
+	.thermal_profile = 0,
 };
 
 static char* find_kernel_sysfs_device_path(struct udev *udev) {
@@ -317,6 +325,9 @@ static int asus_kbd_ev_map(
 			} else if ((e->ev[i].code == KEY_F18) && (e->ev[i].value != 0)) {
 				// this is right screen button, on long release both 0 and 1 events are emitted so just discard the 0
 
+			} else if ((e->ev[i].code == KEY_DELETE) && (e->ev[i].value != 0)) {
+				// this is left screen button, on long release both 0 and 1 events are emitted so just discard the 0
+				printf("requested switch to thermal profile %d\n", (int)++asus_kbd_user_data->parent->thermal_profile);
 			} else if ((e->ev[i].code == KEY_F17) && (e->ev[i].value != 0)) {
 				// this is right screen button, on long press, after passing short threshold both 0 and 1 events are emitted so just discard the 0
 
