@@ -1501,10 +1501,10 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
             (in_device_status->r3 ? 0x80 : 0x00);
 
     // mic button press is 0x04, touchpad press is 0x02
-    out_shifted_buf[10] = (in_device_status->l5 ? 0x40 : 0x00) |
-            (in_device_status->r5 ? 0x80 : 0x00) |
-            (in_device_status->l4 ? 0x10 : 0x00) |
-            (in_device_status->r4 ? 0x20 : 0x00) |
+    out_shifted_buf[10] = ((gamepad->edge_model) && (in_device_status->l5) ? 0x40 : 0x00) |
+            ((gamepad->edge_model) && (in_device_status->r5) ? 0x80 : 0x00) |
+            ((gamepad->edge_model) && (in_device_status->l4) ? 0x10 : 0x00) |
+            ((gamepad->edge_model) && (in_device_status->r4) ? 0x20 : 0x00) |
             (in_device_status->touchpad_press ? 0x02 : 0x00) |
             (in_device_status->center ? 0x01 : 0x00);
     //buf[11] = ;
