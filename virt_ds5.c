@@ -1476,7 +1476,7 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
         } else {
             out_shifted_buf[3] = ((uint64_t)(joint_x + (int64_t)32768) >> (uint64_t)8);
         }
-
+        printf("%ld -> %d\n", joint_x, (int)out_shifted_buf[3]);
         if (joint_y <= (int64_t)(-32768)) {
             out_shifted_buf[4] = 0x00;
         } else if (joint_y >= (int64_t)(+32767)) {
