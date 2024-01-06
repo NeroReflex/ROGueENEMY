@@ -429,9 +429,16 @@ static ds4_dpad_status_t ds4_dpad_from_gamepad(uint8_t dpad) {
     return DPAD_RELEASED;
 }
 
-int virt_dualshock_init(virt_dualshock_t *const out_gamepad, bool bluetooth) {
+int virt_dualshock_init(
+    virt_dualshock_t *const out_gamepad,
+    bool bluetooth,
+    int64_t gyro_to_analog_activation_treshold,
+    int64_t gyro_to_analog_mapping
+) {
     int ret = 0;
 
+    out_gamepad->gyro_to_analog_activation_treshold = absolute_value(gyro_to_analog_activation_treshold);
+    out_gamepad->gyro_to_analog_mapping = gyro_to_analog_mapping;
     out_gamepad->dt_sum = 0;
     out_gamepad->dt_buffer_current = 0;
     memset(out_gamepad->dt_buffer, 0, sizeof(out_gamepad->dt_buffer));
@@ -781,11 +788,14 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
      */
 
     const int16_t g_x = in_device_status->raw_gyro[0];
-    const int16_t g_y = in_device_status->raw_gyro[1];  // Swap Y and Z
-    const int16_t g_z = in_device_status->raw_gyro[2];  // Swap Y and Z
+    const int16_t g_y = in_device_status->raw_gyro[1];
+    const int16_t g_z = in_device_status->raw_gyro[2];
     const int16_t a_x = in_device_status->raw_accel[0];
-    const int16_t a_y = in_device_status->raw_accel[1];  // Swap Y and Z
-    const int16_t a_z = in_device_status->raw_accel[2];  // Swap Y and Z
+    const int16_t a_y = in_device_status->raw_accel[1];
+    const int16_t a_z = in_device_status->raw_accel[2];
+
+    const int64_t contrib_x = (int64_t)127 + ((int64_t)g_y / (int64_t)gamepad->gyro_to_analog_mapping);
+    const int64_t contrib_y = (int64_t)127 + ((int64_t)g_x / (int64_t)gamepad->gyro_to_analog_mapping);
 
     out_buf[0] = gamepad->bluetooth ? DS4_INPUT_REPORT_BT : DS4_INPUT_REPORT_USB;  // [00] report ID (0x01)
 
@@ -811,10 +821,25 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
         (in_device_status->r1 ? 0x02 : 0x00) |
         (in_device_status->l1 ? 0x01 : 0x00);
     
-    /*
-    static uint8_t counter = 0;
-    buf[7] = (((counter++) % (uint8_t)64) << ((uint8_t)2)) | get_buttons_byte3_by_gs(&gs);
-    */
+    if (contrib_y > gamepad->gyro_to_analog_activation_treshold) {
+        if (absolute_value(contrib_x) > gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[1] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[3] - (int64_t)127) + contrib_x), 0, 255);
+        }
+        
+        if (absolute_value(contrib_y) > gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[2] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[4] - (int64_t)127) + contrib_y), 0, 255);
+        }
+    }
+
+    if (in_device_status->join_right_analog_and_gyroscope) {
+        if (absolute_value(contrib_x) > gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[3] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[3] - (int64_t)127) + contrib_x), 0, 255);
+        }
+        
+        if (absolute_value(contrib_y) > gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[4] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[4] - (int64_t)127) + contrib_y), 0, 255);
+        }
+    }
     
     out_shifted_buf[7] = in_device_status->center ? 0x01 : 0x00;
 

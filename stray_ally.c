@@ -20,6 +20,8 @@ int main(int argc, char ** argv) {
         .controller_bluetooth = false,
         .dualsense_edge = false,
         .swap_y_z = false,
+        .gyro_to_analog_activation_treshold = 16,
+        .gyro_to_analog_mapping = 4,
     };
 
     load_out_config(&out_settings, configuration_file);

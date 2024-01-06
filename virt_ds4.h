@@ -21,16 +21,38 @@ typedef struct virt_dualshock {
 
     uint32_t empty_reports;
     int64_t last_time;
+
+    int64_t gyro_to_analog_activation_treshold;
+    int64_t gyro_to_analog_mapping;
 } virt_dualshock_t;
 
-int virt_dualshock_init(virt_dualshock_t *const gamepad, bool bluetooth);
+int virt_dualshock_init(
+    virt_dualshock_t *const gamepad,
+    bool bluetooth,
+    int64_t gyro_to_analog_activation_treshold,
+    int64_t gyro_to_analog_mapping
+);
 
-int virt_dualshock_get_fd(virt_dualshock_t *const gamepad);
+int virt_dualshock_get_fd(
+    virt_dualshock_t *const gamepad
+);
 
-int virt_dualshock_event(virt_dualshock_t *const gamepad, gamepad_status_t *const out_device_status);
+int virt_dualshock_event(
+    virt_dualshock_t *const gamepad,
+    gamepad_status_t *const out_device_status
+);
 
-void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *const in_device_status, uint8_t *const out_buf);
+void virt_dualshock_compose(
+    virt_dualshock_t *const gamepad,
+    gamepad_status_t *const in_device_status,
+    uint8_t *const out_buf
+);
 
-int virt_dualshock_send(virt_dualshock_t *const gamepad, uint8_t *const out_buf);
+int virt_dualshock_send(
+    virt_dualshock_t *const gamepad,
+    uint8_t *const out_buf
+);
 
-void virt_dualshock_close(virt_dualshock_t *const gamepad);
+void virt_dualshock_close(
+    virt_dualshock_t *const gamepad
+);

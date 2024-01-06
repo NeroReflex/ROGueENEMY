@@ -120,6 +120,21 @@ void load_out_config(dev_out_settings_t *const out_conf, const char* const filep
         fprintf(stderr, "swap_y_z (bool) configuration not found. Default value will be used.\n");
     }
 
+    int gyro_to_analog_activation_treshold;
+    if (config_lookup_int(&cfg, "gyro_to_analog_activation_treshold", &gyro_to_analog_activation_treshold) != CONFIG_FALSE) {
+        out_conf->gyro_to_analog_activation_treshold = gyro_to_analog_activation_treshold;
+    } else {
+        fprintf(stderr, "gyro_to_analog_activation_treshold (int) configuration not found. Default value will be used.\n");
+    }
+
+    int gyro_to_analog_mapping;
+    if (config_lookup_int(&cfg, "gyro_to_analog_mapping", &gyro_to_analog_mapping) != CONFIG_FALSE) {
+        out_conf->gyro_to_analog_mapping = gyro_to_analog_mapping == 0 ? 1 : gyro_to_analog_mapping;
+    } else {
+        fprintf(stderr, "gyro_to_analog_mapping (int) configuration not found. Default value will be used.\n");
+    }
+
+
     config_destroy(&cfg);
 
 load_out_config_err:

@@ -25,12 +25,17 @@ typedef struct virt_dualsense {
 
     uint32_t empty_reports;
     int64_t last_time;
+
+    int64_t gyro_to_analog_activation_treshold;
+    int64_t gyro_to_analog_mapping;
 } virt_dualsense_t;
 
 int virt_dualsense_init(
     virt_dualsense_t *const gamepad,
     bool bluetooth,
-    bool dualsense_edge
+    bool dualsense_edge,
+    int64_t gyro_to_analog_activation_treshold,
+    int64_t gyro_to_analog_mapping
 );
 
 int virt_dualsense_get_fd(

@@ -21,3 +21,11 @@ int64_t min_max_clamp(int64_t value, int64_t min, int64_t max) {
 
     return value;
 }
+
+int64_t absolute_value(int64_t value) {
+    if (value < 0) {
+        return (int64_t)-1 * value;
+    }
+
+    return value;
+}

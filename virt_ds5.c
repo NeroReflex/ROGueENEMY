@@ -1102,9 +1102,17 @@ static void destroy(int fd)
 	uhid_write(fd, &ev);
 }
 
-int virt_dualsense_init(virt_dualsense_t *const out_gamepad, bool bluetooth, bool dualsense_edge) {
+int virt_dualsense_init(
+    virt_dualsense_t *const out_gamepad,
+    bool bluetooth,
+    bool dualsense_edge,
+    int64_t gyro_to_analog_activation_treshold,
+    int64_t gyro_to_analog_mapping
+) {
     int ret = 0;
 
+    out_gamepad->gyro_to_analog_activation_treshold = absolute_value(gyro_to_analog_activation_treshold);
+    out_gamepad->gyro_to_analog_mapping = gyro_to_analog_mapping;
     out_gamepad->edge_model = dualsense_edge;
     out_gamepad->bluetooth = bluetooth;
     out_gamepad->dt_sum = 0;
@@ -1452,14 +1460,14 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     const uint32_t timestamp = sim_time + (int)((double)gamepad->empty_reports * DS5_SPEC_DELTA_TIME);
 
     const int16_t g_x = in_device_status->raw_gyro[0];
-    const int16_t g_y = in_device_status->raw_gyro[1];  // Swap Y and Z
-    const int16_t g_z = in_device_status->raw_gyro[2];  // Swap Y and Z
+    const int16_t g_y = in_device_status->raw_gyro[1];
+    const int16_t g_z = in_device_status->raw_gyro[2];
     const int16_t a_x = in_device_status->raw_accel[0];
-    const int16_t a_y = in_device_status->raw_accel[1];  // Swap Y and Z
-    const int16_t a_z = in_device_status->raw_accel[2];  // Swap Y and Z
+    const int16_t a_y = in_device_status->raw_accel[1];
+    const int16_t a_z = in_device_status->raw_accel[2];
 
-    const int64_t contrib_x = (int64_t)127 + ((int64_t)g_y / (int64_t)4);
-    const int64_t contrib_y = (int64_t)127 + ((int64_t)g_x / (int64_t)4);
+    const int64_t contrib_x = (int64_t)127 + ((int64_t)g_y / (int64_t)gamepad->gyro_to_analog_mapping);
+    const int64_t contrib_y = (int64_t)127 + ((int64_t)g_x / (int64_t)gamepad->gyro_to_analog_mapping);
 
     out_buf[0] = gamepad->bluetooth ? DS_INPUT_REPORT_BT : DS_INPUT_REPORT_USB;  // [00] report ID (0x01)
 
@@ -1469,14 +1477,24 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[3] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
     out_shifted_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
 
-    if (in_device_status->join_left_analog_and_gyroscope) {
-        out_shifted_buf[1] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[3] - (int64_t)127) + contrib_x), 0, 255);
-        out_shifted_buf[2] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[4] - (int64_t)127) + contrib_y), 0, 255);
+    if (contrib_y > gamepad->gyro_to_analog_activation_treshold) {
+        if (absolute_value(contrib_x) > gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[1] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[3] - (int64_t)127) + contrib_x), 0, 255);
+        }
+        
+        if (absolute_value(contrib_y) > gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[2] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[4] - (int64_t)127) + contrib_y), 0, 255);
+        }
     }
 
     if (in_device_status->join_right_analog_and_gyroscope) {
-        out_shifted_buf[3] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[3] - (int64_t)127) + contrib_x), 0, 255);
-        out_shifted_buf[4] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[4] - (int64_t)127) + contrib_y), 0, 255);
+        if (absolute_value(contrib_x) > gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[3] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[3] - (int64_t)127) + contrib_x), 0, 255);
+        }
+        
+        if (absolute_value(contrib_y) > gamepad->gyro_to_analog_activation_treshold) {
+            out_shifted_buf[4] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[4] - (int64_t)127) + contrib_y), 0, 255);
+        }
     }
 
     out_shifted_buf[5] = in_device_status->l2_trigger; // Z
