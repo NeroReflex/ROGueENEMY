@@ -63,9 +63,11 @@ typedef struct rc71l_platform {
 
   rc71l_timer_user_data_t* timer_data;
 
-  DBusError dbus_error;
-
-  DBusConnection * dbus_conn;
+  struct {
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+  } static_led_color;
 
 } rc71l_platform_t;
 
@@ -101,7 +103,6 @@ static rc71l_platform_t hw_platform = {
 	.kbd_user_data = &asus_userdata,
 	.xbox360_user_data = &controller_user_data,
 	.timer_data = &timer_user_data,
-	.dbus_conn = NULL,
 };
 
 static char* find_kernel_sysfs_device_path(struct udev *udev) {
@@ -1235,8 +1236,6 @@ static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platf
 		goto rc71l_platform_init_err;
 	}
 
-	dbus_error_init(&platform->dbus_error);
-
 	res = 0;
 
 rc71l_platform_init_err:
@@ -1250,9 +1249,6 @@ static void rc71l_platform_deinit(const dev_in_settings_t *const conf, void** pl
 		if (platform->kbd_user_data != NULL) {
 			udev_unref(platform->kbd_user_data->udev);
 		}
-
-		// Close the D-Bus connection
-		dbus_connection_close(platform->dbus_conn);
 	}
 
 	*platform_data = NULL;
@@ -1265,8 +1261,12 @@ static int rc71l_platform_leds(const dev_in_settings_t *const conf, uint8_t r, u
 		return 0;
 	}
 
+	platform->static_led_color.r = r;
+	platform->static_led_color.g = g;
+	platform->static_led_color.b = b;
+
 	char command_str[64] = "\0";
-	sprintf(command_str, "asusctl led-mode static -c %02X%02X%02X",r ,g ,b);
+	sprintf(command_str, "asusctl led-mode static -c %02X%02X%02X", r ,g ,b);
 	
 	return system(command_str);
 }
