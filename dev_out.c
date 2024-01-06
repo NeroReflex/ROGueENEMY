@@ -443,7 +443,9 @@ void *dev_out_thread_func(void *ptr) {
         const int ds5_init_res = virt_dualsense_init(
             &controller_data.ds5,
             dev_out_data->settings.controller_bluetooth,
-            dev_out_data->settings.dualsense_edge           
+            dev_out_data->settings.dualsense_edge,
+            dev_out_data->settings.gyro_to_analog_activation_treshold,
+            dev_out_data->settings.gyro_to_analog_mapping       
         );
 
         if (ds5_init_res != 0) {
@@ -455,7 +457,9 @@ void *dev_out_thread_func(void *ptr) {
     } else if (current_gamepad == GAMEPAD_DUALSHOCK) {
         const int ds4_init_res = virt_dualshock_init(
             &controller_data.ds4,
-            dev_out_data->settings.controller_bluetooth
+            dev_out_data->settings.controller_bluetooth,
+            dev_out_data->settings.gyro_to_analog_activation_treshold,
+            dev_out_data->settings.gyro_to_analog_mapping  
         );
 
         if (ds4_init_res != 0) {
