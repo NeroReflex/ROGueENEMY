@@ -15,9 +15,7 @@ int64_t div_round_closest_i64(int64_t x, int64_t divisor) {
 int64_t min_max_clamp(int64_t value, int64_t min, int64_t max) {
     if (value <= min) {
         return min;
-    }
-
-    if (value >= max) {
+    } else if (value >= max) {
         return max;
     }
 
