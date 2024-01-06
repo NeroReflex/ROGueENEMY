@@ -1445,8 +1445,8 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
 
     if (in_device_status->join_left_analog_and_gyroscope) {
-        const int64_t joint_x = (int64_t)in_device_status->joystick_positions[0][0] + (int64_t)in_device_status->raw_gyro[0];
-        const int64_t joint_y = (int64_t)in_device_status->joystick_positions[0][1] + (int64_t)in_device_status->raw_gyro[1];
+        const int64_t joint_x = (int64_t)in_device_status->joystick_positions[0][0] + (int64_t)g_x;
+        const int64_t joint_y = (int64_t)in_device_status->joystick_positions[0][1] + (int64_t)g_y;
 
         if (joint_x <= (int64_t)(-32768)) {
             out_shifted_buf[0] = 0x00;
@@ -1466,8 +1466,8 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     }
 
     if (in_device_status->join_right_analog_and_gyroscope) {
-        const int64_t joint_x = (int64_t)in_device_status->joystick_positions[1][0] + (int64_t)in_device_status->raw_gyro[0];
-        const int64_t joint_y = (int64_t)in_device_status->joystick_positions[1][1] + (int64_t)in_device_status->raw_gyro[1];
+        const int64_t joint_x = /*(int64_t)in_device_status->joystick_positions[1][0]*/ + (int64_t)g_x;
+        const int64_t joint_y = /*(int64_t)in_device_status->joystick_positions[1][1]*/ + (int64_t)g_y;
 
         if (joint_x <= (int64_t)(-32768)) {
             out_shifted_buf[2] = 0x00;
