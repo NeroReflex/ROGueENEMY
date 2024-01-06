@@ -794,8 +794,8 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
     const int16_t a_y = in_device_status->raw_accel[1];
     const int16_t a_z = in_device_status->raw_accel[2];
 
-    const int64_t contrib_x = (int64_t)127 + ((int64_t)g_y / (int64_t)gamepad->gyro_to_analog_mapping);
-    const int64_t contrib_y = (int64_t)127 + ((int64_t)g_x / (int64_t)gamepad->gyro_to_analog_mapping);
+    const int64_t contrib_x = ((int64_t)g_y / (int64_t)gamepad->gyro_to_analog_mapping);
+    const int64_t contrib_y = ((int64_t)g_x / (int64_t)gamepad->gyro_to_analog_mapping);
 
     out_buf[0] = gamepad->bluetooth ? DS4_INPUT_REPORT_BT : DS4_INPUT_REPORT_USB;  // [00] report ID (0x01)
 
@@ -821,7 +821,7 @@ void virt_dualshock_compose(virt_dualshock_t *const gamepad, gamepad_status_t *c
         (in_device_status->r1 ? 0x02 : 0x00) |
         (in_device_status->l1 ? 0x01 : 0x00);
     
-    if (contrib_y >= gamepad->gyro_to_analog_activation_treshold) {
+    if (in_device_status->join_left_analog_and_gyroscope) {
         if (absolute_value(contrib_x) > gamepad->gyro_to_analog_activation_treshold) {
             out_shifted_buf[1] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[1] - (int64_t)127) + contrib_x), 0, 255);
         }

@@ -1466,8 +1466,8 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     const int16_t a_y = in_device_status->raw_accel[1];
     const int16_t a_z = in_device_status->raw_accel[2];
 
-    const int64_t contrib_x = (int64_t)127 + ((int64_t)g_y / (int64_t)gamepad->gyro_to_analog_mapping);
-    const int64_t contrib_y = (int64_t)127 + ((int64_t)g_x / (int64_t)gamepad->gyro_to_analog_mapping);
+    const int64_t contrib_x = ((int64_t)g_y / (int64_t)gamepad->gyro_to_analog_mapping);
+    const int64_t contrib_y = ((int64_t)g_x / (int64_t)gamepad->gyro_to_analog_mapping);
 
     out_buf[0] = gamepad->bluetooth ? DS_INPUT_REPORT_BT : DS_INPUT_REPORT_USB;  // [00] report ID (0x01)
 
@@ -1477,7 +1477,7 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[3] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][0] + (int64_t)32768) >> (uint64_t)8); // R stick, X axis
     out_shifted_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
 
-    if (contrib_y >= gamepad->gyro_to_analog_activation_treshold) {
+    if (in_device_status->join_left_analog_and_gyroscope) {
         if (absolute_value(contrib_x) > gamepad->gyro_to_analog_activation_treshold) {
             out_shifted_buf[1] = min_max_clamp((int64_t)127 + (((int64_t)out_shifted_buf[1] - (int64_t)127) + contrib_x), 0, 255);
         }
