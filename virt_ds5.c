@@ -1445,44 +1445,44 @@ void virt_dualsense_compose(virt_dualsense_t *const gamepad, gamepad_status_t *c
     out_shifted_buf[4] = ((uint64_t)((int64_t)in_device_status->joystick_positions[1][1] + (int64_t)32768) >> (uint64_t)8); // R stick, Y axis
 
     if (in_device_status->join_left_analog_and_gyroscope) {
-        const int64_t joint_x = (int64_t)in_device_status->joystick_positions[0][0] + (int64_t)g_x;
-        const int64_t joint_y = (int64_t)in_device_status->joystick_positions[0][1] + (int64_t)g_y;
+        const int64_t joint_x = /*(int64_t)in_device_status->joystick_positions[0][0]*/ (int64_t)127 + ((int64_t)g_x / (int64_t)4);
+        const int64_t joint_y = /*(int64_t)in_device_status->joystick_positions[0][1]*/ (int64_t)127 + ((int64_t)g_y / (int64_t)4);
 
-        if (joint_x <= (int64_t)(-32768)) {
+        if (joint_x <= (int64_t)0) {
             out_shifted_buf[1] = 0x00;
-        } else if (joint_x >= (int64_t)(+32767)) {
+        } else if (joint_x >= (int64_t)255) {
             out_shifted_buf[1] = 0xFF;
         } else {
-            out_shifted_buf[1] = ((uint64_t)(joint_x + (int64_t)32768) >> (uint64_t)8);
+            out_shifted_buf[1] = joint_x;
         }
 
-        if (joint_y <= (int64_t)(-32768)) {
+        if (joint_y <= (int64_t)0) {
             out_shifted_buf[2] = 0x00;
-        } else if (joint_y >= (int64_t)(+32767)) {
+        } else if (joint_y >= (int64_t)255) {
             out_shifted_buf[2] = 0xFF;
         } else {
-            out_shifted_buf[2] = ((uint64_t)(joint_y + (int64_t)32768) >> (uint64_t)8);
+            out_shifted_buf[2] = joint_y;
         }
     }
 
     if (in_device_status->join_right_analog_and_gyroscope) {
-        const int64_t joint_x = /*(int64_t)in_device_status->joystick_positions[1][0]*/ + (int64_t)g_x;
-        const int64_t joint_y = /*(int64_t)in_device_status->joystick_positions[1][1]*/ + (int64_t)g_y;
+        const int64_t joint_x = /*(int64_t)in_device_status->joystick_positions[1][0]*/ (int64_t)127 + ((int64_t)g_x / (int64_t)4);
+        const int64_t joint_y = /*(int64_t)in_device_status->joystick_positions[1][1]*/ (int64_t)127 + ((int64_t)g_y / (int64_t)4);
 
-        if (joint_x <= (int64_t)(-32768)) {
+        if (joint_x <= (int64_t)0) {
             out_shifted_buf[3] = 0x00;
-        } else if (joint_x >= (int64_t)(+32767)) {
+        } else if (joint_x >= (int64_t)255) {
             out_shifted_buf[3] = 0xFF;
         } else {
-            out_shifted_buf[3] = ((uint64_t)(joint_x + (int64_t)32768) >> (uint64_t)8);
+            out_shifted_buf[3] = joint_x;
         }
-        printf("%ld -> %d\n", joint_x, (int)out_shifted_buf[3]);
-        if (joint_y <= (int64_t)(-32768)) {
+
+        if (joint_y <= (int64_t)0) {
             out_shifted_buf[4] = 0x00;
-        } else if (joint_y >= (int64_t)(+32767)) {
+        } else if (joint_y >= (int64_t)0) {
             out_shifted_buf[4] = 0xFF;
         } else {
-            out_shifted_buf[4] = ((uint64_t)(joint_y + (int64_t)32768) >> (uint64_t)8);
+            out_shifted_buf[4] = joint_y;
         }
     }
 
