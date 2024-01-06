@@ -33,6 +33,7 @@ int main(int argc, char ** argv) {
     .gamepad_rumble_control = true,
     .controller_bluetooth = false,
     .dualsense_edge = false,
+    .swap_y_z = false,
   };
 
   load_out_config(&out_settings, configuration_file);

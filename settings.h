@@ -19,6 +19,7 @@ typedef struct dev_out_settings {
     bool gamepad_rumble_control;
     bool controller_bluetooth;
     bool dualsense_edge;
+    bool swap_y_z;
 } dev_out_settings_t;
 
 void load_out_config(dev_out_settings_t *const out_conf, const char* const filepath);

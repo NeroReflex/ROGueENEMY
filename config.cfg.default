@@ -9,3 +9,4 @@ m1m2_mode = 1;
 touchbar = true;
 controller_bluetooth = true;
 dualsense_edge = false;
+swap_y_z = true;
