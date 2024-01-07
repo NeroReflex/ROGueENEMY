@@ -1346,6 +1346,7 @@ static void rc71l_hidraw_timer(
 
 	if (hidraw_data->parent->current_thermal_profile != hidraw_data->parent->next_thermal_profile) {
 		if (hidraw_data->parent->thermal_profile_expired == 0) {
+			++hidraw_data->parent->thermal_profile_expired;
 			uint64_t thermal_profile_index = hidraw_data->parent->next_thermal_profile % PROFILES_COUNT;
 
 			const int leds_set = rc71l_hidraw_set_leds_inner(
