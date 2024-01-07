@@ -1520,20 +1520,21 @@ input_dev_composite_t rc71l_composite = {
     &in_asus_kb_1_dev,
     &in_asus_kb_2_dev,
     &in_asus_kb_3_dev,
-	&nkey_dev,
 	&timer_dev,
-	&in_touchscreen_dev,
   },
-  .dev_count = 8,
+  .dev_count = 6,
   .init_fn = rc71l_platform_init,
   .deinit_fn = rc71l_platform_deinit,
   .leds_fn = rc71l_platform_leds,
 };
 
 input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const settings) {
-	if (!settings->touchbar) {
-		// this is because the touchscreen is the latest in the list
-		rc71l_composite.dev_count -= 1;
+	if (settings->touchbar) {
+		rc71l_composite.dev[rc71l_composite.dev_count++] = &in_touchscreen_dev;
+	}
+
+	if ((settings->enable_leds_commands) || (settings->enable_thermal_profiles_switching)) {
+		rc71l_composite.dev[rc71l_composite.dev_count++] = &nkey_dev;
 	}
 
 	return &rc71l_composite;
