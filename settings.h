@@ -8,6 +8,8 @@ typedef struct dev_in_settings {
     uint16_t ff_gain;
     uint8_t m1m2_mode;
     bool touchbar;
+    bool enable_thermal_profiles_switching;
+    bool enable_leds_commands;
 } dev_in_settings_t;
 
 void load_in_config(dev_in_settings_t *const out_conf, const char* const filepath);

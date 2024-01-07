@@ -21,6 +21,8 @@ int main(int argc, char ** argv) {
     .rumble_on_mode_switch = true,
     .m1m2_mode = 1,
     .touchbar = true,
+    .enable_thermal_profiles_switching = false,
+    .enable_leds_commands = false,
   };
   
   load_in_config(&in_settings, configuration_file);

@@ -55,6 +55,20 @@ void load_in_config(dev_in_settings_t *const out_conf, const char* const filepat
         fprintf(stderr, "touchbar (bool) configuration not found. Default value will be used.\n");
     }
 
+    int enable_thermal_profiles_switching;
+    if (config_lookup_bool(&cfg, "enable_thermal_profiles_switching", &enable_thermal_profiles_switching) != CONFIG_FALSE) {
+        out_conf->enable_thermal_profiles_switching = enable_thermal_profiles_switching;
+    } else {
+        fprintf(stderr, "enable_thermal_profiles_switching (bool) configuration not found. Default value will be used.\n");
+    }
+
+    int enable_leds_commands;
+    if (config_lookup_bool(&cfg, "enable_leds_commands", &enable_leds_commands) != CONFIG_FALSE) {
+        out_conf->enable_leds_commands = enable_leds_commands;
+    } else {
+        fprintf(stderr, "enable_leds_commands (bool) configuration not found. Default value will be used.\n");
+    }
+
     config_destroy(&cfg);
 
 load_in_config_err:
@@ -133,7 +147,6 @@ void load_out_config(dev_out_settings_t *const out_conf, const char* const filep
     } else {
         fprintf(stderr, "gyro_to_analog_mapping (int) configuration not found. Default value will be used.\n");
     }
-
 
     config_destroy(&cfg);
 

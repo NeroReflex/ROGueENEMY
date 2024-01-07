@@ -343,9 +343,11 @@ static int asus_kbd_ev_map(
 			} else if ((e->ev[i].code == KEY_DELETE) && (e->ev[i].value != 0)) {
 				// this is left screen button, on long release both 0 and 1 events are emitted so just discard the 0
 
-				asus_kbd_user_data->parent->next_thermal_profile = asus_kbd_user_data->parent->current_thermal_profile + 1;
+				if (conf->enable_thermal_profiles_switching) {
+					asus_kbd_user_data->parent->next_thermal_profile = asus_kbd_user_data->parent->current_thermal_profile + 1;
 
-				printf("Requested switch to thermal profile %d\n", (int)asus_kbd_user_data->parent->next_thermal_profile);
+					printf("Requested switch to thermal profile %d\n", (int)asus_kbd_user_data->parent->next_thermal_profile);
+				}
 			} else if ((e->ev[i].code == KEY_F17) && (e->ev[i].value != 0)) {
 				// this is right screen button, on long press, after passing short threshold both 0 and 1 events are emitted so just discard the 0
 
@@ -1302,12 +1304,18 @@ static int rc71l_hidraw_set_leds(const dev_in_settings_t *const conf, int hidraw
 	hidraw_data->parent->static_led_color.g = g;
 	hidraw_data->parent->static_led_color.b = b;
 
-	return rc71l_hidraw_set_leds_inner(
+	const int res = conf->enable_leds_commands ? rc71l_hidraw_set_leds_inner(
 		hidraw_fd,
 		hidraw_data->parent->static_led_color.r,
 		hidraw_data->parent->static_led_color.g,
 		hidraw_data->parent->static_led_color.b
-	);
+	) : 0;
+
+	if (res != 0) {
+		sprintf(stderr, "Error setting leds: %d\n", res);
+	}
+
+	return res;
 }
 
 #define PROFILES_COUNT 3
@@ -1332,44 +1340,46 @@ static void rc71l_hidraw_timer(
 		return;
 	}
 
-	if (hidraw_data->parent->current_thermal_profile != hidraw_data->parent->next_thermal_profile) {
-		if (hidraw_data->parent->thermal_profile_expired == 0) {
-			++hidraw_data->parent->thermal_profile_expired;
-			uint64_t thermal_profile_index = hidraw_data->parent->next_thermal_profile % PROFILES_COUNT;
+	if (conf->enable_thermal_profiles_switching) {
+		if (hidraw_data->parent->current_thermal_profile != hidraw_data->parent->next_thermal_profile) {
+			if (hidraw_data->parent->thermal_profile_expired == 0) {
+				++hidraw_data->parent->thermal_profile_expired;
+				uint64_t thermal_profile_index = hidraw_data->parent->next_thermal_profile % PROFILES_COUNT;
 
-			int change_thermal_result = system(profiles[thermal_profile_index]);
+				int change_thermal_result = system(profiles[thermal_profile_index]);
 
-			if (change_thermal_result == 0) {
-				const int leds_set = rc71l_hidraw_set_leds_inner(
-					hidraw_fd,
-					thermal_profile_index == 2 ? 0xFF : 0x00,
-					thermal_profile_index == 1 ? 0xFF : 0x00,
-					thermal_profile_index == 0 ? 0xFF : 0x00
-				);
+				if (change_thermal_result == 0) {
+					const int leds_set = rc71l_hidraw_set_leds_inner(
+						hidraw_fd,
+						thermal_profile_index == 2 ? 0xFF : 0x00,
+						thermal_profile_index == 1 ? 0xFF : 0x00,
+						thermal_profile_index == 0 ? 0xFF : 0x00
+					);
 
-				if (leds_set != 0) {
-					sprintf(stderr, "Error setting leds to tell the user about the new profile: %d\n", leds_set);
+					if (leds_set != 0) {
+						sprintf(stderr, "Error setting leds to tell the user about the new profile: %d\n", leds_set);
+					}
+				} else {
+					fprintf(
+						stderr,
+						"Error setting the new thermal profile with '%s': %d\n",
+						profiles[thermal_profile_index],
+						change_thermal_result
+					);
 				}
 			} else {
-				fprintf(
-					stderr,
-					"Error setting the new thermal profile with '%s': %d\n",
-					profiles[thermal_profile_index],
-					change_thermal_result
-				);
-			}
-		} else {
-			++hidraw_data->parent->thermal_profile_expired;
+				++hidraw_data->parent->thermal_profile_expired;
 
-			if (hidraw_data->parent->thermal_profile_expired > 18) {
-				hidraw_data->parent->current_thermal_profile = hidraw_data->parent->next_thermal_profile;
-				hidraw_data->parent->thermal_profile_expired = 0;
-				rc71l_hidraw_set_leds_inner(
-					hidraw_fd,
-					hidraw_data->parent->static_led_color.r,
-					hidraw_data->parent->static_led_color.g,
-					hidraw_data->parent->static_led_color.b
-				);
+				if (hidraw_data->parent->thermal_profile_expired > 18) {
+					hidraw_data->parent->current_thermal_profile = hidraw_data->parent->next_thermal_profile;
+					hidraw_data->parent->thermal_profile_expired = 0;
+					rc71l_hidraw_set_leds_inner(
+						hidraw_fd,
+						hidraw_data->parent->static_led_color.r,
+						hidraw_data->parent->static_led_color.g,
+						hidraw_data->parent->static_led_color.b
+					);
+				}
 			}
 		}
 	}
@@ -1415,34 +1425,42 @@ static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platf
 
 	res = 0;
 
-	char command_str[64] = "\0";
-    sprintf(
-		command_str,
-		"asusctl led-mode static -c %02X%02X%02X",
-		platform->static_led_color.r,
-		platform->static_led_color.g,
-		platform->static_led_color.b
-	);
-
-    const int led_mode_cmd_result = system(command_str);
-	if (led_mode_cmd_result != 0) {
-		fprintf(
-			stderr,
-			"Error setting led mode to static over asusctl: %d\n",
-			led_mode_cmd_result
+	if (conf->enable_leds_commands) {
+		char command_str[64] = "\0";
+		sprintf(
+			command_str,
+			"asusctl led-mode static -c %02X%02X%02X",
+			platform->static_led_color.r,
+			platform->static_led_color.g,
+			platform->static_led_color.b
 		);
-	}
 
-	memset(command_str, 0, sizeof(command_str));
-    sprintf(command_str, "asusctl -k high");
+		const int led_mode_cmd_result = system(command_str);
+		if (led_mode_cmd_result != 0) {
+			fprintf(
+				stderr,
+				"Error setting led mode to static over asusctl: %d\n",
+				led_mode_cmd_result
+			);
 
-    const int led_brightness_cmd_result = system(command_str);
-	if (led_brightness_cmd_result != 0) {
-		fprintf(
-			stderr,
-			"Error setting led brightness over asusctl: %d\n",
-			led_brightness_cmd_result
-		);
+			res = led_mode_cmd_result;
+			goto rc71l_platform_init_err;
+		}
+
+		memset(command_str, 0, sizeof(command_str));
+		sprintf(command_str, "asusctl -k high");
+
+		const int led_brightness_cmd_result = system(command_str);
+		if (led_brightness_cmd_result != 0) {
+			fprintf(
+				stderr,
+				"Error setting led brightness over asusctl: %d\n",
+				led_brightness_cmd_result
+			);
+
+			res = led_brightness_cmd_result;
+			goto rc71l_platform_init_err;
+		}
 	}
 
 rc71l_platform_init_err:
