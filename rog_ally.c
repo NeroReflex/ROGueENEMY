@@ -124,7 +124,7 @@ static rc71l_platform_t hw_platform = {
 		.g = 0x40,
 		.b = 0x40,
 	},
-	.current_thermal_profile = 0xFFFFFFFFFFFFFFFF,
+	.current_thermal_profile = 0,
 	.next_thermal_profile = 0,
 };
 
@@ -1528,13 +1528,18 @@ input_dev_composite_t rc71l_composite = {
   .leds_fn = rc71l_platform_leds,
 };
 
-input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const settings) {
-	if (settings->touchbar) {
+input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) {
+	if (conf->touchbar) {
 		rc71l_composite.dev[rc71l_composite.dev_count++] = &in_touchscreen_dev;
 	}
 
-	if ((settings->enable_leds_commands) || (settings->enable_thermal_profiles_switching)) {
+	if ((conf->enable_leds_commands) || (conf->enable_thermal_profiles_switching)) {
 		rc71l_composite.dev[rc71l_composite.dev_count++] = &nkey_dev;
+	}
+
+	if ((conf->enable_thermal_profiles_switching) && (conf->default_thermal_profile >= 0) && (conf->default_thermal_profile < 3)) {
+		hw_platform.current_thermal_profile = 0xFFFFFFFFFFFFFFFF;
+		hw_platform.next_thermal_profile = conf->default_thermal_profile;
 	}
 
 	return &rc71l_composite;

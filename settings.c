@@ -62,6 +62,13 @@ void load_in_config(dev_in_settings_t *const out_conf, const char* const filepat
         fprintf(stderr, "enable_thermal_profiles_switching (bool) configuration not found. Default value will be used.\n");
     }
 
+    int default_thermal_profile;
+    if (config_lookup_int(&cfg, "default_thermal_profile", &default_thermal_profile) != CONFIG_FALSE) {
+        out_conf->default_thermal_profile = default_thermal_profile;
+    } else {
+        fprintf(stderr, "default_thermal_profile (int) configuration not found. Default value will be used.\n");
+    }
+
     int enable_leds_commands;
     if (config_lookup_bool(&cfg, "enable_leds_commands", &enable_leds_commands) != CONFIG_FALSE) {
         out_conf->enable_leds_commands = enable_leds_commands;

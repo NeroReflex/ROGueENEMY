@@ -9,6 +9,7 @@ typedef struct dev_in_settings {
     uint8_t m1m2_mode;
     bool touchbar;
     bool enable_thermal_profiles_switching;
+    int default_thermal_profile;
     bool enable_leds_commands;
 } dev_in_settings_t;
 

@@ -22,6 +22,7 @@ int main(int argc, char ** argv) {
     .m1m2_mode = 1,
     .touchbar = true,
     .enable_thermal_profiles_switching = false,
+    .default_thermal_profile = -1,
     .enable_leds_commands = false,
   };
   
