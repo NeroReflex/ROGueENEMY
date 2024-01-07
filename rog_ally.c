@@ -49,6 +49,11 @@ typedef struct rc71l_asus_kbd_user_data {
 	int m1, m2;
 } rc71l_asus_kbd_user_data_t;
 
+typedef struct rc71l_asus_hidraw_user_data {
+	struct rc71l_platform* parent;
+
+} rc71l_asus_hidraw_user_data_t;
+
 typedef struct rc71l_timer_user_data {
 	struct rc71l_platform* parent;
 
@@ -63,15 +68,23 @@ typedef struct rc71l_platform {
 
 	rc71l_timer_user_data_t* timer_data;
 
+	rc71l_asus_hidraw_user_data_t* hidraw_user_data;
+
 	struct {
 		uint8_t r;
 		uint8_t g;
 		uint8_t b;
 	} static_led_color;
 
-	size_t thermal_profile;
+	uint64_t thermal_profile_expired;
+	size_t current_thermal_profile;
+	size_t next_thermal_profile;
 
 } rc71l_platform_t;
+
+static rc71l_asus_hidraw_user_data_t hidraw_userdata = {
+	.parent = NULL,
+};
 
 static rc71l_asus_kbd_user_data_t asus_userdata = {
 	.parent = NULL,
@@ -105,12 +118,14 @@ static rc71l_platform_t hw_platform = {
 	.kbd_user_data = &asus_userdata,
 	.xbox360_user_data = &controller_user_data,
 	.timer_data = &timer_user_data,
+	.hidraw_user_data = &hidraw_userdata,
 	.static_led_color = {
 		.r = 0x00,
 		.g = 0x00,
 		.b = 0x00,
 	},
-	.thermal_profile = 0,
+	.current_thermal_profile = 0,
+	.next_thermal_profile = 0,
 };
 
 static char* find_kernel_sysfs_device_path(struct udev *udev) {
@@ -327,7 +342,10 @@ static int asus_kbd_ev_map(
 
 			} else if ((e->ev[i].code == KEY_DELETE) && (e->ev[i].value != 0)) {
 				// this is left screen button, on long release both 0 and 1 events are emitted so just discard the 0
-				printf("requested switch to thermal profile %d\n", (int)++asus_kbd_user_data->parent->thermal_profile);
+
+				asus_kbd_user_data->parent->next_thermal_profile = asus_kbd_user_data->parent->current_thermal_profile + 1;
+
+				printf("Requested switch to thermal profile %d\n", (int)asus_kbd_user_data->parent->next_thermal_profile);
 			} else if ((e->ev[i].code == KEY_F17) && (e->ev[i].value != 0)) {
 				// this is right screen button, on long press, after passing short threshold both 0 and 1 events are emitted so just discard the 0
 
@@ -1247,7 +1265,7 @@ static int rc71l_hidraw_rumble(const dev_in_settings_t *const conf, int hidraw_f
 	return 0;
 }
 
-static int rc71l_hidraw_set_leds(const dev_in_settings_t *const conf, int hidraw_fd, uint8_t r, uint8_t g, uint8_t b, void* user_data) {
+static int rc71l_hidraw_set_leds_inner(int hidraw_fd, uint8_t r, uint8_t g, uint8_t b) {
 	const uint8_t brightness_buf[] = {
 		0x5A, 0xBA, 0xC5, 0xC4, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -1264,28 +1282,100 @@ static int rc71l_hidraw_set_leds(const dev_in_settings_t *const conf, int hidraw
 
 	if (write(hidraw_fd, brightness_buf, sizeof(brightness_buf)) != 64) {
 		fprintf(stderr, "Unable to send LEDs brightness (1) command change: %d\n", errno);
-		goto rc71l_hidraw_set_leds_err;
+		goto rc71l_hidraw_set_leds_inner_err;
 	}
 
 	if (write(hidraw_fd, colors_buf, sizeof(colors_buf)) != 64) {
 		fprintf(stderr, "Unable to send LEDs color command change (1)\n");
-		goto rc71l_hidraw_set_leds_err;
+		goto rc71l_hidraw_set_leds_inner_err;
 	}
 
 	return 0;
 
-rc71l_hidraw_set_leds_err:
+rc71l_hidraw_set_leds_inner_err:
   return -EIO;
 }
 
+static int rc71l_hidraw_set_leds(const dev_in_settings_t *const conf, int hidraw_fd, uint8_t r, uint8_t g, uint8_t b, void* user_data) {
+	rc71l_asus_hidraw_user_data_t *const hidraw_data = (rc71l_asus_hidraw_user_data_t*)user_data;
+	if (hidraw_data == NULL) {
+		return -ENOENT;
+	}
+
+	if (
+		(hidraw_data->parent->static_led_color.r == r) &&
+		(hidraw_data->parent->static_led_color.g == g) &&
+		(hidraw_data->parent->static_led_color.b == b)
+	) {
+		return 0;
+	}
+	
+	hidraw_data->parent->static_led_color.r = r;
+	hidraw_data->parent->static_led_color.g = g;
+	hidraw_data->parent->static_led_color.b = b;
+
+	return rc71l_hidraw_set_leds_inner(
+		hidraw_fd,
+		hidraw_data->parent->static_led_color.r,
+		hidraw_data->parent->static_led_color.g,
+		hidraw_data->parent->static_led_color.b
+	);
+}
+
+#define PROFILES_COUNT 3
+
+static const char* profiles[PROFILES_COUNT] = {
+	"asusctl profile -P Quiet",
+	"asusctl profile -P Balanced",
+	"asusctl profile -P Performance",
+};
+
 static void rc71l_hidraw_timer(
     const dev_in_settings_t *const conf,
-    int fd,
+    int hidraw_fd,
     const char* const timer_name,
     uint64_t expired,
     void* user_data
 ) {
+	// one tick is 60ms
 
+	rc71l_asus_hidraw_user_data_t *const hidraw_data = (rc71l_asus_hidraw_user_data_t*)user_data;
+	if (hidraw_data == NULL) {
+		return;
+	}
+
+	if (hidraw_data->parent->current_thermal_profile != hidraw_data->parent->next_thermal_profile) {
+		if (hidraw_data->parent->thermal_profile_expired == 0) {
+			uint64_t thermal_profile_index = hidraw_data->parent->next_thermal_profile % PROFILES_COUNT;
+
+			const int leds_set = rc71l_hidraw_set_leds_inner(
+				hidraw_fd,
+				thermal_profile_index == 2 ? 0xFF : 0x00,
+				thermal_profile_index == 1 ? 0xFF : 0x00,
+				thermal_profile_index == 0 ? 0xFF : 0x00
+			);
+
+			if (leds_set != 0) {
+				sprintf(stderr, "Error setting leds to tell the user about the new profile: %d\n", leds_set);
+			}
+
+			printf("Setting the new thermal profile with '%s'\n", profiles[thermal_profile_index]);
+			// system(profiles[thermal_profile_index]);
+		} else {
+			++hidraw_data->parent->thermal_profile_expired;
+
+			if (hidraw_data->parent->thermal_profile_expired > 18) {
+				hidraw_data->parent->current_thermal_profile = hidraw_data->parent->next_thermal_profile;
+				hidraw_data->parent->thermal_profile_expired = 0;
+				rc71l_hidraw_set_leds_inner(
+					hidraw_fd,
+					hidraw_data->parent->static_led_color.r,
+					hidraw_data->parent->static_led_color.g,
+					hidraw_data->parent->static_led_color.b
+				);
+			}
+		}
+	}
 }
 
 static input_dev_t nkey_dev = {
@@ -1297,7 +1387,7 @@ static input_dev_t nkey_dev = {
 			.rdesc_size = 167, // 48 83 167
 		}
 	},
-	.user_data = NULL,
+	.user_data = (void*)&hidraw_userdata,
 	.map = {
 		.hidraw_callbacks = {
 			.leds_callback = rc71l_hidraw_set_leds,
@@ -1319,6 +1409,7 @@ static int rc71l_platform_init(const dev_in_settings_t *const conf, void** platf
 	platform->xbox360_user_data->parent = platform;
 	platform->timer_data->parent = platform;
 	platform->kbd_user_data->udev = udev_new();
+	platform->hidraw_user_data->parent = platform;
 	if (platform->kbd_user_data->udev == NULL) {
 		fprintf(stderr, "Unable to initialize udev\n");
 		res = -ENOMEM;
@@ -1358,9 +1449,6 @@ int rc71l_timer_map(const dev_in_settings_t *const conf, int timer_fd, uint64_t 
 		return 0;
 	}
 
-
-	
-	
 	return 0;
 }
 
