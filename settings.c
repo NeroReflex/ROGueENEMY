@@ -83,6 +83,13 @@ void load_in_config(dev_in_settings_t *const out_conf, const char* const filepat
         fprintf(stderr, "enable_imu (bool) configuration not found. Default value will be used.\n");
     }
 
+    int imu_polling_interface;
+    if (config_lookup_bool(&cfg, "imu_polling_interface", &imu_polling_interface) != CONFIG_FALSE) {
+        out_conf->imu_polling_interface = imu_polling_interface;
+    } else {
+        fprintf(stderr, "imu_polling_interface (bool) configuration not found. Default value will be used.\n");
+    }
+
     config_destroy(&cfg);
 
 load_in_config_err:

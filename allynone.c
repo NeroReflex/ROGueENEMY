@@ -26,6 +26,7 @@ int main(int argc, char ** argv) {
     .default_thermal_profile = -1,
     .enable_leds_commands = false,
     .enable_imu = true,
+    .imu_polling_interface = true,
   };
   
   load_in_config(&in_settings, configuration_file);

@@ -16,3 +16,4 @@ enable_thermal_profiles_switching = true;
 default_thermal_profile = -1;
 enable_leds_commands = true;
 enable_imu = true;
+imu_polling_interface = true;

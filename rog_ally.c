@@ -2046,6 +2046,10 @@ input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) 
 		if ((bmc15_timer_data.name != NULL) && (strcmp(bmc15_timer_data.name, "bmi323"))) {
 			printf("Old bmc150-accel-i2c for bmi323 device has been selected! Are you running a neptune kernel?\n");
 			rc71l_composite.dev[rc71l_composite.dev_count++] = &bmc150_timer_dev;
+		} else if ((conf->imu_polling_interface)) {
+			if (bmc15_timer_data.name != NULL) {
+				printf("Forced polling on a %s, suspend/resume issues?\n", bmc15_timer_data.name);
+			}
 		} else {
 			printf("Using the newer upstreamed bmi323-imu driver\n");
 			rc71l_composite.dev[rc71l_composite.dev_count++] = &in_iio_dev;
