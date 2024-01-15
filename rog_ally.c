@@ -1567,7 +1567,7 @@ read_file_err:
     return res;
 }
 
-int write_file(const char* base_path, const char *file, const void* buf, size_t buf_sz) {
+static int inline_write_file(const char* base_path, const char *file, const void* buf, size_t buf_sz) {
     char* fdir = NULL;
 
     int res = 0;
@@ -1576,7 +1576,7 @@ int write_file(const char* base_path, const char *file, const void* buf, size_t 
     fdir = malloc(len);
     if (fdir == NULL) {
         fprintf(stderr, "Cannot allocate %ld bytes for device path, device skipped.\n", len);
-        goto write_file_err;
+        goto inline_write_file_err;
     }
     strcpy(fdir, base_path);
     strcat(fdir, file);
@@ -1602,11 +1602,11 @@ int write_file(const char* base_path, const char *file, const void* buf, size_t 
     free(fdir);
     fdir = NULL;
 
-write_file_err:
+inline_write_file_err:
     return res;
 }
 
-dev_old_iio_t* dev_old_iio_create(const char* path) {
+static dev_old_iio_t* dev_old_iio_create(const char* path) {
     dev_old_iio_t *iio = malloc(sizeof(dev_old_iio_t));
     if (iio == NULL) {
         return NULL;
@@ -1675,7 +1675,7 @@ dev_old_iio_t* dev_old_iio_create(const char* path) {
             iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
 
-            if (write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
+            if (inline_write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
                 iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = LSB_PER_RAD_S_2000_DEG_S;
                 printf("anglvel scale changed to %f for device %s\n", iio->anglvel_scale_x, iio->name);
             } else {
@@ -1702,7 +1702,7 @@ dev_old_iio_t* dev_old_iio_create(const char* path) {
             iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = strtod(accel_scale, NULL);
             free((void*)accel_scale);
 
-            if (write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
+            if (inline_write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
                 iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = LSB_PER_16G;
                 printf("accel scale changed to %f for device %s\n", iio->accel_scale_x, iio->name);
             } else {
@@ -1803,7 +1803,7 @@ dev_old_iio_create_err:
     return iio;
 }
 
-void dev_old_iio_destroy(dev_old_iio_t* iio) {
+static void dev_old_iio_destroy(dev_old_iio_t* iio) {
     fclose(iio->accel_x_fd);
     fclose(iio->accel_y_fd);
     fclose(iio->accel_z_fd);
