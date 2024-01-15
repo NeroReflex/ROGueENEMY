@@ -1312,7 +1312,7 @@ static int rc71l_hidraw_set_leds(const dev_in_settings_t *const conf, int hidraw
 	) : 0;
 
 	if (res != 0) {
-		sprintf(stderr, "Error setting leds: %d\n", res);
+		fprintf(stderr, "Error setting leds: %d\n", res);
 	}
 
 	return res;
@@ -1357,7 +1357,7 @@ static void rc71l_hidraw_timer(
 					);
 
 					if (leds_set != 0) {
-						sprintf(stderr, "Error setting leds to tell the user about the new profile: %d\n", leds_set);
+						fprintf(stderr, "Error setting leds to tell the user about the new profile: %d\n", leds_set);
 					}
 				} else {
 					fprintf(
@@ -1513,6 +1513,41 @@ input_dev_t timer_dev = {
 	}
 };
 
+typedef struct bmc150_accel_user_data {
+
+} bmc150_accel_user_data_t;
+
+static bmc150_accel_user_data_t bmc15_timer_data = {
+
+};
+
+int rc71l_bmc150_accel_timer_map(const dev_in_settings_t *const conf, int timer_fd, uint64_t expirations, in_message_t *const messages, size_t messages_len, void* user_data) {
+	bmc150_accel_user_data_t *const timer_data = (bmc150_accel_user_data_t*)user_data;
+	
+	if (timer_data == NULL) {
+		return 0;
+	}
+
+	return 0;
+}
+
+input_dev_t bmc150_timer_dev = {
+	.dev_type = input_dev_type_timer,
+	.filters = {
+		.timer = {
+			.name = "RC71L_bmc150-accel_timer",
+			.ticktime_ms = 0,
+			.ticktime_ns = 625000
+		}
+	},
+	.user_data = &bmc15_timer_data,
+	.map = {
+		.timer_callbacks = {
+			.map_fn = rc71l_bmc150_accel_timer_map,
+		}
+	}
+};
+
 input_dev_composite_t rc71l_composite = {
   .dev = {
     &in_xbox_dev,
@@ -1529,7 +1564,11 @@ input_dev_composite_t rc71l_composite = {
 
 input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) {
 	if (conf->enable_imu) {
-		rc71l_composite.dev[rc71l_composite.dev_count++] = &in_iio_dev;
+		if (false) {
+			rc71l_composite.dev[rc71l_composite.dev_count++] = &bmc150_timer_dev;
+		} else {
+			rc71l_composite.dev[rc71l_composite.dev_count++] = &in_iio_dev;
+		}
 	}
 	
 	if (conf->touchbar) {

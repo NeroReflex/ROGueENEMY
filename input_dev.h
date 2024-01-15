@@ -113,6 +113,7 @@ typedef struct ev_callbacks {
 typedef struct timer_filters {
     char name[128];
     uint64_t ticktime_ms;
+    uint64_t ticktime_ns;
 } timer_filters_t;
 
 typedef struct input_dev {
