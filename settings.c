@@ -155,6 +155,13 @@ void load_out_config(dev_out_settings_t *const out_conf, const char* const filep
         fprintf(stderr, "swap_y_z (bool) configuration not found. Default value will be used.\n");
     }
 
+    int invert_x;
+    if (config_lookup_bool(&cfg, "invert_x", &invert_x) != CONFIG_FALSE) {
+        out_conf->invert_x = invert_x;
+    } else {
+        fprintf(stderr, "invert_x (bool) configuration not found. Default value will be used.\n");
+    }
+
     int gyro_to_analog_activation_treshold;
     if (config_lookup_int(&cfg, "gyro_to_analog_activation_treshold", &gyro_to_analog_activation_treshold) != CONFIG_FALSE) {
         out_conf->gyro_to_analog_activation_treshold = gyro_to_analog_activation_treshold;

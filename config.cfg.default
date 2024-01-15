@@ -12,6 +12,7 @@ touchbar = true;
 controller_bluetooth = true;
 dualsense_edge = false;
 swap_y_z = true;
+invert_x = false;
 enable_thermal_profiles_switching = true;
 default_thermal_profile = -1;
 enable_leds_commands = true;

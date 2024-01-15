@@ -25,6 +25,7 @@ typedef struct dev_out_settings {
     bool controller_bluetooth;
     bool dualsense_edge;
     bool swap_y_z;
+    bool invert_x;
     int gyro_to_analog_activation_treshold;
     int gyro_to_analog_mapping;
 } dev_out_settings_t;

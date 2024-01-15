@@ -186,14 +186,14 @@ static void handle_incoming_message_gamepad_set(
         }
         case GAMEPAD_GYROSCOPE: {
             inout_gamepad->last_gyro_motion_timestamp_ns = msg_payload->status.gyro.sample_timestamp_ns;
-            inout_gamepad->raw_gyro[0] = msg_payload->status.gyro.x;
+            inout_gamepad->raw_gyro[0] = in_settings->invert_x ? (int16_t)(-1) * msg_payload->status.gyro.x : msg_payload->status.gyro.x;
             inout_gamepad->raw_gyro[1] = in_settings->swap_y_z ? msg_payload->status.gyro.z : msg_payload->status.gyro.y;
             inout_gamepad->raw_gyro[2] = in_settings->swap_y_z ? msg_payload->status.gyro.y : msg_payload->status.gyro.z;
             break;
         }
         case GAMEPAD_ACCELEROMETER: {
             inout_gamepad->last_accel_motion_timestamp_ns = msg_payload->status.accel.sample_timestamp_ns;
-            inout_gamepad->raw_accel[0] = msg_payload->status.accel.x;
+            inout_gamepad->raw_accel[0] = in_settings->invert_x ? (int16_t)(-1) * msg_payload->status.accel.x : msg_payload->status.accel.x;
             inout_gamepad->raw_accel[1] = in_settings->swap_y_z ? msg_payload->status.accel.z : msg_payload->status.accel.y;
             inout_gamepad->raw_accel[2] = in_settings->swap_y_z ? msg_payload->status.accel.y : msg_payload->status.accel.z;
             break;
