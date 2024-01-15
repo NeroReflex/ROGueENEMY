@@ -1166,8 +1166,11 @@ static void rc71l_timer_xbox360(
     uint64_t expired,
     void* user_data
 ) {
-	rc71l_xbox360_user_data_t *const xbox360_data = (rc71l_xbox360_user_data_t*)user_data;
-	
+	if (strcmp(timer_name, "RC71L_timer") != 0) {
+		return;
+	}
+
+	rc71l_xbox360_user_data_t *const xbox360_data = (rc71l_xbox360_user_data_t*)user_data;	
 
 	if (conf->rumble_on_mode_switch) {
 		if (xbox360_data->accounted_mode_switches != xbox360_data->mode_switched) {
@@ -1336,7 +1339,10 @@ static void rc71l_hidraw_timer(
     uint64_t expired,
     void* user_data
 ) {
-	// one tick is 60ms
+	// one tick is 60ms, avoid all other timers
+	if (strcmp(timer_name, "RC71L_timer") != 0) {
+		return;
+	}
 
 	rc71l_asus_hidraw_user_data_t *const hidraw_data = (rc71l_asus_hidraw_user_data_t*)user_data;
 	if (hidraw_data == NULL) {
@@ -2016,6 +2022,7 @@ input_dev_t timer_dev = {
 		.timer = {
 			.name = "RC71L_timer",
 			.ticktime_ms = 60,
+			.ticktime_ns = 0,
 		}
 	},
 	.user_data = &timer_user_data,
