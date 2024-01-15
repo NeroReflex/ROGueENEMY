@@ -76,6 +76,13 @@ void load_in_config(dev_in_settings_t *const out_conf, const char* const filepat
         fprintf(stderr, "enable_leds_commands (bool) configuration not found. Default value will be used.\n");
     }
 
+    int enable_imu;
+    if (config_lookup_bool(&cfg, "enable_imu", &enable_imu) != CONFIG_FALSE) {
+        out_conf->enable_imu = enable_imu;
+    } else {
+        fprintf(stderr, "enable_imu (bool) configuration not found. Default value will be used.\n");
+    }
+
     config_destroy(&cfg);
 
 load_in_config_err:

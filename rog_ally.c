@@ -1516,19 +1516,22 @@ input_dev_t timer_dev = {
 input_dev_composite_t rc71l_composite = {
   .dev = {
     &in_xbox_dev,
-    &in_iio_dev,
     &in_asus_kb_1_dev,
     &in_asus_kb_2_dev,
     &in_asus_kb_3_dev,
 	&timer_dev,
   },
-  .dev_count = 6,
+  .dev_count = 5,
   .init_fn = rc71l_platform_init,
   .deinit_fn = rc71l_platform_deinit,
   .leds_fn = rc71l_platform_leds,
 };
 
 input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) {
+	if (conf->enable_imu) {
+		rc71l_composite.dev[rc71l_composite.dev_count++] = &in_iio_dev;
+	}
+	
 	if (conf->touchbar) {
 		rc71l_composite.dev[rc71l_composite.dev_count++] = &in_touchscreen_dev;
 	}

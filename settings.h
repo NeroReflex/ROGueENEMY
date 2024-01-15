@@ -11,6 +11,7 @@ typedef struct dev_in_settings {
     bool enable_thermal_profiles_switching;
     int default_thermal_profile;
     bool enable_leds_commands;
+    bool enable_imu;
 } dev_in_settings_t;
 
 void load_in_config(dev_in_settings_t *const out_conf, const char* const filepath);

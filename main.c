@@ -24,6 +24,7 @@ int main(int argc, char ** argv) {
     .enable_thermal_profiles_switching = false,
     .default_thermal_profile = -1,
     .enable_leds_commands = false,
+    .enable_imu = true,
   };
   
   load_in_config(&in_settings, configuration_file);
