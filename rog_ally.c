@@ -1324,12 +1324,47 @@ static int rc71l_hidraw_set_leds(const dev_in_settings_t *const conf, int hidraw
 	return res;
 }
 
-#define PROFILES_COUNT 3
+#define PROFILES_COUNT 4
+
+static const char* epp[PROFILES_COUNT] = {
+	"/bin/bash -c 'shopt -s nullglob; echo \"power\" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'",
+	"/bin/bash -c 'shopt -s nullglob; echo \"balance_performance\" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'",
+	"/bin/bash -c 'shopt -s nullglob; echo \"balance_power\" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'",
+	"/bin/bash -c 'shopt -s nullglob; echo \"performance\" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'"
+};
 
 static const char* profiles[PROFILES_COUNT] = {
 	"asusctl profile -P Quiet",
 	"asusctl profile -P Balanced",
 	"asusctl profile -P Performance",
+	"asusctl profile -P Performance",
+};
+
+static const struct {
+	uint8_t r;
+	uint8_t g;
+	uint8_t b;
+} colors[PROFILES_COUNT] = {
+	{
+		.r = 0x00, // Blue
+		.g = 0x00,
+		.b = 0xFF,
+	},
+	{
+		.r = 0x00, // Green
+		.g = 0xFF,
+		.b = 0x00,
+	},
+	{
+		.r = 0xFF, // Almost-orange/yellow
+		.g = 0xBF,
+		.b = 0x00,
+	},
+	{
+		.r = 0xFF, // Red
+		.g = 0x00,
+		.b = 0x00,
+	}
 };
 
 static void rc71l_hidraw_timer(
@@ -1355,18 +1390,27 @@ static void rc71l_hidraw_timer(
 				++hidraw_data->parent->thermal_profile_expired;
 				uint64_t thermal_profile_index = hidraw_data->parent->next_thermal_profile % PROFILES_COUNT;
 
-				int change_thermal_result = system(profiles[thermal_profile_index]);
-
+				const int change_thermal_result = system(profiles[thermal_profile_index]);
 				if (change_thermal_result == 0) {
-					const int leds_set = rc71l_hidraw_set_leds_inner(
-						hidraw_fd,
-						thermal_profile_index == 2 ? 0xFF : 0x00,
-						thermal_profile_index == 1 ? 0xFF : 0x00,
-						thermal_profile_index == 0 ? 0xFF : 0x00
-					);
+					const int change_amd_pstate_epp = system(epp[thermal_profile_index]);
+					if (change_amd_pstate_epp == 0) {
+						const int leds_set = rc71l_hidraw_set_leds_inner(
+							hidraw_fd,
+							colors[thermal_profile_index].r,
+							colors[thermal_profile_index].g,
+							colors[thermal_profile_index].b
+						);
 
-					if (leds_set != 0) {
-						fprintf(stderr, "Error setting leds to tell the user about the new profile: %d\n", leds_set);
+						if (leds_set != 0) {
+							fprintf(stderr, "Error setting leds to tell the user about the new profile: %d\n", leds_set);
+						}
+					} else {
+						fprintf(
+							stderr,
+							"Error setting the new AMD P-State hint with '%s': %d\n",
+							epp[thermal_profile_index],
+							change_amd_pstate_epp
+						);
 					}
 				} else {
 					fprintf(
@@ -2056,6 +2100,7 @@ input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) 
 		} else if ((conf->imu_polling_interface)) {
 			if (bmc15_timer_data.name != NULL) {
 				printf("Forced polling on a %s, suspend/resume issues?\n", bmc15_timer_data.name);
+				rc71l_composite.dev[rc71l_composite.dev_count++] = &bmc150_timer_dev;
 			}
 		} else {
 			printf("Using the newer upstreamed bmi323-imu driver\n");
@@ -2071,9 +2116,9 @@ input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) 
 		rc71l_composite.dev[rc71l_composite.dev_count++] = &nkey_dev;
 	}
 
-	if ((conf->enable_thermal_profiles_switching) && (conf->default_thermal_profile >= 0) && (conf->default_thermal_profile < 3)) {
+	if ((conf->enable_thermal_profiles_switching) && (conf->default_thermal_profile >= 0)) {
 		hw_platform.current_thermal_profile = 0xFFFFFFFFFFFFFFFF;
-		hw_platform.next_thermal_profile = conf->default_thermal_profile;
+		hw_platform.next_thermal_profile = conf->default_thermal_profile % PROFILES_COUNT;
 	}
 
 	return &rc71l_composite;
