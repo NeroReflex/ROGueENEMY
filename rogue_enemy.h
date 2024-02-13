@@ -52,6 +52,9 @@
 #define LSB_PER_16G ((double)0.004785)
 #define LSB_PER_16G_STR "0.004785"
 
+#define PREFERRED_SAMPLING_FREQ ((double)800.000000)
+#define PREFERRED_SAMPLING_FREQ_STR "800.000000"
+
 // courtesy of linux kernel
 #ifndef __packed
 #define __packed	__attribute__((packed))

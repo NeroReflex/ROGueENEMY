@@ -1568,7 +1568,8 @@ typedef struct dev_iio {
 
     double mount_matrix[3][3];
 
-    double sampling_rate_hz;
+    double anglvel_sampling_rate_hz;
+	double accel_sampling_rate_hz;
 } dev_old_iio_t;
 
 
@@ -1785,14 +1786,50 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
     }
     // ==========================================================================================================
 
-    // ============================================ sampling_rate ================================================
+    // ======================================= anglvel_sampling_rate_hz ==========================================
     {
-        char* const accel_scale = read_file(iio->path, "/in_temp_scale");
+        const char* preferred_scale = PREFERRED_SAMPLING_FREQ_STR;
+        const char *scale_main_file = "/in_anglvel_sampling_frequency";
+
+        char* const accel_scale = read_file(iio->path, scale_main_file);
         if (accel_scale != NULL) {
-            iio->temp_scale = strtod(accel_scale, NULL);
+            iio->anglvel_sampling_rate_hz = strtod(accel_scale, NULL);
             free((void*)accel_scale);
+
+            if (inline_write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
+                iio->anglvel_sampling_rate_hz = PREFERRED_SAMPLING_FREQ;
+                printf("anglvel sampling rate changed to %f for device %s\n", iio->accel_scale_x, iio->name);
+            } else {
+                fprintf(stderr, "Unable to set preferred in_anglvel_sampling_frequency for device %s.\n", iio->name);
+            }
         } else {
-            fprintf(stderr, "Unable to read in_accel_scale file from path %s%s.\n", iio->path, "/in_accel_scale");
+            fprintf(stderr, "Unable to read in_anglvel_sampling_frequency file from path %s%s.\n", iio->path, scale_main_file);
+
+            free(iio);
+            iio = NULL;
+            goto dev_old_iio_create_err;
+        }
+    }
+    // ==========================================================================================================
+
+	// ======================================= accel_sampling_rate_hz ==========================================
+    {
+        const char* preferred_scale = PREFERRED_SAMPLING_FREQ_STR;
+        const char *scale_main_file = "/in_accel_sampling_frequency";
+
+        char* const accel_scale = read_file(iio->path, scale_main_file);
+        if (accel_scale != NULL) {
+            iio->accel_sampling_rate_hz = strtod(accel_scale, NULL);
+            free((void*)accel_scale);
+
+            if (inline_write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
+                iio->accel_sampling_rate_hz = PREFERRED_SAMPLING_FREQ;
+                printf("accel sampling rate changed to %f for device %s\n", iio->accel_scale_x, iio->name);
+            } else {
+                fprintf(stderr, "Unable to set preferred in_accel_sampling_frequency for device %s.\n", iio->name);
+            }
+        } else {
+            fprintf(stderr, "Unable to read in_accel_sampling_frequency file from path %s%s.\n", iio->path, scale_main_file);
 
             free(iio);
             iio = NULL;
@@ -2038,7 +2075,7 @@ input_dev_t bmc150_timer_dev = {
 		.timer = {
 			.name = "RC71L_bmc150-accel_timer",
 			.ticktime_ms = 0,
-			.ticktime_ns = 625000
+			.ticktime_ns = 1250000
 		}
 	},
 	.user_data = &bmc15_timer_data,
