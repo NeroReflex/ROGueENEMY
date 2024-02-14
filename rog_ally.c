@@ -2031,7 +2031,7 @@ typedef struct bmc150_accel_user_data {
 	uint64_t errors;
 } bmc150_accel_user_data_t;
 
-static bmc150_accel_user_data_t bmc15_timer_data = {
+static bmc150_accel_user_data_t bmc150_timer_data = {
 	.iio = NULL,
 	.name = NULL,
 	.errors = 0,
@@ -2078,7 +2078,7 @@ input_dev_t bmc150_timer_dev = {
 			.ticktime_ns = 1250000
 		}
 	},
-	.user_data = &bmc15_timer_data,
+	.user_data = &bmc150_timer_data,
 	.map = {
 		.timer_callbacks = {
 			.map_fn = rc71l_bmc150_accel_timer_map,
@@ -2130,13 +2130,13 @@ input_dev_composite_t rc71l_composite = {
 
 input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) {
 	if (conf->enable_imu) {
-		bmc15_timer_data.name = read_file(iio_base_path, "name");
-		if ((bmc15_timer_data.name != NULL) && (strcmp(bmc15_timer_data.name, "bmi323"))) {
+		bmc150_timer_data.name = read_file(iio_base_path, "name");
+		if ((bmc150_timer_data.name != NULL) && (strcmp(bmc150_timer_data.name, "bmi323"))) {
 			printf("Old bmc150-accel-i2c for bmi323 device has been selected! Are you running a neptune kernel?\n");
 			rc71l_composite.dev[rc71l_composite.dev_count++] = &bmc150_timer_dev;
 		} else if ((conf->imu_polling_interface)) {
-			if (bmc15_timer_data.name != NULL) {
-				printf("Forced polling on a %s, suspend/resume issues?\n", bmc15_timer_data.name);
+			if (bmc150_timer_data.name != NULL) {
+				printf("Forced polling on a %s, suspend/resume issues?\n", bmc150_timer_data.name);
 				rc71l_composite.dev[rc71l_composite.dev_count++] = &bmc150_timer_dev;
 			}
 		} else {
