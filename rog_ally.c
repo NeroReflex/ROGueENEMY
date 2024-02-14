@@ -188,10 +188,15 @@ static char* find_kernel_sysfs_device_path(struct udev *udev) {
 static int get_next_mode(int current_mode) {
 	if (current_mode == 1)
 		return 2;
+	else if (current_mode == 2)
+		return 1;
+	/*
+	// TODO: luke has yet to complete the mapping for mode 3, use only 1 and 2 for now
 	if (current_mode == 2)
 		return 3;
 	if (current_mode == 3)
 		return 1;
+	*/
 	else
 		fprintf(stderr, "Invalid current mode: %d -- 1 (gamepad) will be set\n", current_mode);
 
