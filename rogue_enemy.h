@@ -55,6 +55,9 @@
 #define PREFERRED_SAMPLING_FREQ ((double)800.000000)
 #define PREFERRED_SAMPLING_FREQ_STR "800.000000"
 
+#define PREFERRED_SAMPLING_FREQ_HIGH_HZ ((double)1600.000000)
+#define PREFERRED_SAMPLING_FREQ_HIGH_HZ_STR "1600.000000"
+
 // courtesy of linux kernel
 #ifndef __packed
 #define __packed	__attribute__((packed))

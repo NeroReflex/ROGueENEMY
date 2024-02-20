@@ -1708,7 +1708,15 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
 
     // ======================================= anglvel_sampling_rate_hz ==========================================
     {
+		const char *const avail_freq = inline_read_file(iio->path, "/in_anglvel_sampling_frequency_available");
+
         const char* preferred_scale = PREFERRED_SAMPLING_FREQ_STR;
+		double new_freq = PREFERRED_SAMPLING_FREQ;
+		if ((avail_freq != NULL) && (strstr(avail_freq, "1600.0"))) {
+			preferred_scale = PREFERRED_SAMPLING_FREQ_HIGH_HZ_STR;
+			new_freq = PREFERRED_SAMPLING_FREQ_HIGH_HZ;
+		}
+
         const char *scale_main_file = "/in_anglvel_sampling_frequency";
 
         char* const accel_scale = inline_read_file(iio->path, scale_main_file);
@@ -1717,7 +1725,7 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
             free((void*)accel_scale);
 
             if (inline_write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
-                iio->anglvel_sampling_rate_hz = PREFERRED_SAMPLING_FREQ;
+                iio->anglvel_sampling_rate_hz = new_freq;
                 printf("anglvel sampling rate changed to %f for device %s\n", iio->accel_scale_x, iio->name);
             } else {
                 fprintf(stderr, "Unable to set preferred in_anglvel_sampling_frequency for device %s.\n", iio->name);
@@ -1734,7 +1742,15 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
 
 	// ======================================= accel_sampling_rate_hz ==========================================
     {
+        const char *const avail_freq = inline_read_file(iio->path, "/in_accel_sampling_frequency_available");
+
         const char* preferred_scale = PREFERRED_SAMPLING_FREQ_STR;
+		double new_freq = PREFERRED_SAMPLING_FREQ;
+		if ((avail_freq != NULL) && (strstr(avail_freq, "1600.0"))) {
+			preferred_scale = PREFERRED_SAMPLING_FREQ_HIGH_HZ_STR;
+			new_freq = PREFERRED_SAMPLING_FREQ_HIGH_HZ;
+		}
+
         const char *scale_main_file = "/in_accel_sampling_frequency";
 
         char* const accel_scale = inline_read_file(iio->path, scale_main_file);
@@ -1743,7 +1759,7 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
             free((void*)accel_scale);
 
             if (inline_write_file(iio->path, scale_main_file, preferred_scale, strlen(preferred_scale)) >= 0) {
-                iio->accel_sampling_rate_hz = PREFERRED_SAMPLING_FREQ;
+                iio->accel_sampling_rate_hz = new_freq;
                 printf("accel sampling rate changed to %f for device %s\n", iio->accel_scale_x, iio->name);
             } else {
                 fprintf(stderr, "Unable to set preferred in_accel_sampling_frequency for device %s.\n", iio->name);
@@ -2050,6 +2066,12 @@ input_dev_composite_t rc71l_composite = {
 
 input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) {
 	if (conf->enable_imu) {
+		const char *const avail_freq = inline_read_file(iio_base_path, "/in_accel_sampling_frequency_available");
+		if ((avail_freq != NULL) && (strstr(avail_freq, "1600.0"))) {
+			printf("Using high sampling rate mode");
+			bmc150_timer_dev.filters.timer.ticktime_ns = 625000;
+		}
+
 		bmc150_timer_data.name = inline_read_file(iio_base_path, "name");
 		if ((bmc150_timer_data.name != NULL) && (strcmp(bmc150_timer_data.name, "bmi323"))) {
 			printf("Old bmc150-accel-i2c for bmi323 device has been selected! Are you running a neptune kernel?\n");

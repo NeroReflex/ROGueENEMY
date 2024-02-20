@@ -435,9 +435,16 @@ void *dev_out_thread_func(void *ptr) {
         printf("Keyboard initialized: fd=%d\n", current_keyboard_fd);
     }
 
-    const int64_t kbd_report_timing_us = 2025;
-    const int64_t mouse_report_timing_us = 1650;
-    const int64_t gamepad_report_timing_us = 2500;
+    bool high_hz_avail = false;
+    const char *const avail_freq = inline_read_file("/sys/bus/iio/devices/iio:device0/", "name");
+    if ((avail_freq != NULL) && (strstr(avail_freq, "1600.0") != NULL)) {
+        printf("High iio sampling frequency available: 1600.0 Hz");
+        high_hz_avail = true;
+    }
+
+    const int64_t kbd_report_timing_us = high_hz_avail ? 1125 : 2025;
+    const int64_t mouse_report_timing_us = high_hz_avail ? 950 : 1650;
+    const int64_t gamepad_report_timing_us = high_hz_avail ? 1250 : 2500;
 
     if (current_gamepad == GAMEPAD_DUALSENSE) {
         const int ds5_init_res = virt_dualsense_init(
