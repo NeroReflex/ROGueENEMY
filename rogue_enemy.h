@@ -70,3 +70,7 @@ int64_t min_max_clamp(int64_t value, int64_t min, int64_t max);
 int64_t absolute_value(int64_t value);
 
 ssize_t dmi_board_name(char *const buf, size_t buf_len);
+
+char* inline_read_file(const char* base_path, const char *file);
+
+int inline_write_file(const char* base_path, const char *file, const void* buf, size_t buf_sz);

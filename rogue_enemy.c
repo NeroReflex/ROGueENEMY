@@ -42,3 +42,87 @@ int dmi_name_fd = open("/sys/class/dmi/id/board_name", O_RDONLY | O_NONBLOCK);
 
     return ret;
 }
+
+char* inline_read_file(const char* base_path, const char *file) {
+    char* res = NULL;
+    char* fdir = NULL;
+    long len = 0;
+
+    len = strlen(base_path) + strlen(file) + 1;
+    fdir = malloc(len);
+    if (fdir == NULL) {
+        fprintf(stderr, "Cannot allocate %ld bytes for device path, device skipped.\n", len);
+        goto read_file_err;
+    }
+    strcpy(fdir, base_path);
+    strcat(fdir, file);
+
+    if (access(fdir, F_OK) == 0) {
+        FILE* fp = fopen(fdir, "r");
+        if (fp != NULL) {
+            fseek(fp, 0L, SEEK_END);
+            len = ftell(fp);
+            rewind(fp);
+
+            len += 1;
+            res = malloc(len);
+            if (res != NULL) {
+                unsigned long read_bytes = fread(res, 1, len, fp);
+                printf("Read %lu bytes from file %s\n", read_bytes, fdir);
+            } else {
+                fprintf(stderr, "Cannot allocate %ld bytes for %s content.\n", len, fdir);
+            }
+
+            fclose(fp);
+        } else {
+            fprintf(stderr, "Cannot open file %s.\n", fdir);
+        }
+    } else {
+        fprintf(stderr, "File %s does not exists.\n", fdir);
+    }
+
+    free(fdir);
+    fdir = NULL;
+
+read_file_err:
+    return res;
+}
+
+int inline_write_file(const char* base_path, const char *file, const void* buf, size_t buf_sz) {
+    char* fdir = NULL;
+
+    int res = 0;
+
+    const size_t len = strlen(base_path) + strlen(file) + 1;
+    fdir = malloc(len);
+    if (fdir == NULL) {
+        fprintf(stderr, "Cannot allocate %ld bytes for device path, device skipped.\n", len);
+        goto inline_write_file_err;
+    }
+    strcpy(fdir, base_path);
+    strcat(fdir, file);
+
+    if (access(fdir, F_OK) == 0) {
+        FILE* fp = fopen(fdir, "w");
+        if (fp != NULL) {
+            res = fwrite(buf, 1, buf_sz, fp);
+            if (res >= buf_sz) {
+                printf("Written %d bytes to file %s\n", res, fdir);
+            } else {
+                fprintf(stderr, "Cannot write to %s: %d.\n", fdir, res);
+            }
+
+            fclose(fp);
+        } else {
+            fprintf(stderr, "Cannot open file %s.\n", fdir);
+        }
+    } else {
+        fprintf(stderr, "File %s does not exists.\n", fdir);
+    }
+
+    free(fdir);
+    fdir = NULL;
+
+inline_write_file_err:
+    return res;
+}

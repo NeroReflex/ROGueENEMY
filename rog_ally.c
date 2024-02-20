@@ -1577,91 +1577,6 @@ typedef struct dev_iio {
 	double accel_sampling_rate_hz;
 } dev_old_iio_t;
 
-
-static char* read_file(const char* base_path, const char *file) {
-    char* res = NULL;
-    char* fdir = NULL;
-    long len = 0;
-
-    len = strlen(base_path) + strlen(file) + 1;
-    fdir = malloc(len);
-    if (fdir == NULL) {
-        fprintf(stderr, "Cannot allocate %ld bytes for device path, device skipped.\n", len);
-        goto read_file_err;
-    }
-    strcpy(fdir, base_path);
-    strcat(fdir, file);
-
-    if (access(fdir, F_OK) == 0) {
-        FILE* fp = fopen(fdir, "r");
-        if (fp != NULL) {
-            fseek(fp, 0L, SEEK_END);
-            len = ftell(fp);
-            rewind(fp);
-
-            len += 1;
-            res = malloc(len);
-            if (res != NULL) {
-                unsigned long read_bytes = fread(res, 1, len, fp);
-                printf("Read %lu bytes from file %s\n", read_bytes, fdir);
-            } else {
-                fprintf(stderr, "Cannot allocate %ld bytes for %s content.\n", len, fdir);
-            }
-
-            fclose(fp);
-        } else {
-            fprintf(stderr, "Cannot open file %s.\n", fdir);
-        }
-    } else {
-        fprintf(stderr, "File %s does not exists.\n", fdir);
-    }
-
-    free(fdir);
-    fdir = NULL;
-
-read_file_err:
-    return res;
-}
-
-static int inline_write_file(const char* base_path, const char *file, const void* buf, size_t buf_sz) {
-    char* fdir = NULL;
-
-    int res = 0;
-
-    const size_t len = strlen(base_path) + strlen(file) + 1;
-    fdir = malloc(len);
-    if (fdir == NULL) {
-        fprintf(stderr, "Cannot allocate %ld bytes for device path, device skipped.\n", len);
-        goto inline_write_file_err;
-    }
-    strcpy(fdir, base_path);
-    strcat(fdir, file);
-
-    if (access(fdir, F_OK) == 0) {
-        FILE* fp = fopen(fdir, "w");
-        if (fp != NULL) {
-            res = fwrite(buf, 1, buf_sz, fp);
-            if (res >= buf_sz) {
-                printf("Written %d bytes to file %s\n", res, fdir);
-            } else {
-                fprintf(stderr, "Cannot write to %s: %d.\n", fdir, res);
-            }
-
-            fclose(fp);
-        } else {
-            fprintf(stderr, "Cannot open file %s.\n", fdir);
-        }
-    } else {
-        fprintf(stderr, "File %s does not exists.\n", fdir);
-    }
-
-    free(fdir);
-    fdir = NULL;
-
-inline_write_file_err:
-    return res;
-}
-
 static dev_old_iio_t* dev_old_iio_create(const char* path) {
     dev_old_iio_t *iio = malloc(sizeof(dev_old_iio_t));
     if (iio == NULL) {
@@ -1707,7 +1622,7 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
     strcpy(iio->path, path);
 
     // ============================================= DEVICE NAME ================================================
-    iio->name = read_file(iio->path, "/name");
+    iio->name = inline_read_file(iio->path, "/name");
     if (iio->name == NULL) {
         fprintf(stderr, "Unable to read iio device name.\n");
         free(iio);
@@ -1726,7 +1641,7 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
         const char* preferred_scale = LSB_PER_RAD_S_2000_DEG_S_STR;
         const char *scale_main_file = "/in_anglvel_scale";
 
-        char* const anglvel_scale = read_file(iio->path, scale_main_file);
+        char* const anglvel_scale = inline_read_file(iio->path, scale_main_file);
         if (anglvel_scale != NULL) {
             iio->anglvel_scale_x = iio->anglvel_scale_y = iio->anglvel_scale_z = strtod(anglvel_scale, NULL);
             free((void*)anglvel_scale);
@@ -1753,7 +1668,7 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
         const char* preferred_scale = LSB_PER_16G_STR;
         const char *scale_main_file = "/in_accel_scale";
 
-        char* const accel_scale = read_file(iio->path, scale_main_file);
+        char* const accel_scale = inline_read_file(iio->path, scale_main_file);
         if (accel_scale != NULL) {
             iio->accel_scale_x = iio->accel_scale_y = iio->accel_scale_z = strtod(accel_scale, NULL);
             free((void*)accel_scale);
@@ -1777,7 +1692,7 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
 
     // ============================================= temp_scale =================================================
     {
-        char* const accel_scale = read_file(iio->path, "/in_temp_scale");
+        char* const accel_scale = inline_read_file(iio->path, "/in_temp_scale");
         if (accel_scale != NULL) {
             iio->temp_scale = strtod(accel_scale, NULL);
             free((void*)accel_scale);
@@ -1796,7 +1711,7 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
         const char* preferred_scale = PREFERRED_SAMPLING_FREQ_STR;
         const char *scale_main_file = "/in_anglvel_sampling_frequency";
 
-        char* const accel_scale = read_file(iio->path, scale_main_file);
+        char* const accel_scale = inline_read_file(iio->path, scale_main_file);
         if (accel_scale != NULL) {
             iio->anglvel_sampling_rate_hz = strtod(accel_scale, NULL);
             free((void*)accel_scale);
@@ -1822,7 +1737,7 @@ static dev_old_iio_t* dev_old_iio_create(const char* path) {
         const char* preferred_scale = PREFERRED_SAMPLING_FREQ_STR;
         const char *scale_main_file = "/in_accel_sampling_frequency";
 
-        char* const accel_scale = read_file(iio->path, scale_main_file);
+        char* const accel_scale = inline_read_file(iio->path, scale_main_file);
         if (accel_scale != NULL) {
             iio->accel_sampling_rate_hz = strtod(accel_scale, NULL);
             free((void*)accel_scale);
@@ -2135,7 +2050,7 @@ input_dev_composite_t rc71l_composite = {
 
 input_dev_composite_t* rog_ally_device_def(const dev_in_settings_t *const conf) {
 	if (conf->enable_imu) {
-		bmc150_timer_data.name = read_file(iio_base_path, "name");
+		bmc150_timer_data.name = inline_read_file(iio_base_path, "name");
 		if ((bmc150_timer_data.name != NULL) && (strcmp(bmc150_timer_data.name, "bmi323"))) {
 			printf("Old bmc150-accel-i2c for bmi323 device has been selected! Are you running a neptune kernel?\n");
 			rc71l_composite.dev[rc71l_composite.dev_count++] = &bmc150_timer_dev;
