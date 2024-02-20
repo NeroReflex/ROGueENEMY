@@ -47,16 +47,13 @@ int main(int argc, char ** argv) {
   load_out_config(&out_settings, configuration_file);
 
   input_dev_composite_t* in_devs = NULL;
-  
-  int dmi_name_fd = open("/sys/class/dmi/id/board_name", O_RDONLY | O_NONBLOCK);
-  if (dmi_name_fd < 0) {
+
+  char bname[256];
+  if (dmi_board_name(bname, sizeof(bname)) < 0) {
     fprintf(stderr, "Cannot get the board name\n");
     return EXIT_FAILURE;
   }
 
-  char bname[256];
-  memset(bname, 0, sizeof(bname));
-  read(dmi_name_fd, bname, sizeof(bname));
   if (strstr(bname, "RC71L") != NULL) {
     printf("Running in an Asus ROG Ally device\n");
     in_devs = rog_ally_device_def(&in_settings);
@@ -64,7 +61,7 @@ int main(int argc, char ** argv) {
     printf("Running in an Lenovo Legion Go device\n");
     in_devs = legion_go_device_def();
   }
-  close(dmi_name_fd);
+  
 
   int dev_in_thread_creation = -1;
   int dev_out_thread_creation = -1;

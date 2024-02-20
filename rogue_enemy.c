@@ -29,3 +29,16 @@ int64_t absolute_value(int64_t value) {
 
     return value;
 }
+
+ssize_t dmi_board_name(char *const buf, size_t buf_len) {
+int dmi_name_fd = open("/sys/class/dmi/id/board_name", O_RDONLY | O_NONBLOCK);
+    if (dmi_name_fd < 0) {
+        return -1;
+    }
+
+    memset(buf, 0, buf_len);
+    const ssize_t ret = read(dmi_name_fd, buf, buf_len);
+    close(dmi_name_fd);
+
+    return ret;
+}
