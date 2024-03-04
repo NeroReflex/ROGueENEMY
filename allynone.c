@@ -10,9 +10,17 @@
 #include "rog_ally.h"
 #include "legion_go.h"
 
+#include <sys/mman.h>
+
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 
 int main(int argc, char ** argv) {
+  // Lock all current and future pages from preventing of being paged to swap
+  const int lockall_res = mlockall( MCL_CURRENT | MCL_FUTURE );
+  if (lockall_res) { 
+    fprintf(stderr, "mlockall failed: %d", lockall_res);
+  }
+
   int ret = 0;
 
   // fill in configuration from file: automatic fallback to default

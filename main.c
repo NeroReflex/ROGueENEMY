@@ -10,9 +10,17 @@
 #include "rog_ally.h"
 #include "legion_go.h"
 
+#include <sys/mman.h>
+
 static const char* configuration_file = "/etc/ROGueENEMY/config.cfg";
 
 int main(int argc, char ** argv) {
+  // Lock all current and future pages from preventing of being paged to swap
+  const int lockall_res = mlockall( MCL_CURRENT | MCL_FUTURE );
+  if (lockall_res) { 
+    fprintf(stderr, "mlockall failed: %d", lockall_res);
+  }
+
   int ret = 0;
 
   dev_in_settings_t in_settings = {
@@ -74,8 +82,45 @@ int main(int argc, char ** argv) {
 
   //memset(&dev_in_thread_data.communication.endpoint.socket.serveraddr, 0, sizeof(dev_in_thread_data.communication.endpoint.socket.serveraddr));
   
+  // Initialize pthread attributes (default values)
+  struct sched_param param;
+  pthread_attr_t attr;
+  ret = pthread_attr_init(&attr);
+  if (ret) {
+          printf("init pthread attributes failed\n");
+          goto main_err;
+  }
+
+  // Set a specific stack size
+  ret = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN + 8192);
+  if (ret) {
+      printf("pthread setstacksize failed\n");
+      goto main_err;
+  }
+
+  // Set scheduler policy and priority of pthread
+  ret = pthread_attr_setschedpolicy(&attr, SCHED_FIFO);
+  if (ret) {
+      printf("pthread setschedpolicy failed\n");
+      goto main_err;
+  }
+  param.sched_priority = 80;
+  ret = pthread_attr_setschedparam(&attr, &param);
+  if (ret) {
+      printf("pthread setschedparam failed\n");
+      goto main_err;
+  }
+
+  // Use scheduling parameters of attr
+  ret = pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+  if (ret) {
+      printf("pthread setinheritsched failed\n");
+      goto main_err;
+  }
+
+
   pthread_t dev_in_thread;
-  const int dev_in_thread_creation = pthread_create(&dev_in_thread, NULL, dev_in_thread_func, (void*)(&dev_in_thread_data));
+  const int dev_in_thread_creation = pthread_create(&dev_in_thread, &attr, dev_in_thread_func, (void*)(&dev_in_thread_data));
   if (dev_in_thread_creation != 0) {
     fprintf(stderr, "Error creating dev_in thread: %d\n", dev_in_thread_creation);
     ret = -1;
