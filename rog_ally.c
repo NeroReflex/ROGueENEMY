@@ -1329,19 +1329,27 @@ static int rc71l_hidraw_set_leds(const dev_in_settings_t *const conf, int hidraw
 	return res;
 }
 
+#if defined(MANAGE_EPP)
 #define PROFILES_COUNT 4
+#else
+#define PROFILES_COUNT 3
+#endif
 
+#if defined(MANAGE_EPP)
 static const char* epp[PROFILES_COUNT] = {
 	"/bin/bash -c 'shopt -s nullglob; echo \"power\" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'",
 	"/bin/bash -c 'shopt -s nullglob; echo \"balance_performance\" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'",
 	"/bin/bash -c 'shopt -s nullglob; echo \"balance_power\" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'",
 	"/bin/bash -c 'shopt -s nullglob; echo \"performance\" | tee /sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference'"
 };
+#endif
 
 static const char* profiles[PROFILES_COUNT] = {
 	"asusctl profile -P Quiet",
 	"asusctl profile -P Balanced",
+#if defined(MANAGE_EPP)
 	"asusctl profile -P Performance",
+#endif
 	"asusctl profile -P Performance",
 };
 
@@ -1360,11 +1368,13 @@ static const struct {
 		.g = 0xFF,
 		.b = 0x00,
 	},
+#if defined(MANAGE_EPP)
 	{
 		.r = 0xFF, // Almost-orange/yellow
 		.g = 0xBF,
 		.b = 0x00,
 	},
+#endif
 	{
 		.r = 0xFF, // Red
 		.g = 0x00,
@@ -1397,6 +1407,7 @@ static void rc71l_hidraw_timer(
 
 				const int change_thermal_result = system(profiles[thermal_profile_index]);
 				if (change_thermal_result == 0) {
+					#if defined(MANAGE_EPP)
 					const int change_amd_pstate_epp = system(epp[thermal_profile_index]);
 					if (change_amd_pstate_epp == 0) {
 						const int leds_set = rc71l_hidraw_set_leds_inner(
@@ -1417,6 +1428,18 @@ static void rc71l_hidraw_timer(
 							change_amd_pstate_epp
 						);
 					}
+					#else
+					const int leds_set = rc71l_hidraw_set_leds_inner(
+						hidraw_fd,
+						colors[thermal_profile_index].r,
+						colors[thermal_profile_index].g,
+						colors[thermal_profile_index].b
+					);
+
+					if (leds_set != 0) {
+						fprintf(stderr, "Error setting leds to tell the user about the new profile: %d\n", leds_set);
+					}
+					#endif
 				} else {
 					fprintf(
 						stderr,
